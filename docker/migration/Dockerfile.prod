@@ -1,0 +1,9 @@
+FROM bigcapital-server:latest
+
+USER root
+RUN apk update && apk add --no-cache bash git
+
+WORKDIR /app/packages/server
+RUN git clone https://github.com/vishnubob/wait-for-it.git
+
+CMD ["sh", "-c", "./wait-for-it/wait-for-it.sh mysql:3306 -- sh -c 'node dist/cli.js system:migrate:latest && node dist/cli.js tenants:migrate:latest'"]

@@ -34,6 +34,9 @@
   </p>
 </p>
 
+> **This is a fork of [bigcapitalhq/bigcapital](https://github.com/bigcapitalhq/bigcapital).**
+> Maintained by [@crxnit](https://github.com/crxnit) for a self-hosted ARM64 deployment with bug fixes applied on top of the upstream release. All original credit goes to [Ahmed Bouhuolia](https://github.com/abouolia) and the Bigcapital contributors. See [CHANGES.md](CHANGES.md) for a full list of modifications.
+
 # What's Bigcapital?
 
 Bigcapital is a smart and open-source accounting and inventory software, Bigcapital keeps all business finances in right place and automates accounting processes to give the business powerful and intelligent financial statements and reports to help in making decisions.

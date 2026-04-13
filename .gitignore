@@ -3,11 +3,20 @@ node_modules/
 # Docker volumes data directory
 /data
 
-# Production env file 
+# Production env file
 .env
 
 test-results/
 .qodo
 
-
 .pnpm-store
+
+# Credentials — never commit
+*.credentials.txt
+*credentials*.csv
+
+# Docker image archives
+*.tar.gz
+
+# Deployment scratch directories
+04-11-2026-deploy/
