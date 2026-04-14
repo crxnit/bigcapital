@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository Identity
+
+This is a **fork** of [bigcapitalhq/bigcapital](https://github.com/bigcapitalhq/bigcapital), hosted at [crxnit/bigcapital](https://github.com/crxnit/bigcapital). Licensed under AGPL v3. All modifications from upstream are documented in `CHANGES.md`.
+
+### Git Remotes
+
+- `origin` — `git@github.com:crxnit/bigcapital.git` (the fork — push here)
+- `upstream` — `https://github.com/bigcapitalhq/bigcapital.git` (upstream — pull updates from here)
+
+To sync with upstream:
+```bash
+git fetch upstream
+git merge upstream/main
+```
+
 ## Project Overview
 
 Bigcapital is a multi-tenant cloud accounting SaaS application. It uses a **per-tenant database isolation** model where each tenant gets its own MySQL/MariaDB database (prefixed `bigcapital_tenant_`), plus a shared system database for tenant management and authentication.
