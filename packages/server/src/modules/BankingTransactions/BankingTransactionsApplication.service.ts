@@ -16,12 +16,15 @@ import { GetPendingBankAccountTransactions } from './queries/GetPendingBankAccou
 import { GetPendingTransactionsQueryDto } from './dtos/GetPendingTransactionsQuery.dto';
 import { GetAutofillCategorizeTransactionService } from './queries/GetAutofillCategorizeTransaction/GetAutofillCategorizeTransaction.service';
 import { GetBankTransactionsQueryDto } from './dtos/GetBankTranasctionsQuery.dto';
+import { EditBankTransactionService } from './commands/EditBankTransaction.service';
+import { EditBankTransactionDto } from './dtos/EditBankTransaction.dto';
 
 @Injectable()
 export class BankingTransactionsApplication {
   constructor(
     private readonly createTransactionService: CreateBankTransactionService,
     private readonly deleteTransactionService: DeleteCashflowTransaction,
+    private readonly editTransactionService: EditBankTransactionService,
     private readonly getCashflowTransactionService: GetBankTransactionService,
     private readonly getBankAccountsService: GetBankAccountsService,
     private readonly getBankAccountTransactionsService: GetBankAccountTransactionsService,
@@ -30,6 +33,16 @@ export class BankingTransactionsApplication {
     private readonly getPendingBankAccountTransactionsService: GetPendingBankAccountTransactions,
     private readonly getAutofillCategorizeTransactionService: GetAutofillCategorizeTransactionService,
   ) {}
+
+  /**
+   * Edits descriptive metadata (memo, reference, transaction number) on an
+   * existing bank transaction. GL-affecting fields (amount, accounts, date,
+   * exchange rate) intentionally go through uncategorize -> recategorize
+   * instead of this PATCH path.
+   */
+  public editTransaction(transactionId: number, dto: EditBankTransactionDto) {
+    return this.editTransactionService.editTransaction(transactionId, dto);
+  }
 
   /**
    * Creates a new cashflow transaction.

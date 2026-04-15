@@ -27,6 +27,7 @@ import InviteSendMainNotificationSubscribe from './subscribers/InviteSendMailNot
 import { SendInviteUserMailProcessor } from './processors/SendInviteUserMail.processor';
 import { SendInviteUsersMailMessage } from './commands/SendInviteUsersMailMessage.service';
 import { MailModule } from '../Mail/Mail.module';
+import { UserInviteCleanupJob } from './jobs/UserInviteCleanup.job';
 
 const models = [InjectSystemModel(UserInvite)];
 
@@ -59,7 +60,8 @@ const models = [InjectSystemModel(UserInvite)];
     InviteSendMainNotificationSubscribe,
     SendInviteUserMailProcessor,
     SendInviteUsersMailMessage,
-    UsersApplication
+    UsersApplication,
+    UserInviteCleanupJob,
   ],
   controllers: [UsersController, UsersInviteController, UsersInvitePublicController],
 })

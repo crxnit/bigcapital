@@ -20,6 +20,9 @@ import cloud from './cloud';
 import redis from './redis';
 import queue from './queue';
 import bullBoard from './bull-board';
+import auditLog from './auditLog';
+import resetPasswordSeconds from './resetPassword';
+import systemAdmin from './systemAdmin';
 
 export const config = [
   app,
@@ -44,4 +47,7 @@ export const config = [
   redis,
   queue,
   bullBoard,
+  auditLog,
+  resetPasswordSeconds,
+  systemAdmin,
 ];
