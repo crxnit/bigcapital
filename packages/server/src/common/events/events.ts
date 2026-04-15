@@ -20,6 +20,16 @@ export const events = {
 
     resetPassword: 'onResetPassword',
     resetingPassword: 'onResetingPassword',
+
+    loginFailed: 'onLoginFailed',
+  },
+
+  /**
+   * API key service.
+   */
+  apiKey: {
+    created: 'onApiKeyCreated',
+    revoked: 'onApiKeyRevoked',
   },
 
   /**

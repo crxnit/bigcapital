@@ -42,6 +42,7 @@ import { AuthApiKeysController } from './AuthApiKeys.controllers';
 import { AuthApiKeyAuthorizeService } from './commands/AuthApiKeyAuthorization.service';
 import { GenerateApiKey } from './commands/GenerateApiKey.service';
 import { GetApiKeysService } from './queries/GetApiKeys.service';
+import { PasswordResetCleanupJob } from './jobs/PasswordResetCleanup.job';
 
 const models = [
   InjectSystemModel(PasswordReset),
@@ -106,6 +107,7 @@ const models = [
       useClass: EnsureUserVerifiedGuard,
     },
     AuthMailSubscriber,
+    PasswordResetCleanupJob,
   ],
 })
 export class AuthModule {}

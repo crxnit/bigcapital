@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { BankingTransactionsApplication } from '../BankingTransactionsApplication.service';
 import { CreateBankTransactionDto } from '../dtos/CreateBankTransaction.dto';
+import { EditBankTransactionDto } from '../dtos/EditBankTransaction.dto';
 import { GetBankTransactionsQueryDto } from '../dtos/GetBankTranasctionsQuery.dto';
 import { BankTransactionResponseDto } from '../dtos/BankTransactionResponse.dto';
 import { PaginatedResponseDto } from '@/common/dtos/PaginatedResults.dto';
@@ -110,6 +112,35 @@ export class BankingTransactionsController {
   async deleteTransaction(@Param('id') transactionId: string) {
     return this.bankingTransactionsApplication.deleteTransaction(
       Number(transactionId),
+    );
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Edit descriptive metadata on an existing bank transaction',
+    description:
+      'Updates memo, reference, and transaction number. GL-affecting fields (amount, accounts, date, exchange rate) must go through uncategorize -> recategorize instead.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'The bank transaction metadata has been updated',
+    schema: { $ref: getSchemaPath(BankTransactionResponseDto) },
+  })
+  @ApiResponse({ status: 404, description: 'Bank transaction not found' })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    type: String,
+    description: 'Bank transaction ID',
+  })
+  @ApiBody({ type: EditBankTransactionDto })
+  async editTransaction(
+    @Param('id') transactionId: string,
+    @Body() dto: EditBankTransactionDto,
+  ) {
+    return this.bankingTransactionsApplication.editTransaction(
+      Number(transactionId),
+      dto,
     );
   }
 
