@@ -143,7 +143,7 @@ export const ITEMS_FILTER_ROLES = JSON.stringify([
 export const handleErrors = (errors, { setErrors }) => {
   if (errors.some((e) => e.type === ERRORS.ESTIMATE_NUMBER_IS_NOT_UNQIUE)) {
     setErrors({
-      estimate_number: intl.get('estimate_number_is_not_unqiue'),
+      estimate_number: intl.get('estimate_number_is_not_unique'),
     });
   }
   if (

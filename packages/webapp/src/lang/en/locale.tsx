@@ -33,7 +33,7 @@ export const locale = {
     url: '${path} must be a valid URL',
     trim: '${path} must be a trimmed string',
     lowercase: '${path} must be a lowercase string',
-    uppercase: '${path} must be a upper case string',
+    uppercase: '${path} must be an upper case string',
   },
   number: {
     min: '${path} must be greater than or equal to ${min}',
@@ -47,7 +47,7 @@ export const locale = {
   },
   date: {
     min: '${path} field must be later than ${min}',
-    max: '${path} field must be at earlier than ${max}',
+    max: '${path} field must be earlier than ${max}',
   },
   boolean: {},
   object: {
