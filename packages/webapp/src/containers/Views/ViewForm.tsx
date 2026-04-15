@@ -296,7 +296,7 @@ function ViewForm({
         <H5 className="mb2">Define the conditionals</H5>
 
         {values.roles.map((role, index) => (
-          <Row className="view-form__role-conditional">
+          <Row key={role?.id ?? index} className="view-form__role-conditional">
             <Col sm={2} className="flex">
               <div className="mr2 pt1 condition-number">{index + 1}</div>
               {index === 0 ? (

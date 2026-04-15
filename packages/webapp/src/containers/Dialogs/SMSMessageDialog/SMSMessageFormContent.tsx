@@ -34,7 +34,7 @@ export default function SMSMessageFormContent() {
             <SMSMessageFormFields />
             <SMSMessageVariables>
               {messageVariables.map(({ variable, description }) => (
-                <MessageVariable>
+                <MessageVariable key={variable}>
                   <strong>{`{${variable}}`}</strong> {description}
                 </MessageVariable>
               ))}

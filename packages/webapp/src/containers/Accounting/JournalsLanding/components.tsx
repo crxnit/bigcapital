@@ -84,8 +84,9 @@ export function AmountPopoverContent({ journalEntries, currencyCode }) {
 
   return (
     <div>
-      {journalLinesProps.map(({ journalEntry, accountId }) => (
+      {journalLinesProps.map(({ journalEntry, accountId }, index) => (
         <AmountPopoverContentLine
+          key={journalEntry?.id ?? index}
           journalEntry={journalEntry}
           accountId={accountId}
           currencyCode={currencyCode}

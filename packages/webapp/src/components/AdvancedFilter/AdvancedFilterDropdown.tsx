@@ -280,6 +280,7 @@ function AdvancedFilterDropdownConditions({ push, remove, replace, form }) {
       <div className={'filter-dropdown__conditions'}>
         {form.values.conditions.map((condition, index) => (
           <AdvancedFilterDropdownCondition
+            key={index}
             conditionIndex={index}
             onRemoveClick={handleClickRemoveCondition}
           />

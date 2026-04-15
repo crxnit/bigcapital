@@ -72,7 +72,7 @@ export function DashboardViewsTabs({
         {allTab && <Tab id={0} title={defaultTabText} />}
 
         {tabs.map((tab) => (
-          <Tab id={tab.slug} title={tab.name} />
+          <Tab key={tab.slug} id={tab.slug} title={tab.name} />
         ))}
         <If condition={newViewTab}>
           <Tooltip

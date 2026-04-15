@@ -27,7 +27,12 @@ export default function QuickNewDropdown() {
 
   // Item renderer.
   const itemRenderer = (item, { handleClick, modifiers, query }) => (
-    <MenuItem text={item.name} label={item.label} onClick={handleClick} />
+    <MenuItem
+      key={item.path}
+      text={item.name}
+      label={item.label}
+      onClick={handleClick}
+    />
   );
 
   return (

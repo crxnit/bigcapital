@@ -11,14 +11,14 @@ function TableHeaderCell({ column, index }) {
     props: { expandable, expandToggleColumn },
   } = useContext(TableContext);
 
+  const { key: headerKey, ...headerProps } = column.getHeaderProps({
+    className: classNames(column.className || '', 'th', {
+      [`align-${column.align}`]: column.align,
+    }),
+  });
+
   return (
-    <div
-      {...column.getHeaderProps({
-        className: classNames(column.className || '', 'th', {
-          [`align-${column.align}`]: column.align,
-        }),
-      })}
-    >
+    <div key={headerKey} {...headerProps}>
       <If condition={expandable && index + 1 === expandToggleColumn}>
         <span {...getToggleAllRowsExpandedProps()} className="expand-toggle">
           <span
@@ -65,8 +65,9 @@ function TableHeaderCell({ column, index }) {
 }
 
 function TableHeaderGroup({ headerGroup }) {
+  const { key: groupKey, ...groupProps } = headerGroup.getHeaderGroupProps();
   return (
-    <div {...headerGroup.getHeaderGroupProps()} className="tr">
+    <div key={groupKey} {...groupProps} className="tr">
       {headerGroup.headers.map((column, index) => (
         <TableHeaderCell key={index} column={column} index={index} />
       ))}

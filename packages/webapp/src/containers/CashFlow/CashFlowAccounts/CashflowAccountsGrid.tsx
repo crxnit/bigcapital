@@ -38,6 +38,7 @@ const CASHFLOW_SKELETON_N = 4;
 function CashflowAccountsSkeleton() {
   return [...Array(CASHFLOW_SKELETON_N)].map((e, i) => (
     <BankAccount
+      key={i}
       title={'XXXXX'}
       code={'XXXXX'}
       balance={'XXXXXX'}
@@ -150,7 +151,7 @@ function getUpdatedBeforeText(createdAt) {
  */
 function CashflowAccountsGridItems({ accounts }) {
   return accounts.map((account) => (
-    <CashflowBankAccountEnhanced account={account} />
+    <CashflowBankAccountEnhanced key={account.id} account={account} />
   ));
 }
 
@@ -201,7 +202,7 @@ function CashflowAccountMoneyInContextMenu({ onClick }) {
   const addMoneyInOptions = useMemo(() => getAddMoneyInOptions(), []);
 
   return addMoneyInOptions.map((option) => (
-    <MenuItem text={option.name} onClick={handleItemClick(option.value)} />
+    <MenuItem key={option.value} text={option.name} onClick={handleItemClick(option.value)} />
   ));
 }
 
@@ -216,7 +217,7 @@ function CashflowAccountMoneyOutContextMenu({ onClick }) {
   const addMoneyOutOptions = useMemo(() => getAddMoneyOutOptions(), []);
 
   return addMoneyOutOptions.map((option) => (
-    <MenuItem text={option.name} onClick={handleItemClick(option.value)} />
+    <MenuItem key={option.value} text={option.name} onClick={handleItemClick(option.value)} />
   ));
 }
 

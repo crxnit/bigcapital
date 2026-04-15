@@ -29,7 +29,11 @@ export function DashboardActionViewsList({
   };
 
   const viewsMenuItems = views.map((view) => (
-    <MenuItem onClick={() => handleClickViewItem(view)} text={view.name} />
+    <MenuItem
+      key={view.id ?? view.slug ?? view.name}
+      onClick={() => handleClickViewItem(view)}
+      text={view.name}
+    />
   ));
 
   const handleAllTabClick = () => {

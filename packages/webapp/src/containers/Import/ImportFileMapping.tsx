@@ -26,6 +26,7 @@ export function ImportFileMapping() {
 
           {entityColumns.map((entityColumn, index) => (
             <ImportFileMappingGroup
+              key={entityColumn.groupKey ?? index}
               groupKey={entityColumn.groupKey}
               groupLabel={entityColumn.groupLabel}
               fields={entityColumn.fields}

@@ -68,8 +68,8 @@ PaperTemplate.Table = ({ columns, data }: PaperTemplateTableProps) => {
       </thead>
 
       <tbody className={styles.tableBody}>
-        {data.map((_data: any) => (
-          <tr>
+        {data.map((_data: any, rowIndex: number) => (
+          <tr key={_data?.id ?? rowIndex}>
             {columns.map((column, index) => (
               <td align={column.align} key={index}>
                 {isFunction(column?.accessor)

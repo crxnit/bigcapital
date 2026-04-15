@@ -9,19 +9,18 @@ import { Skeleton } from '../Skeleton';
  */
 function TableHeaderCell({ column }) {
   const { skeletonWidthMax = 100, skeletonWidthMin = 40 } = column;
+  const { key: headerKey, ...headerProps } = column.getHeaderProps({
+    className: clsx(
+      'td',
+      {
+        [`align-${column.align}`]: column.align,
+      },
+      column.className,
+    ),
+  });
 
   return (
-    <div
-      {...column.getHeaderProps({
-        className: clsx(
-          'td',
-          {
-            [`align-${column.align}`]: column.align,
-          },
-          column.className,
-        ),
-      })}
-    >
+    <div key={headerKey} {...headerProps}>
       <Skeleton minWidth={skeletonWidthMin} maxWidth={skeletonWidthMax} />
     </div>
   );
@@ -36,17 +35,21 @@ export function TableSkeletonRows({}) {
   } = useContext(TableContext);
   const skeletonRows = 10;
 
-  return Array.from({ length: skeletonRows }).map(() => {
-    return headerGroups.map((headerGroup) => (
-      <div
-        {...headerGroup.getHeaderGroupProps({
-          className: 'tr',
-        })}
-      >
-        {headerGroup.headers.map((column) => (
-          <TableHeaderCell column={column} />
-        ))}
-      </div>
-    ));
+  return Array.from({ length: skeletonRows }).map((_, rowIndex) => {
+    return headerGroups.map((headerGroup, groupIndex) => {
+      const { key: groupKey, ...groupProps } = headerGroup.getHeaderGroupProps({
+        className: 'tr',
+      });
+      return (
+        <div
+          key={`${rowIndex}-${groupKey ?? groupIndex}`}
+          {...groupProps}
+        >
+          {headerGroup.headers.map((column) => (
+            <TableHeaderCell key={column.id} column={column} />
+          ))}
+        </div>
+      );
+    });
   });
 }

@@ -45,8 +45,8 @@ function BillableEntriesBox({ billableEntry }) {
  * @returns
  */
 export function BillableEntiresBox({ billableEntries }) {
-  return billableEntries.map((entries) => (
-    <BillableEntriesBox billableEntry={entries} />
+  return billableEntries.map((entries, index) => (
+    <BillableEntriesBox key={entries?.id ?? index} billableEntry={entries} />
   ));
 }
 

@@ -24,8 +24,9 @@ function DashboardUniversalSearchItemActions({
     resetSelectedItemUniversalSearch();
   }, [resetSelectedItemUniversalSearch]);
 
-  return components.map((COMPONENT) => (
+  return components.map((COMPONENT, index) => (
     <COMPONENT
+      key={COMPONENT.displayName || COMPONENT.name || index}
       resourceId={searchSelectedResourceId}
       resourceType={searchSelectedResourceType}
       onAction={handleActionExec}

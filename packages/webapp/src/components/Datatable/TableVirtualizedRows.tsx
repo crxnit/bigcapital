@@ -40,25 +40,27 @@ export function TableVirtualizedListRows() {
 
   return (
     <WindowScroller scrollElement={scrollElement}>
-      {({ height, isScrolling, onChildScroll, scrollTop }) => (
-        <AutoSizer disableHeight>
-          {({ width }) => (
-            <List
-              autoHeight={true}
-              className={'List'}
-              height={height}
-              isScrolling={isScrolling}
-              onScroll={onChildScroll}
-              overscanRowCount={vListOverscanRowCount}
-              rowCount={page.length}
-              rowHeight={vListrowHeight}
-              rowRenderer={rowRenderer}
-              scrollTop={scrollTop}
-              width={width}
-            />
-          )}
-        </AutoSizer>
-      )}
+      {({ height, isScrolling, onChildScroll, scrollTop }) =>
+        height == null ? null : (
+          <AutoSizer disableHeight>
+            {({ width }) => (
+              <List
+                autoHeight={true}
+                className={'List'}
+                height={height}
+                isScrolling={isScrolling}
+                onScroll={onChildScroll}
+                overscanRowCount={vListOverscanRowCount}
+                rowCount={page.length}
+                rowHeight={vListrowHeight}
+                rowRenderer={rowRenderer}
+                scrollTop={scrollTop}
+                width={width}
+              />
+            )}
+          </AutoSizer>
+        )
+      }
     </WindowScroller>
   );
 }

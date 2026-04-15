@@ -23,7 +23,7 @@ export function CreditNoteCustomizeContentFields() {
 
       <Stack>
         {fieldsGroups.map((group) => (
-          <ElementCustomizeFieldsGroup label={group.label}>
+          <ElementCustomizeFieldsGroup key={group.label} label={group.label}>
             {group.fields.map((item, index) => (
               <ElementCustomizeContentItemFieldGroup
                 key={index}

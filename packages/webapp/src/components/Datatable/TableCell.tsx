@@ -43,12 +43,11 @@ export default function TableCell({ cell, row, index }) {
   );
 
   if (cellLoading) {
+    const { key: loadingKey, ...loadingProps } = cell.getCellProps({
+      className: classNames(cell.column.className, 'td'),
+    });
     return (
-      <div
-        {...cell.getCellProps({
-          className: classNames(cell.column.className, 'td'),
-        })}
-      >
+      <div key={loadingKey} {...loadingProps}>
         <Skeleton minWidth={skeletonWidthMin} maxWidth={skeletonWidthMax} />
       </div>
     );
@@ -62,21 +61,24 @@ export default function TableCell({ cell, row, index }) {
   };
   const cellType = camelCase(cell.column.Cell.cellType) || 'text';
 
+  const { key: cellKey, ...cellProps } = cell.getCellProps({
+    className: classNames(cell.column.className, 'td', {
+      'is-text-overview': cell.column.textOverview,
+      clickable: cell.column.clickable,
+      'align-right': cell.column.align === 'right',
+      'align-center': cell.column.align === 'center',
+      [`td-${cell.column.id}`]: cell.column.id,
+      [`td-${cellType}-type`]: !!cellType,
+    }),
+    tabIndex: 0,
+    onClick: handleCellClick,
+  });
+  const { key: expandKey, ...expandProps } = getToggleRowExpandedProps({
+    className: 'expand-toggle',
+  });
+
   return (
-    <div
-      {...cell.getCellProps({
-        className: classNames(cell.column.className, 'td', {
-          'is-text-overview': cell.column.textOverview,
-          clickable: cell.column.clickable,
-          'align-right': cell.column.align === 'right',
-          'align-center': cell.column.align === 'center',
-          [`td-${cell.column.id}`]: cell.column.id,
-          [`td-${cellType}-type`]: !!cellType,
-        }),
-        tabindex: 0,
-        onClick: handleCellClick,
-      })}
-    >
+    <div key={cellKey} {...cellProps}>
       <div
         className={classNames(
           {
@@ -96,12 +98,7 @@ export default function TableCell({ cell, row, index }) {
           // to build the toggle for expanding a row
         }
         <If condition={cell.row.canExpand && expandable && isExpandColumn}>
-          <span
-            {...getToggleRowExpandedProps({
-              className: 'expand-toggle',
-            })}
-            style={{}}
-          >
+          <span key={expandKey} {...expandProps} style={{}}>
             <span
               className={classNames('expand-arrow', {
                 'is-expanded': isExpanded,

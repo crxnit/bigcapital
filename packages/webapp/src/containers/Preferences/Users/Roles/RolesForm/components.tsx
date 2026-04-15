@@ -96,7 +96,9 @@ function PermissionBodyColumn({ column }) {
  * @returns {React.JSX}
  */
 function ModulePermissionsTableColumns({ columns }) {
-  return columns.map((column) => <PermissionBodyColumn column={column} />);
+  return columns.map((column) => (
+    <PermissionBodyColumn key={column.key ?? column.label} column={column} />
+  ));
 }
 
 /**
@@ -118,6 +120,7 @@ function ModuleExtraPermissionsPopover() {
       <ExtraPermissionsRoot>
         {extraPermissions.map((permission) => (
           <Field
+            key={permission.key}
             name={`permissions.${service.subject}/${permission.key}`}
             type="checkbox"
           >
@@ -178,7 +181,9 @@ function ModulePermissionsTableHead() {
           </th>
         </If>
         {columns.map((column) => (
-          <th className={'permission'}>{column.label}</th>
+          <th key={column.key ?? column.label} className={'permission'}>
+            {column.label}
+          </th>
         ))}
         <th></th>
       </tr>
@@ -229,7 +234,10 @@ function ModulePermissionsTableBody() {
   return (
     <tbody>
       {services.map((service) => (
-        <ModulePermissionsServiceProvider service={service}>
+        <ModulePermissionsServiceProvider
+          key={service.subject ?? service.label}
+          service={service}
+        >
           <tr>
             <td className="service-label">{service.label} </td>
 
@@ -266,7 +274,7 @@ function ModuleVerticalTableCells() {
   return (
     <td className={'permissions'}>
       {service.permissions.map((permission) => (
-        <div>
+        <div key={permission.key}>
           <Field
             name={`permissions.${service.subject}/${permission.key}`}
             type="checkbox"
@@ -302,7 +310,10 @@ function ModulePermissionsVerticalServices() {
       <ModulePermissionsVerticalTable>
         <tbody>
           {module.services.map((service) => (
-            <ModulePermissionsServiceProvider service={service}>
+            <ModulePermissionsServiceProvider
+              key={service.subject ?? service.label}
+              service={service}
+            >
               <tr>
                 <td className={'service-label'}>{service.label} </td>
                 <ModuleVerticalTableCells />
@@ -367,7 +378,7 @@ export const RolesPermissionList = () => {
   return (
     <ModulesPermission>
       {permissions.map((module) => (
-        <ModulePermissions module={module} />
+        <ModulePermissions key={module.subject ?? module.label} module={module} />
       ))}
     </ModulesPermission>
   );

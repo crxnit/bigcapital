@@ -17,21 +17,27 @@ export default function TableFooter() {
   
   return (
     <div className="tfooter">
-      {footerGroups.map((group) => (
-        <div {...group.getFooterGroupProps({ className: 'tr' })}>
-          {group.headers.map((column) => (
-            <div
-              {...column.getFooterProps({
+      {footerGroups.map((group) => {
+        const { key: groupKey, ...groupProps } = group.getFooterGroupProps({
+          className: 'tr',
+        });
+        return (
+          <div key={groupKey} {...groupProps}>
+            {group.headers.map((column) => {
+              const { key: colKey, ...colProps } = column.getFooterProps({
                 className: classNames(column.className || '', 'td'),
-              })}
-            >
-              <div className={'cell-inner'}>
-                {column.render('Footer')}
-              </div>
-            </div>
-          ))}
-        </div>
-      ))}
+              });
+              return (
+                <div key={colKey} {...colProps}>
+                  <div className={'cell-inner'}>
+                    {column.render('Footer')}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
