@@ -30,9 +30,9 @@ export function DashboardHamburgerButton({ ...props }) {
         </title>
         <path
           stroke="currentColor"
-          stroke-linecap="round"
-          stroke-miterlimit="5"
-          stroke-width="2"
+          strokeLinecap="round"
+          strokeMiterlimit="5"
+          strokeWidth="2"
           d="M4 7h15M4 12h15M4 17h15"
         ></path>
       </svg>

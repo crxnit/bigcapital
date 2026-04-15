@@ -10,7 +10,7 @@ export default function WorkflowIcon({
       <defs>
         <linearGradient id="linear-gradient" x1="-0.001" y1="0.5" x2="1" y2="0.5" gradientUnits="objectBoundingBox">
           <stop offset="0.561"/>
-          <stop offset="1" stop-color="#1244ee"/>
+          <stop offset="1" stopColor="#1244ee"/>
         </linearGradient>
       </defs>
       <g id="_2_workflow" data-name="2_workflow" transform="translate(-0.237)">
