@@ -70,8 +70,9 @@ function SubscriptionPlanRoot({
       </PricingPlan.BuyButton>
 
       <PricingPlan.Features>
-        {features?.map((feature) => (
+        {features?.map((feature, index) => (
           <PricingPlan.FeatureLine
+            key={feature.text ?? index}
             hintLabel={feature.hintLabel}
             hintContent={feature.hint}
           >

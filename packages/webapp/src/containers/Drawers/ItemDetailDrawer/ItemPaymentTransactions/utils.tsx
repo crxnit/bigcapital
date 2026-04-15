@@ -24,7 +24,7 @@ export const ItemManuTransaction = ({ onChange }) => {
     onChange && onChange(item);
   };
   const content = itemTransactionMenu.map(({ name, label }) => (
-    <MenuItem onClick={() => handleClickItem(name)} text={label} />
+    <MenuItem key={name} onClick={() => handleClickItem(name)} text={label} />
   ));
 
   return (

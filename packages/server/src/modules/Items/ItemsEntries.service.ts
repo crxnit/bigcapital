@@ -168,7 +168,7 @@ export class ItemsEntriesService {
   }
 
   /**
-   * Changes items quantity from the given items entries the new and old onces.
+   * Changes items quantity from the given items entries the new and old ones.
    * @param {IItemEntry[]} entries - Items entries.
    * @param {IItemEntry[]} oldEntries - Old items entries.
    */

@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(rootDir, 'src'),
         '@public': path.resolve(rootDir, 'public'),
         path: 'path-browserify',
+        chalk: path.resolve(rootDir, 'src/shims/chalk-browser.ts'),
       },
     },
     define: {

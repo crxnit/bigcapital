@@ -23,6 +23,7 @@ export default function WizardSetupSteps({ currentStep = 1 }) {
         <ul>
           {setupWizardSetups.map((step, index) => (
             <WizardSetupStep
+              key={step.label ?? index}
               label={step.label}
               isActive={index + 1 === currentStep}
             />

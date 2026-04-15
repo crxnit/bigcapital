@@ -31,8 +31,8 @@ function BillableEntriesList({ billableEntries }) {
 }
 
 export function BillableEntriesItems({ billableEntries }) {
-  return billableEntries.map((entries) => (
-    <BillableEntriesList billableEntries={entries} />
+  return billableEntries.map((entries, index) => (
+    <BillableEntriesList key={entries?.id ?? index} billableEntries={entries} />
   ));
 }
 

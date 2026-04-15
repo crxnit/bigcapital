@@ -79,6 +79,6 @@ const WarehousesGridItem = compose(
  */
 export default function WarehousesGridItems({ warehouses }) {
   return warehouses.map((warehouse) => (
-    <WarehousesGridItem warehouse={warehouse} />
+    <WarehousesGridItem key={warehouse.id} warehouse={warehouse} />
   ));
 }

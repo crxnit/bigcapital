@@ -49,7 +49,11 @@ export function TransactionsLockingList({ ...rest }) {
   } = useTransactionsLockingContext();
 
   return modules.map((module) => (
-    <TransactionsLockingItemModule module={module} {...rest} />
+    <TransactionsLockingItemModule
+      key={module?.module ?? module?.name ?? module?.id}
+      module={module}
+      {...rest}
+    />
   ));
 }
 

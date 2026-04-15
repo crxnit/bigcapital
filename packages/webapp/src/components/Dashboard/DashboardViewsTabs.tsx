@@ -60,7 +60,7 @@ export function DashboardViewsTabs({
   };
 
   return (
-    <div class="dashboard__views-tabs">
+    <div className="dashboard__views-tabs">
       <Tabs
         id="navbar"
         large={true}
@@ -72,7 +72,7 @@ export function DashboardViewsTabs({
         {allTab && <Tab id={0} title={defaultTabText} />}
 
         {tabs.map((tab) => (
-          <Tab id={tab.slug} title={tab.name} />
+          <Tab key={tab.slug} id={tab.slug} title={tab.name} />
         ))}
         <If condition={newViewTab}>
           <Tooltip

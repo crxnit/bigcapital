@@ -105,8 +105,8 @@ export function WarehousesGridItemBox({
 }
 
 export function WarehousesSkeleton() {
-  return [...Array(WAREHOUSES_SKELETON_N)].map((key, value) => (
-    <WarehouseGridItemSkeletonBox />
+  return [...Array(WAREHOUSES_SKELETON_N)].map((_, index) => (
+    <WarehouseGridItemSkeletonBox key={index} />
   ));
 }
 

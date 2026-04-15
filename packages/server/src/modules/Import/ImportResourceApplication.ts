@@ -21,7 +21,7 @@ export class ImportResourceApplication {
   ) {}
 
   /**
-   * Reads the imported file and stores the import file meta under unqiue id.
+   * Reads the imported file and stores the import file meta under unique id.
    * @param {string} resource - Resource name.
    * @param {string} fileName - File name.
    * @returns {Promise<ImportFileUploadPOJO>}

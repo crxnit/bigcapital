@@ -17,7 +17,7 @@ export function ChangeSubscriptionPlans() {
   return (
     <Group spacing={14} noWrap align="stretch">
       {subscriptionPlans.map((plan, index) => (
-        <SubscriptionPlanMapped plan={plan} />
+        <SubscriptionPlanMapped key={plan?.id ?? plan?.slug ?? index} plan={plan} />
       ))}
     </Group>
   );

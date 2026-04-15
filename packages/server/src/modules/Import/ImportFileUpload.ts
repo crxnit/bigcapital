@@ -48,7 +48,7 @@ export class ImportFileUploadService {
   }
 
   /**
-   * Reads the imported file and stores the import file meta under unqiue id.
+   * Reads the imported file and stores the import file meta under unique id.
    * @param {number} tenantId - Tenant id.
    * @param {string} resource - Resource name.
    * @param {string} filePath - File path.

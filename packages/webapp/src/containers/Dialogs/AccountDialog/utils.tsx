@@ -24,7 +24,7 @@ export const transformApiErrors = (errors) => {
   if (errors.find((e) => e.type === 'account_code_not_unique')) {
     fields.code = intl.get('account_code_is_not_unique');
   }
-  if (errors.find((e) => e.type === 'account_name_not_unqiue')) {
+  if (errors.find((e) => e.type === 'account_name_not_unique')) {
     fields.name = intl.get('account_name_is_already_used');
   }
   if (

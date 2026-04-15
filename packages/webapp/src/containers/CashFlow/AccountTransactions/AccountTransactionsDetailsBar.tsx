@@ -41,6 +41,7 @@ function AccountSwitchItem() {
 
   const items = cashflowAccounts.map((account) => (
     <AccountSwitchMenuItem
+      key={account.id}
       name={account.name}
       balance={account.formatted_amount}
       onClick={handleItemClick(account)}

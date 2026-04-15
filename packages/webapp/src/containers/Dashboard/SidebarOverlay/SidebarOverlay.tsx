@@ -103,8 +103,8 @@ export interface ISidebarOverlayMenu {
 function SidebarOverlayMenu({ items }: ISidebarOverlayMenu) {
   return (
     <div className="sidebar-overlay__menu">
-      {items.map((item) => (
-        <SidebarOverlayItem item={item} />
+      {items.map((item, index) => (
+        <SidebarOverlayItem key={item.id ?? item.href ?? item.label ?? index} item={item} />
       ))}
     </div>
   );

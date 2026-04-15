@@ -30,7 +30,7 @@ export default function EstimateDetailHeader() {
       <CommercialDocTopHeader>
         <DetailsMenu>
           <AmountEstimateDetail label={intl.get('amount')}>
-            <span class="big-number">{estimate.total_formatted}</span>
+            <span className="big-number">{estimate.total_formatted}</span>
           </AmountEstimateDetail>
 
           <EstimateStatusDetail>

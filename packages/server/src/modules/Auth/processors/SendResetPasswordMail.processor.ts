@@ -26,7 +26,7 @@ export class SendResetPasswordMailProcessor extends WorkerHost {
         job.data.token,
       );
     } catch (error) {
-      console.log('Error occured during send reset password mail', error);
+      console.log('Error occurred during send reset password mail', error);
     }
   }
 }

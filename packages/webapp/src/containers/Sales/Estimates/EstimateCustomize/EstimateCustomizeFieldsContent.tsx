@@ -1,4 +1,5 @@
 // @ts-nocheck
+import React from 'react';
 import { FInputGroup, FSwitch, Group, Stack } from '@/components';
 import { CLASSES } from '@/constants';
 import { Classes } from '@blueprintjs/core';
@@ -20,7 +21,7 @@ export function EstimateCustomizeContentFields() {
 
       <Stack>
         {fieldsGroups.map((group) => (
-          <>
+          <React.Fragment key={group.label}>
             <h4 className={CLASSES.TEXT_MUTED} style={{ fontWeight: 600 }}>
               {group.label}
             </h4>
@@ -38,7 +39,7 @@ export function EstimateCustomizeContentFields() {
                 </Group>
               ))}
             </Stack>
-          </>
+          </React.Fragment>
         ))}
       </Stack>
     </Stack>

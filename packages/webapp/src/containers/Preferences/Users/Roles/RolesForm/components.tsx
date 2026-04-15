@@ -71,10 +71,10 @@ function PermissionBodyColumn({ column }) {
 
   // Display empty cell if the current column key has no related permissions.
   if (!permission) {
-    return <td class={'permission-checkbox'}></td>;
+    return <td className={'permission-checkbox'}></td>;
   }
   return (
-    <td class={'permission-checkbox'}>
+    <td className={'permission-checkbox'}>
       <Field
         name={`permissions.${service.subject}/${permission.key}`}
         type="checkbox"
@@ -96,7 +96,9 @@ function PermissionBodyColumn({ column }) {
  * @returns {React.JSX}
  */
 function ModulePermissionsTableColumns({ columns }) {
-  return columns.map((column) => <PermissionBodyColumn column={column} />);
+  return columns.map((column) => (
+    <PermissionBodyColumn key={column.key ?? column.label} column={column} />
+  ));
 }
 
 /**
@@ -118,6 +120,7 @@ function ModuleExtraPermissionsPopover() {
       <ExtraPermissionsRoot>
         {extraPermissions.map((permission) => (
           <Field
+            key={permission.key}
             name={`permissions.${service.subject}/${permission.key}`}
             type="checkbox"
           >
@@ -173,12 +176,14 @@ function ModulePermissionsTableHead() {
       <tr>
         <th></th>
         <If condition={serviceFullAccess}>
-          <th class={'full'}>
+          <th className={'full'}>
             <T id={'permissions.column.full_access'} />
           </th>
         </If>
         {columns.map((column) => (
-          <th class={'permission'}>{column.label}</th>
+          <th key={column.key ?? column.label} className={'permission'}>
+            {column.label}
+          </th>
         ))}
         <th></th>
       </tr>
@@ -199,7 +204,7 @@ function ModulePermissionsServiceFullAccess() {
 
   return (
     <If condition={module.serviceFullAccess}>
-      <td class="full-access-permission">
+      <td className="full-access-permission">
         <Field name={`serviceFullAccess.${service.subject}`} type="checkbox">
           {({ form, field }) => (
             <PermissionCheckbox
@@ -229,7 +234,10 @@ function ModulePermissionsTableBody() {
   return (
     <tbody>
       {services.map((service) => (
-        <ModulePermissionsServiceProvider service={service}>
+        <ModulePermissionsServiceProvider
+          key={service.subject ?? service.label}
+          service={service}
+        >
           <tr>
             <td className="service-label">{service.label} </td>
 
@@ -264,9 +272,9 @@ function ModuleVerticalTableCells() {
   const { service } = useModulePermissionsServiceProvider();
 
   return (
-    <td class={'permissions'}>
+    <td className={'permissions'}>
       {service.permissions.map((permission) => (
-        <div>
+        <div key={permission.key}>
           <Field
             name={`permissions.${service.subject}/${permission.key}`}
             type="checkbox"
@@ -302,9 +310,12 @@ function ModulePermissionsVerticalServices() {
       <ModulePermissionsVerticalTable>
         <tbody>
           {module.services.map((service) => (
-            <ModulePermissionsServiceProvider service={service}>
+            <ModulePermissionsServiceProvider
+              key={service.subject ?? service.label}
+              service={service}
+            >
               <tr>
-                <td class={'service-label'}>{service.label} </td>
+                <td className={'service-label'}>{service.label} </td>
                 <ModuleVerticalTableCells />
               </tr>
             </ModulePermissionsServiceProvider>
@@ -367,7 +378,7 @@ export const RolesPermissionList = () => {
   return (
     <ModulesPermission>
       {permissions.map((module) => (
-        <ModulePermissions module={module} />
+        <ModulePermissions key={module.subject ?? module.label} module={module} />
       ))}
     </ModulesPermission>
   );

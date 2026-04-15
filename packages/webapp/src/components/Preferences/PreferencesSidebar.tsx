@@ -15,11 +15,12 @@ export default function PreferencesSidebar() {
   const history = useHistory();
   const location = useLocation();
 
-  const items = PreferencesMenu.map((item) =>
+  const items = PreferencesMenu.map((item, index) =>
     item.divider ? (
-      <MenuDivider title={item.title} />
+      <MenuDivider key={`divider-${index}`} title={item.title} />
     ) : (
       <MenuItem
+        key={item.href || `item-${index}`}
         active={item.href && item.href === location.pathname}
         text={item.text}
         label={item.label}
@@ -33,7 +34,7 @@ export default function PreferencesSidebar() {
 
   return (
     <PreferencesSidebarContainer>
-      <div class="preferences-sidebar__head">
+      <div className="preferences-sidebar__head">
         <h2>{<T id={'preferences'} />}</h2>
       </div>
 

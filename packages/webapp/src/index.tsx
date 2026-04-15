@@ -2,7 +2,7 @@
 import 'regenerator-runtime/runtime';
 import './wdyr';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -12,7 +12,9 @@ import App from '@/components/App';
 import * as serviceWorker from '@/serviceWorker';
 import { store, persistor } from '@/store/createStore';
 
-ReactDOM.render(
+const container = document.getElementById('root');
+const root = createRoot(container);
+root.render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <BrowserRouter>
@@ -20,7 +22,6 @@ ReactDOM.render(
       </BrowserRouter>
     </PersistGate>
   </Provider>,
-  document.getElementById('root'),
 );
 
 // If you want your app to work offline and load faster, you can change

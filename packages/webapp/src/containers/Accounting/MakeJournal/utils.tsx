@@ -181,8 +181,8 @@ export const transformErrors = (resErrors, { setErrors, errors }) => {
 
   if (toastMessages.length > 0) {
     AppToaster.show({
-      message: toastMessages.map((message) => {
-        return <div>{message}</div>;
+      message: toastMessages.map((message, index) => {
+        return <div key={index}>{message}</div>;
       }),
       intent: Intent.DANGER,
     });

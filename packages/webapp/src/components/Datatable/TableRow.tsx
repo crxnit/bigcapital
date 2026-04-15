@@ -33,7 +33,7 @@ function TableRowContextMenu({ children, row }) {
   }, [setVisible]);
 
   return (
-    <div class="tr-context" {...bindTrigger}>
+    <div className="tr-context" {...bindTrigger}>
       {children}
 
       <ContextMenu
@@ -60,18 +60,18 @@ export default function TableRow({ row, className, style }) {
     },
   } = useContext(TableContext);
 
+  const { key: rowKey, ...rowProps } = row.getRowProps({
+    className: classNames(
+      'tr',
+      { 'is-expanded': row.isExpanded && row.canExpand },
+      saveInvoke(rowClassNames, row),
+      className,
+    ),
+    style,
+  });
+
   return (
-    <div
-      {...row.getRowProps({
-        className: classNames(
-          'tr',
-          { 'is-expanded': row.isExpanded && row.canExpand },
-          saveInvoke(rowClassNames, row),
-          className,
-        ),
-        style,
-      })}
-    >
+    <div key={rowKey} {...rowProps}>
       <ConditionalWrapper
         condition={ContextMenuContent}
         wrapper={TableRowContextMenu}
