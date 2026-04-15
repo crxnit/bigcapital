@@ -28,7 +28,7 @@ export const getInventoryItemDetailsDefaultQuery =
     };
   };
 
-export const MAP_CONFIG = { childrenPath: 'children', pathFormat: 'array' };
+export const MAP_CONFIG = { childrenPath: 'children', pathFormat: 'array' as const };
 
 export enum INodeTypes {
   ITEM = 'item',
