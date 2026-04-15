@@ -22,7 +22,7 @@ export class CommandSaleInvoiceValidators {
   }
 
   /**
-   * Validate whether sale invoice number unqiue on the storage.
+   * Validate whether sale invoice number unique on the storage.
    * @param {string} invoiceNumber -
    * @param {number} notInvoiceId -
    */

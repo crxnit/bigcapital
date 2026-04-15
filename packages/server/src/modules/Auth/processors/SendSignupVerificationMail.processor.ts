@@ -25,7 +25,7 @@ export class SendSignupVerificationMailProcessor extends WorkerHost {
         job.data.token,
       );
     } catch (error) {
-      console.log('Error occured during send signup verification mail', error);
+      console.log('Error occurred during send signup verification mail', error);
     }
   }
 }
