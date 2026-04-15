@@ -88,7 +88,7 @@ export function BillUniversalSearchItem(
       text={
         <div>
           <div>{item.text}</div>
-          <span class="bp4-text-muted">
+          <span className="bp4-text-muted">
             {item.reference.bill_number}{' '}
             <Icon icon={'caret-right-16'} iconSize={16} />
             {item.reference.formatted_bill_date}
@@ -97,7 +97,7 @@ export function BillUniversalSearchItem(
       }
       label={
         <>
-          <div class="amount">{item.reference.formatted_amount}</div>
+          <div className="amount">{item.reference.formatted_amount}</div>
           <BillStatus bill={item.reference} />
         </>
       }

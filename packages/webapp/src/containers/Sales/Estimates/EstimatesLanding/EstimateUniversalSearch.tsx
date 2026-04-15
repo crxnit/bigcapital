@@ -76,7 +76,7 @@ export function EstimateUniversalSearchItem(
       text={
         <div>
           <div>{item.text}</div>
-          <span class="bp4-text-muted">
+          <span className="bp4-text-muted">
             {item.reference.estimate_number}{' '}
             <Icon icon={'caret-right-16'} iconSize={16} />
             {item.reference.formatted_estimate_date}
@@ -85,7 +85,7 @@ export function EstimateUniversalSearchItem(
       }
       label={
         <>
-          <div class="amount">{item.reference.formatted_amount}</div>
+          <div className="amount">{item.reference.formatted_amount}</div>
           <EstimateStatus estimate={item.reference} />
         </>
       }

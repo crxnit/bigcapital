@@ -14,7 +14,7 @@ export default function BigcapitalLoading({ className }) {
 
   return (
     <div className={classNames('bigcapital-loading', className)}>
-      <div class="center">
+      <div className="center">
         {isDarkmode ? (
           <Icon
             icon="bigcapital-alt"

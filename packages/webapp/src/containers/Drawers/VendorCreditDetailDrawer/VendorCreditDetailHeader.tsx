@@ -28,7 +28,7 @@ export default function VendorCreditDetailHeader() {
       <CommercialDocTopHeader>
         <DetailsMenu>
           <AmountItem label={intl.get('amount')}>
-            <span class="big-number">{vendorCredit.total_formatted}</span>
+            <span className="big-number">{vendorCredit.total_formatted}</span>
           </AmountItem>
           <StatusItem>
             <VendorCreditDetailsStatus vendorCredit={vendorCredit} />

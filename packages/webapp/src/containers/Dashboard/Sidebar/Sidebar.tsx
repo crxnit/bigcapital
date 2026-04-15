@@ -39,5 +39,5 @@ function SidebarFooterVersion() {
   if (!REACT_APP_VERSION) {
     return null;
   }
-  return <div class="sidebar__version">v{REACT_APP_VERSION}</div>;
+  return <div className="sidebar__version">v{REACT_APP_VERSION}</div>;
 }
