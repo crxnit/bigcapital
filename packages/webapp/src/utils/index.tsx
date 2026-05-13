@@ -85,6 +85,12 @@ export const momentFormatter = (format) => {
     formFormatDate: (date) => moment(date).format('YYYY-MM-DD'),
     formParseDate: (value) => {
       if (!value) return null;
+      // Some Formik flows (e.g. FinancialStatementDateRange's preset handler)
+      // setFieldValue with a Date instance rather than a string. Pass those
+      // through untouched — `String(date).slice(0, 10)` produces "Wed May 13 "
+      // which moment can't parse and would render the picker as Invalid Date
+      // / "out of bounds".
+      if (value instanceof Date) return value;
       const dateOnly = String(value).slice(0, 10);
       return moment(dateOnly, 'YYYY-MM-DD').toDate();
     },
