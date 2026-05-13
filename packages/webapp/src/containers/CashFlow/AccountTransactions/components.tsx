@@ -63,8 +63,8 @@ const allTransactionsStatusAccessor = (transaction) => {
         transaction.status === 'categorized'
           ? Intent.SUCCESS
           : transaction.status === 'matched'
-          ? Intent.SUCCESS
-          : Intent.NONE
+            ? Intent.SUCCESS
+            : Intent.NONE
       }
       minimal={transaction.status === 'manual'}
     >
@@ -83,6 +83,14 @@ export function useAccountTransactionsColumns() {
         id: 'date',
         Header: intl.get('date'),
         accessor: 'formatted_date',
+        // Display column shows the formatted string (e.g. "Apr 15 2026").
+        // Without a custom comparator react-table v7 falls back to a string
+        // sort on that label, ordering months alphabetically (Apr < Aug …)
+        // instead of chronologically. Compare the raw `date` from the row
+        // payload so the column sorts as a real date.
+        sortType: (rowA, rowB) =>
+          new Date(rowA.original.date).getTime() -
+          new Date(rowB.original.date).getTime(),
         width: 110,
         className: 'date',
         clickable: true,
