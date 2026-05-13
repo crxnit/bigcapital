@@ -54,33 +54,49 @@ export const getNumberCampatators = () => [
   { value: 'smaller_or_equal', label: intl.get('smaller_or_equals') },
 ];
 
-export const getConditionTypeCompatators = (
-  dataType,
-) => {
+export const getConditionTypeCompatators = (dataType) => {
   return [
     ...(dataType === 'enumeration'
       ? [...getOptionsCompatators()]
       : dataType === 'date'
-      ? [...getDateCompatators()]
-      : dataType === 'boolean'
-      ? [...getBooleanCompatators()]
-      : dataType === 'number'
-      ? [...getNumberCampatators()]
-      : [...getTextCompatators()]),
+        ? [...getDateCompatators()]
+        : dataType === 'boolean'
+          ? [...getBooleanCompatators()]
+          : dataType === 'number'
+            ? [...getNumberCampatators()]
+            : [...getTextCompatators()]),
   ];
 };
 
-export const getConditionDefaultCompatator = (
-  dataType,
-) => {
+export const getConditionDefaultCompatator = (dataType) => {
   const compatators = getConditionTypeCompatators(dataType);
   return compatators[0];
+};
+
+/**
+ * Server-side model metas declare filter-field labels as dotted i18n keys
+ * (e.g. `expense.field.payment_date`). Most of those keys aren't in
+ * `lang/en/index.json` yet, so the dropdown was rendering the raw key.
+ * `intl.get()` returns '' when a key is missing in react-intl-universal,
+ * so we humanize the last segment as a fallback:
+ *   expense.field.payment_date → Payment Date
+ *   account.field.code → Code
+ * When a translation eventually lands in the lang file it takes precedence.
+ */
+export const prettifyFieldKey = (key) => {
+  if (typeof key !== 'string' || !key) return key;
+  const last = key.split('.').pop();
+  return last
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 };
 
 export const transformFieldsToOptions = (fields) =>
   fields.map((field) => ({
     value: field.key,
-    label: field.name,
+    label: intl.get(field.name) || prettifyFieldKey(field.name),
   }));
 
 /**
@@ -89,14 +105,11 @@ export const transformFieldsToOptions = (fields) =>
  * @param {IFilterRole[]} conditions
  * @returns
  */
-export const filterConditionRoles = (
-  conditions,
-) => {
+export const filterConditionRoles = (conditions) => {
   const requiredProps = ['fieldKey', 'condition', 'comparator', 'value'];
 
   const filteredConditions = conditions.filter(
-    (condition) =>
-      !checkRequiredProperties(condition, requiredProps),
+    (condition) => !checkRequiredProperties(condition, requiredProps),
   );
   return uniqueMultiProps(filteredConditions, requiredProps);
 };
