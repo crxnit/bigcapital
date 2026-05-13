@@ -47,15 +47,18 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
     throw new Error('groupSeparator cannot be a number');
   }
 
+  // `formatValueOptions` is used during typing (processChange / handleOnBlur),
+  // where padding to fixedDecimalLength must NOT happen — it would turn
+  // `1` into `1.00` on the first keystroke and trap the cursor. The
+  // prop-render path uses `propFormatValueOptions` below, which does pad.
   const formatValueOptions = {
     decimalSeparator,
     groupSeparator,
     turnOffSeparators,
     prefix,
-    // Thread fixedDecimalLength through so prop-time formatting pads zeros
-    // (e.g. value={100} with fixedDecimalLength=2 renders as "100.00").
-    // Without this, only the blur handler padded — and a parseFloat'd prop
-    // on the next render dropped the trailing zeros again.
+  };
+  const propFormatValueOptions = {
+    ...formatValueOptions,
     fixedDecimalLength,
   };
 
@@ -183,7 +186,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
 
   const formattedPropsValue =
     userValue !== undefined
-      ? formatValue({ value: String(userValue), ...formatValueOptions })
+      ? formatValue({ value: String(userValue), ...propFormatValueOptions })
       : undefined;
 
   const handleInputRef = (ref: HTMLInputElement | null) => {
