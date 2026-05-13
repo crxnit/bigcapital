@@ -98,6 +98,8 @@ Newer alternative to the tarball flow: `git push origin develop` triggers `.gith
 
 Sandbox is wired first (auto-deploys on push to `develop`); UAT triggers via `gh workflow run deploy.yml -f environment=uat`. Until cutover is verified, the legacy tarball compose files (`docker-compose.prod.yml`, `docker/sandbox-bc/docker-compose.yml`) remain as rollback paths.
 
+**Solo-dev workflow — no PR ceremony.** This is a single-developer fork. Commit and push directly to `develop`; the push triggers sandbox auto-deploy and acts as the safety net before UAT. Don't open a PR or cut a feature branch unless explicitly asked for one (e.g., a risky multi-commit refactor where a checkpoint is wanted). UAT deploy still requires explicit sign-off / manual dispatch (`gh workflow run deploy.yml -f environment=uat`, workflow id `275652569`). If `gh workflow run` fails to resolve `deploy.yml` by name, dispatch via the raw API: `gh api -X POST repos/crxnit/bigcapital/actions/workflows/275652569/dispatches --input - <<<'{"ref":"develop","inputs":{"environment":"uat"}}'`.
+
 ### Always-relevant deployment notes
 
 - **Colima memory for image builds** — Webapp Vite build needs ~4 GB heap alone. Run Colima with at least 8 GB: `colima stop && colima start --cpu 2 --memory 8 --disk 20`. Without enough memory the build OOMs with `ResourceExhausted: cannot allocate memory`.
