@@ -63,6 +63,10 @@ export default function BillFormCategoriesTable({
         disableSortBy: true,
         width: 120,
         align: Align.Right,
+        // Display as accounting format (two fixed decimals + group separators)
+        // instead of bare integers. MoneyFieldCell now reads
+        // `column.moneyInputGroupProps` as a default for every row.
+        moneyInputGroupProps: { fixedDecimalLength: 2 },
       },
       {
         Header: '',

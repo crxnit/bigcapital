@@ -24,6 +24,7 @@ import { compose, safeSumBy } from '@/utils';
 import {
   defaultBill,
   filterNonZeroEntries,
+  filterNonZeroCategories,
   transformToEditForm,
   transformFormValuesToRequest,
   handleErrors,
@@ -66,8 +67,14 @@ function BillForm({
   ) => {
     const entries = filterNonZeroEntries(values.entries);
     const totalQuantity = safeSumBy(entries, 'quantity');
+    const categories = filterNonZeroCategories(values.categories || []);
+    const categoriesTotal = safeSumBy(categories, (c) => Number(c.amount));
 
-    if (totalQuantity === 0) {
+    // Only block when the bill is genuinely empty. With the new direct-
+    // account allocations panel, a bill may have zero items entries (and
+    // therefore zero quantity) yet still be valid because the categories
+    // table carries the full amount.
+    if (totalQuantity === 0 && categoriesTotal === 0) {
       AppToaster.show({
         message: intl.get('quantity_cannot_be_zero_or_empty'),
         intent: Intent.DANGER,
