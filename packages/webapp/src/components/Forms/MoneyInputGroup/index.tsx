@@ -78,9 +78,18 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       : '';
   const [stateValue, setStateValue] = useState(_defaultValue);
   const [cursor, setCursor] = useState(0);
+  // Track focus so the input shows the raw typing buffer while the user is
+  // editing and only switches to the prop-formatted (padded) value after
+  // blur. Without this, fixedDecimalLength padding kicks in on every
+  // keystroke — backspacing `100` → state `10` → formatted `10.00` so
+  // users perceive zeros being added.
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const onFocus = (): number => (stateValue ? stateValue.length : 0);
+  const onFocus = (): number => {
+    setIsFocused(true);
+    return stateValue ? stateValue.length : 0;
+  };
 
   const processChange = (
     value: string,
@@ -130,6 +139,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   const handleOnBlur = ({
     target: { value },
   }: React.ChangeEvent<HTMLInputElement>): void => {
+    setIsFocused(false);
     const valueOnly = cleanValue({ value, ...cleanValueOptions });
 
     if (valueOnly === '-' || !valueOnly) {
@@ -208,9 +218,12 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       placeholder={placeholder}
       disabled={disabled}
       value={
-        formattedPropsValue !== undefined && stateValue !== '-'
-          ? formattedPropsValue
-          : stateValue
+        // While focused, show what the user is typing (stateValue). After
+        // blur, show the formatted prop value (with optional decimal
+        // padding). The dash check preserves the in-progress negative sign.
+        isFocused || stateValue === '-' || formattedPropsValue === undefined
+          ? stateValue
+          : formattedPropsValue
       }
       inputRef={handleInputRef}
       {...props}
