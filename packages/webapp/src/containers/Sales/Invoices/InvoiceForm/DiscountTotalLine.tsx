@@ -29,10 +29,15 @@ export function DiscountTotalLine({
   currencyCode,
   discountAmount,
 }: DiscountTotalLineProps) {
+  // Render the unit selector as an obviously-interactive toggle. The prior
+  // minimal-no-icon version rendered as just the currency code (e.g. "USD")
+  // and was indistinguishable from a static label — users routinely typed a
+  // number meaning "percent" and got a fixed-amount discount instead. A small
+  // border + caret signals it's a dropdown without crowding the row.
   const discountButtonInput = ({ text }) => (
     <Button
       small
-      minimal
+      rightIcon="caret-down"
       className={css`
         &.bp4-small {
           font-size: 12px;
