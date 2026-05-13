@@ -91,6 +91,39 @@ export class BillGL {
   }
 
   /**
+   * Retrieves a single direct-account allocation (category) GL entry.
+   * One DR per row against the category's expenseAccountId, base-currency
+   * amount = category.amount × bill.exchangeRate. Mirrors Expense's
+   * `getExpenseGLCategoryEntry` pattern.
+   * @param {any} category - Bill expense category row
+   * @param {number} index - Row index within the categories array
+   */
+  private getBillCategoryEntry(
+    category: {
+      expenseAccountId: number;
+      amount: number;
+      description?: string;
+    },
+    index: number,
+  ): ILedgerEntry {
+    const commonJournalMeta = this.billCommonEntry;
+    const localAmount = (category.amount || 0) * this.bill.exchangeRate;
+
+    return {
+      ...commonJournalMeta,
+      debit: localAmount,
+      accountId: category.expenseAccountId,
+      accountNormal: AccountNormal.DEBIT,
+      note: category.description,
+      // Use indexGroup 15 (between item entries at 10 and landed costs at 20)
+      // so category lines render between the items and the landed-cost block
+      // in journal/GL views.
+      index: index + 1,
+      indexGroup: 15,
+    };
+  }
+
+  /**
    * Retrieves the bill landed cost entry.
    * @param {BillLandedCost} landedCost - Landed cost
    * @param {number} index - Index
@@ -214,10 +247,13 @@ export class BillGL {
   private getBillGLEntries = (): ILedgerEntry[] => {
     const payableEntry = this.billPayableEntry;
 
-    const itemsEntries = this.bill.entries.map((entry, index) =>
+    const itemsEntries = (this.bill.entries || []).map((entry, index) =>
       this.getBillItemEntry(entry, index),
     );
-    const landedCostEntries = this.bill.locatedLandedCosts.map(
+    const categoryEntries = (this.bill.categories || []).map(
+      (category, index) => this.getBillCategoryEntry(category, index),
+    );
+    const landedCostEntries = (this.bill.locatedLandedCosts || []).map(
       (landedCost, index) => this.getBillLandedCostEntry(landedCost, index),
     );
 
@@ -225,6 +261,7 @@ export class BillGL {
     return [
       payableEntry,
       ...itemsEntries,
+      ...categoryEntries,
       ...landedCostEntries,
       this.purchaseDiscountEntry,
       this.adjustmentEntry,

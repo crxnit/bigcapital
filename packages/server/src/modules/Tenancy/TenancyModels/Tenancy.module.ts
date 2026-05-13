@@ -30,6 +30,7 @@ import { BillPayment } from '@/modules/BillPayments/models/BillPayment';
 import { BillPaymentEntry } from '@/modules/BillPayments/models/BillPaymentEntry';
 import { BillLandedCostEntry } from '@/modules/BillLandedCosts/models/BillLandedCostEntry';
 import { BillLandedCost } from '@/modules/BillLandedCosts/models/BillLandedCost';
+import { BillExpenseCategory } from '@/modules/Bills/models/BillExpenseCategory.model';
 import { VendorCreditAppliedBill } from '@/modules/VendorCreditsApplyBills/models/VendorCreditAppliedBill';
 import { SaleInvoice } from '@/modules/SaleInvoices/models/SaleInvoice';
 import { PaymentIntegration } from '@/modules/StripePayment/models/PaymentIntegration.model';
@@ -77,6 +78,7 @@ const models = [
   BillPaymentEntry,
   BillLandedCost,
   BillLandedCostEntry,
+  BillExpenseCategory,
   VendorCreditAppliedBill,
   SaleInvoice,
   CreditNoteAppliedInvoice,
@@ -119,4 +121,4 @@ const modelProviders = models.map((model) => RegisterTenancyModel(model));
   imports: [...modelProviders],
   exports: [...modelProviders],
 })
-export class TenancyModelsModule { }
+export class TenancyModelsModule {}

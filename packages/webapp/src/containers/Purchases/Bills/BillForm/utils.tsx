@@ -34,6 +34,7 @@ import {
 } from '@/containers/Attachments/utils';
 
 export const MIN_LINES_NUMBER = 1;
+export const MIN_CATEGORY_LINES = 1;
 
 // Default bill entry.
 export const defaultBillEntry = {
@@ -48,6 +49,15 @@ export const defaultBillEntry = {
   tax_rate_id: '',
   tax_rate: '',
   tax_amount: '',
+};
+
+// Default bill direct-account category row. Renders as a single
+// Description + Account + Amount row in the Categories table.
+export const defaultBillCategory = {
+  index: 0,
+  expense_account_id: '',
+  description: '',
+  amount: '',
 };
 
 // Default bill.
@@ -65,6 +75,7 @@ export const defaultBill = {
   exchange_rate: 1,
   currency_code: '',
   entries: [...repeatValue(defaultBillEntry, MIN_LINES_NUMBER)],
+  categories: [...repeatValue(defaultBillCategory, MIN_CATEGORY_LINES)],
   attachments: [],
 
   // Adjustment
@@ -101,6 +112,18 @@ export const transformToEditForm = (bill) => {
     updateItemsEntriesTotal,
   )(initialEntries);
 
+  // Hydrate direct-account categories from the server response. Preserve the
+  // server `id` on each row so the next save's upsertGraph updates in place
+  // rather than deleting and recreating.
+  const rawCategories = bill.categories || [];
+  const initialCategories =
+    rawCategories.length > 0
+      ? rawCategories.map((category) => ({
+          ...(category.id != null ? { id: category.id } : {}),
+          ...transformToForm(category, defaultBillCategory),
+        }))
+      : [...repeatValue(defaultBillCategory, MIN_CATEGORY_LINES)];
+
   const attachments = transformAttachmentsToForm(bill);
 
   return {
@@ -109,6 +132,7 @@ export const transformToEditForm = (bill) => {
       ? TaxType.Inclusive
       : TaxType.Exclusive,
     entries,
+    categories: initialCategories,
     attachments,
   };
 };
@@ -132,15 +156,41 @@ export const filterNonZeroEntries = (entries) => {
 };
 
 /**
+ * Filters direct-account allocations (categories) to rows with both an
+ * account selected and a positive amount.
+ */
+export const filterNonZeroCategories = (categories = []) => {
+  return categories.filter(
+    (cat) => cat.expense_account_id && Number(cat.amount) > 0,
+  );
+};
+
+/**
+ * Shapes the form's categories array for the API. Preserves `id` so
+ * upsertGraph updates in place; index assigned by row order.
+ */
+export const transformCategoriesToSubmit = (categories = []) => {
+  return categories.map((cat, i) => ({
+    ...(cat.id != null ? { id: cat.id } : {}),
+    index: i + 1,
+    expense_account_id: cat.expense_account_id,
+    description: cat.description ?? '',
+    amount: Number(cat.amount) || 0,
+  }));
+};
+
+/**
  * Transformes form values to request body.
  */
 export const transformFormValuesToRequest = (values) => {
   const entries = filterNonZeroEntries(values.entries);
+  const categories = filterNonZeroCategories(values.categories || []);
   const attachments = transformAttachmentsToRequest(values);
 
   return {
     ...values,
     entries: transformEntriesToSubmit(entries),
+    categories: transformCategoriesToSubmit(categories),
     open: false,
     attachments,
   };

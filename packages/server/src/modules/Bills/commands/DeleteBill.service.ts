@@ -10,6 +10,7 @@ import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ItemEntry } from '@/modules/TransactionItemEntry/models/ItemEntry';
 import { Bill } from '../models/Bill';
+import { BillExpenseCategory } from '../models/BillExpenseCategory.model';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 
 @Injectable()
@@ -24,6 +25,11 @@ export class DeleteBill {
 
     @Inject(ItemEntry.name)
     private readonly itemEntryModel: TenantModelProxy<typeof ItemEntry>,
+
+    @Inject(BillExpenseCategory.name)
+    private readonly billExpenseCategoryModel: TenantModelProxy<
+      typeof BillExpenseCategory
+    >,
   ) {}
 
   /**
@@ -65,6 +71,13 @@ export class DeleteBill {
         .query(trx)
         .where('reference_type', 'Bill')
         .where('reference_id', billId)
+        .delete();
+
+      // Delete all associated direct-account allocations. Service-side
+      // cascade — the FK has no ON DELETE CASCADE per fork convention.
+      await this.billExpenseCategoryModel()
+        .query(trx)
+        .where('billId', billId)
         .delete();
 
       // Delete the bill transaction.

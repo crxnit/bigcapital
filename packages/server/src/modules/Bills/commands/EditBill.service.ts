@@ -29,7 +29,7 @@ export class EditBillService {
 
     @Inject(Bill.name) private billModel: TenantModelProxy<typeof Bill>,
     @Inject(Vendor.name) private vendorModel: TenantModelProxy<typeof Vendor>,
-  ) { }
+  ) {}
 
   /**
    * Edits details of the given bill id with associated entries.
@@ -70,18 +70,31 @@ export class EditBillService {
         billId,
       );
     }
+    // Bills may have no items entries (direct-account allocations only);
+    // pass an empty array so the shared validators don't crash on undefined.
+    const billEntries = billDTO.entries || [];
+
+    this.validators.validateAtLeastOneLine(billEntries, billDTO.categories);
+
     // Validate the entries ids existance.
     await this.itemsEntriesService.validateEntriesIdsExistance(
       billId,
       'Bill',
-      billDTO.entries,
+      billEntries,
     );
     // Validate the items ids existance on the storage.
-    await this.itemsEntriesService.validateItemsIdsExistance(billDTO.entries);
+    await this.itemsEntriesService.validateItemsIdsExistance(billEntries);
     // Accept the purchasable items only.
     await this.itemsEntriesService.validateNonPurchasableEntriesItems(
-      billDTO.entries,
+      billEntries,
     );
+
+    // Validate direct-account allocation rows reference expense-type accounts.
+    if (billDTO.categories && billDTO.categories.length > 0) {
+      await this.validators.validateBillCategoryAccountsType(
+        billDTO.categories,
+      );
+    }
 
     // Transforms the bill DTO to model object.
     const billObj = await this.transformerDTO.billDTOToModel(

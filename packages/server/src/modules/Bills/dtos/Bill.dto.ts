@@ -36,6 +36,49 @@ export class BillEntryDto extends ItemEntryDto {
   landedCost?: boolean;
 }
 
+/**
+ * A direct-account allocation row on a bill (Description + Account + Amount).
+ * Mirrors the Expense form's category row, trimmed: no percent/amount_type,
+ * no landed-cost flag in v1.
+ */
+export class BillExpenseCategoryDto {
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({
+    description:
+      'The id of an existing category row. Preserve on edit so upsertGraph updates in place instead of delete+reinsert.',
+    required: false,
+  })
+  id?: number;
+
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({ description: 'Display order index of the row', example: 1 })
+  index?: number;
+
+  @IsNotEmpty()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({
+    description: 'Expense account the allocation debits',
+    example: 5000,
+  })
+  expenseAccountId: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ description: 'Row description', required: false })
+  description?: string;
+
+  @IsNotEmpty()
+  @ToNumber()
+  @IsNumber()
+  @ApiProperty({ description: 'Allocation amount (pre-tax)', example: 100 })
+  amount: number;
+}
+
 class AttachmentDto {
   @ApiProperty({
     description: 'Storage key of the attachment file',
@@ -163,11 +206,24 @@ export class CommandBillDto {
     type: () => BillEntryDto,
     isArray: true,
   })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => BillEntryDto)
-  @ArrayMinSize(1)
-  entries: BillEntryDto[];
+  entries?: BillEntryDto[];
+
+  @ApiProperty({
+    description:
+      'Direct-account allocations (Description + Account + Amount). Either entries or categories must be non-empty; both may be set.',
+    type: () => BillExpenseCategoryDto,
+    isArray: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => BillExpenseCategoryDto)
+  categories?: BillExpenseCategoryDto[];
 
   @ApiProperty({
     description: 'File attachments associated with the bill',
@@ -213,5 +269,5 @@ export class CommandBillDto {
   adjustment?: number;
 }
 
-export class CreateBillDto extends CommandBillDto { }
-export class EditBillDto extends CommandBillDto { }
+export class CreateBillDto extends CommandBillDto {}
+export class EditBillDto extends CommandBillDto {}

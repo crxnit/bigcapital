@@ -47,8 +47,13 @@ function BillFormProvider({ billId, ...props }) {
   const isBranchFeatureCan = featureCan(Features.Branches);
   const isProjectsFeatureCan = featureCan(Features.Projects);
 
-  // Handle fetch accounts.
-  const { data: accounts, isLoading: isAccountsLoading } = useAccounts();
+  // Handle fetch accounts. Request a large page so the full chart is in
+  // memory — BillFormCategoriesTable's AccountsListFieldCell filters
+  // client-side over this `accounts` array (same FSelect-pagination gotcha
+  // that hit the expense form).
+  const { data: accounts, isLoading: isAccountsLoading } = useAccounts({
+    page_size: 10000,
+  });
 
   // Handle fetch vendors data table
   const {

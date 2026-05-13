@@ -14,6 +14,7 @@ import BillFormHeader from './BillFormHeader';
 import BillFloatingActions from './BillFloatingActions';
 import BillFormFooter from './BillFormFooter';
 import BillItemsEntriesEditor from './BillItemsEntriesEditor';
+import BillFormCategoriesEditor from './BillFormCategoriesEditor';
 import BillFormTopBar from './BillFormTopBar';
 
 import { AppToaster, Box } from '@/components';
@@ -135,6 +136,12 @@ function BillForm({
             <Box p="18px 32px 0">
               <BillFormEntriesActions />
               <BillItemsEntriesEditor />
+              <Box mt={4}>
+                <Box mb={2} fontSize={13} fontWeight={500}>
+                  Direct expense allocations
+                </Box>
+                <BillFormCategoriesEditor />
+              </Box>
             </Box>
             <BillFormFooter />
           </PageForm.Body>

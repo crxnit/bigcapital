@@ -45,11 +45,35 @@ export class BillDTOTransformer {
    * @returns {number}
    */
   private getBillLandedCostAmount(billDTO: CreateBillDto): number {
-    const costEntries = billDTO.entries.filter((entry) => entry.landedCost);
+    const costEntries = (billDTO.entries || []).filter(
+      (entry) => entry.landedCost,
+    );
 
     // return this.getBillEntriesTotal(costEntries);
 
     return 0;
+  }
+
+  /**
+   * Normalize direct-account allocation rows. Preserves `id` on edit so
+   * upsertGraph updates in place rather than delete+reinsert.
+   */
+  private normalizeBillCategories(categories: any[] = []): Array<{
+    id?: number;
+    index: number;
+    expenseAccountId: number;
+    description?: string;
+    amount: number;
+  }> {
+    return (categories || [])
+      .filter((c) => c && c.expenseAccountId != null && Number(c.amount) > 0)
+      .map((c, i) => ({
+        ...(c.id != null ? { id: c.id } : {}),
+        index: c.index ?? i + 1,
+        expenseAccountId: c.expenseAccountId,
+        description: c.description ?? '',
+        amount: Number(c.amount) || 0,
+      }));
   }
 
   /**
@@ -63,9 +87,16 @@ export class BillDTOTransformer {
     vendor: Vendor,
     oldBill?: Bill,
   ): Promise<Bill> {
-    const amount = sumBy(billDTO.entries, (e) =>
+    const itemsTotal = sumBy(billDTO.entries || [], (e) =>
       this.itemEntryModel().calcAmount(e),
     );
+    const categories = this.normalizeBillCategories(billDTO.categories);
+    const categoriesTotal = sumBy(categories, (c) => Number(c.amount) || 0);
+    // `amount` stores the bill's gross balance at creation (decremented by
+    // payments later). Direct-account category allocations add to this
+    // alongside the items entries total.
+    const amount = itemsTotal + categoriesTotal;
+
     // Retrieve the landed cost amount from landed cost entries.
     const landedCostAmount = this.getBillLandedCostAmount(billDTO);
 
@@ -75,19 +106,23 @@ export class BillDTOTransformer {
     // Bill number from DTO or frprom auto-increment.
     const billNumber = billDTO.billNumber || oldBill?.billNumber;
 
-    const initialEntries = billDTO.entries.map((entry) => ({
+    const billEntries = billDTO.entries || [];
+    const initialEntries = billEntries.map((entry) => ({
       referenceType: 'Bill',
       isInclusiveTax: billDTO.isInclusiveTax,
       ...omit(entry, ['amount']),
     }));
-    const asyncEntries = await composeAsync(
-      // Associate tax rate from tax id to entries.
-      this.taxDTOTransformer.assocTaxRateFromTaxIdToEntries,
-      // Associate tax rate id from tax code to entries.
-      this.taxDTOTransformer.assocTaxRateIdFromCodeToEntries,
-      // Sets the default cost account to the bill entries.
-      this.setBillEntriesDefaultAccounts(),
-    )(initialEntries);
+    const asyncEntries =
+      initialEntries.length > 0
+        ? await composeAsync(
+            // Associate tax rate from tax id to entries.
+            this.taxDTOTransformer.assocTaxRateFromTaxIdToEntries,
+            // Associate tax rate id from tax code to entries.
+            this.taxDTOTransformer.assocTaxRateIdFromCodeToEntries,
+            // Sets the default cost account to the bill entries.
+            this.setBillEntriesDefaultAccounts(),
+          )(initialEntries)
+        : [];
 
     const entries = R.compose(
       // Remove tax code from entries.
@@ -97,16 +132,17 @@ export class BillDTOTransformer {
     )(asyncEntries);
 
     const initialDTO = {
-      ...formatDateFields(omit(billDTO, ['open', 'entries', 'attachments']), [
-        'billDate',
-        'dueDate',
-      ]),
+      ...formatDateFields(
+        omit(billDTO, ['open', 'entries', 'attachments', 'categories']),
+        ['billDate', 'dueDate'],
+      ),
       amount,
       landedCostAmount,
       currencyCode: vendor.currencyCode,
       exchangeRate: billDTO.exchangeRate || 1,
       billNumber,
       entries,
+      categories,
       // Avoid rewrite the open date in edit mode when already opened.
       ...(billDTO.open &&
         !oldBill?.openedAt && {

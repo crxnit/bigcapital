@@ -9,7 +9,9 @@ import { VendorCreditAppliedBill } from '@/modules/VendorCreditsApplyBills/model
 import { transformToMap } from '@/utils/transform-to-key';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { ItemEntryDto } from '@/modules/TransactionItemEntry/dto/ItemEntry.dto';
-import { BillEntryDto } from '../dtos/Bill.dto';
+import { BillEntryDto, BillExpenseCategoryDto } from '../dtos/Bill.dto';
+import { Account } from '@/modules/Accounts/models/Account.model';
+import { ACCOUNT_ROOT_TYPE } from '@/constants/accounts';
 
 @Injectable()
 export class BillsValidators {
@@ -28,7 +30,48 @@ export class BillsValidators {
     >,
 
     @Inject(Item.name) private itemModel: TenantModelProxy<typeof Item>,
+
+    @Inject(Account.name)
+    private accountModel: TenantModelProxy<typeof Account>,
   ) {}
+
+  /**
+   * A bill must carry at least one items entry OR one direct-account
+   * allocation. Empty bills are rejected.
+   */
+  public validateAtLeastOneLine(
+    entries: BillEntryDto[] | undefined,
+    categories: BillExpenseCategoryDto[] | undefined,
+  ) {
+    const hasEntries = (entries || []).length > 0;
+    const hasCategories = (categories || []).length > 0;
+    if (!hasEntries && !hasCategories) {
+      throw new ServiceError(ERRORS.BILL_NO_LINES);
+    }
+  }
+
+  /**
+   * Each direct-account allocation must point at an EXPENSE-root-type
+   * account. Mirrors `validateExpensesAccountsType` on the Expense side.
+   */
+  public async validateBillCategoryAccountsType(
+    categories: BillExpenseCategoryDto[],
+  ) {
+    const accountIds = Array.from(
+      new Set(categories.map((c) => c.expenseAccountId).filter(Boolean)),
+    );
+    if (accountIds.length === 0) return;
+    const accounts = await this.accountModel()
+      .query()
+      .whereIn('id', accountIds);
+    const byId = new Map(accounts.map((a) => [a.id, a]));
+    for (const id of accountIds) {
+      const acc = byId.get(id);
+      if (!acc || !acc.isRootType(ACCOUNT_ROOT_TYPE.EXPENSE)) {
+        throw new ServiceError(ERRORS.BILL_CATEGORY_ACCOUNT_INVALID_TYPE);
+      }
+    }
+  }
 
   /**
    * Validates the bill existance.

@@ -29,6 +29,7 @@ export class BillTransformer extends Transformer {
       'totalLocalFormatted',
       'taxes',
       'entries',
+      'categories',
       'attachments',
       'branch',
     ];
@@ -239,6 +240,14 @@ export class BillTransformer extends Transformer {
     return this.item(bill.entries, new ItemEntryTransformer(), {
       currencyCode: bill.currencyCode,
     });
+  };
+
+  /**
+   * Retrieves the bill direct-account allocations (categories). Pass-through
+   * — no per-field formatting beyond what the model already exposes.
+   */
+  protected categories = (bill: Bill) => {
+    return bill.categories || [];
   };
 
   /**

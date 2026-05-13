@@ -59,17 +59,33 @@ export class CreateBill {
     // Validate the bill number uniqiness on the storage.
     await this.validators.validateBillNumberExists(billDTO.billNumber);
 
+    // Bills may now ship without any items entries (direct-account
+    // allocations only). Each entry-level validator is array-based; pass an
+    // empty array so we don't crash on undefined and still no-op when the
+    // user only used the categories panel.
+    const billEntries = billDTO.entries || [];
+
+    // Validate at least one line (entries OR categories) is non-empty.
+    this.validators.validateAtLeastOneLine(billEntries, billDTO.categories);
+
     // Validate items IDs existance.
-    await this.itemsEntriesService.validateItemsIdsExistance(billDTO.entries);
+    await this.itemsEntriesService.validateItemsIdsExistance(billEntries);
 
     // Validate non-purchasable items.
     await this.itemsEntriesService.validateNonPurchasableEntriesItems(
-      billDTO.entries,
+      billEntries,
     );
     // Validates the cost entries should be with inventory items.
     await this.validators.validateCostEntriesShouldBeInventoryItems(
-      billDTO.entries,
+      billEntries,
     );
+
+    // Validate direct-account allocation rows reference expense-type accounts.
+    if (billDTO.categories && billDTO.categories.length > 0) {
+      await this.validators.validateBillCategoryAccountsType(
+        billDTO.categories,
+      );
+    }
     // Transform the bill DTO to model object.
     const billObj = await this.transformerDTO.billDTOToModel(billDTO, vendor);
 

@@ -53,6 +53,7 @@ export class Bill extends TenantBaseModel {
   public updatedAt: Date | null;
 
   public entries?: ItemEntry[];
+  public categories?: any[];
   public attachments!: Document[];
   public locatedLandedCosts?: BillLandedCost[];
   /**
@@ -92,6 +93,7 @@ export class Bill extends TenantBaseModel {
       'subtotalLocal',
       'subtotalExludingTax',
       'taxAmountWithheldLocal',
+      'categoriesTotal',
       'total',
       'totalLocal',
     ];
@@ -175,14 +177,29 @@ export class Bill extends TenantBaseModel {
   }
 
   /**
+   * Sum of direct-account allocations (bill_expense_categories rows). Adds
+   * into the bill total alongside the item-entries subtotal. Categories are
+   * pre-tax and don't carry their own tax rate in v1.
+   * @returns {number}
+   */
+  get categoriesTotal(): number {
+    const cats = this.categories || [];
+    let sum = 0;
+    for (const c of cats) sum += Number(c?.amount) || 0;
+    return sum;
+  }
+
+  /**
    * Invoice total. (Tax included)
    * @returns {number}
    */
   get total(): number {
     const adjustmentAmount = defaultTo(this.adjustment, 0);
+    const categoriesTotal = this.categoriesTotal;
 
     return R.compose(
       R.add(adjustmentAmount),
+      R.add(categoriesTotal),
       R.subtract(R.__, this.discountAmount),
       R.when(R.always(this.isInclusiveTax), R.add(this.taxAmountWithheld)),
     )(this.subtotal);
@@ -522,6 +539,19 @@ export class Bill extends TenantBaseModel {
         },
       },
 
+      categories: {
+        relation: Model.HasManyRelation,
+        // Relative require — `@/` alias does NOT resolve in relationMappings.
+        modelClass: require('./BillExpenseCategory.model').BillExpenseCategory,
+        join: {
+          from: 'bills.id',
+          to: 'bill_expense_categories.billId',
+        },
+        filter(builder) {
+          builder.orderBy('index', 'ASC');
+        },
+      },
+
       locatedLandedCosts: {
         relation: Model.HasManyRelation,
         modelClass: BillLandedCost,
@@ -636,7 +666,7 @@ export class Bill extends TenantBaseModel {
 
     return this.query(trx)
       .where('id', billId)
-    [changeMethod]('payment_amount', Math.abs(amount));
+      [changeMethod]('payment_amount', Math.abs(amount));
   }
 
   /**

@@ -51,6 +51,27 @@ const BillFormSchema = Yup.object().shape({
       description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
     }),
   ),
+  // Direct-account allocations. An account must be picked when an amount is
+  // entered (and vice versa); fully-blank rows are dropped at submit by
+  // `filterNonZeroCategories` so they don't need to validate.
+  categories: Yup.array().of(
+    Yup.object().shape({
+      expense_account_id: Yup.number()
+        .nullable()
+        .when('amount', {
+          is: (amount) => !isBlank(amount) && Number(amount) > 0,
+          then: Yup.number().required(),
+        }),
+      amount: Yup.number()
+        .nullable()
+        .min(0)
+        .when('expense_account_id', {
+          is: (id) => !isBlank(id),
+          then: Yup.number().required().min(0.01),
+        }),
+      description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
+    }),
+  ),
 });
 
 const CreateBillFormSchema = BillFormSchema;

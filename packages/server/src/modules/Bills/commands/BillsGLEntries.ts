@@ -30,12 +30,13 @@ export class BillGLEntries {
     billId: number,
     trx?: Knex.Transaction,
   ) => {
-    // Retrieves bill with associated entries and landed costs.
+    // Retrieves bill with associated entries, categories, and landed costs.
     const bill = await this.billModel()
       .query(trx)
       .findById(billId)
       .withGraphFetched('entries.item')
       .withGraphFetched('entries.allocatedCostEntries')
+      .withGraphFetched('categories')
       .withGraphFetched('locatedLandedCosts.allocateEntries');
 
     // Finds or create a A/P account based on the given currency.
