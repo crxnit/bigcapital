@@ -202,6 +202,21 @@ Verification recipe (covers the brief's scenarios): unpaid invoice in Feb → ca
 
 Unit tests in `CashBasisProjection.spec.ts` cover the proration math, multi-line fan-out, FX, inventory-vs-cost account selection, refunds, and period bucketing.
 
+### Cash-basis P&L 500'd on first sandbox test — Nest `Scope.TRANSIENT` + property injection + class-field arrow methods
+
+Manual verification of the cash-basis fix on sandbox surfaced `this.cashBasisProjection.aggregateTotals is not a function` on every `/api/reports/profit-loss-sheet?basis=cash` request. Unit tests passed (14/14) because the helpers tested were the pure functions in `CashBasisProjection.helpers.ts` — the service-level injection wiring was never exercised by tests. The accrual path was unaffected because it never touched `this.cashBasisProjection`.
+
+Root cause: `CashBasisProjection` was declared `@Injectable({ scope: Scope.TRANSIENT })` and consumed via `@Inject(CashBasisProjection) public cashBasisProjection: CashBasisProjection` (property injection) inside the also-TRANSIENT `ProfitLossSheetRepository`. Nest's per-context proxy wrapper for TRANSIENT-scoped injection exposed a value to `this.cashBasisProjection` that didn't have the instance methods set by the constructor — the class-field arrow assignments (`public aggregateTotals = async (...) => {…}`) run in the constructor and end up on the new instance, but the proxy the consumer received was a different object. Compiled `__decorate` metadata showed both injections (the working `tenancyContext` and the broken `cashBasisProjection`) emitted identically — the difference was that `TenancyContext` is default-scoped (singleton) and `CashBasisProjection` was TRANSIENT.
+
+Fix (`9fa81cd14`):
+
+1. **Drop `Scope.TRANSIENT`** from `CashBasisProjection`. The service is stateless — its only dependencies are the four payment-side tenant model proxies, which are themselves CLS-aware factories registered with `type: 'function'` in `Tenancy.module.ts`. A singleton consumer calling `this.paymentReceivedModel()` still resolves to the tenant-bound model for the current request.
+2. **Switch to constructor injection.** `constructor(@Inject(...) private readonly fooModel: …, …) {}`. This is the canonical Nest pattern and avoids the property-injection-into-TRANSIENT proxy interaction entirely.
+
+The Nest trap is now captured as an active gotcha in `.claude/CLAUDE.md`. Default rule for new services: constructor injection + default singleton scope unless TRANSIENT is genuinely needed; if it is, define methods as regular `public foo(...)` rather than class-field arrows.
+
+**Test gap noted**: the unit tests covered the projection _math_ but not the Nest wiring. Future projection-shaped services should land with at least one wiring test (e.g. a minimal `Test.createTestingModule(...)` that instantiates the consuming repository and exercises the method via Nest's DI), or accept that the first manual integration test is the wiring test.
+
 ### Sibling reports with the same `basis`-flag gap (deferred to follow-up PRs)
 
 All four other financial reports accept a `basis` query parameter and silently ignore it — `grep -rn "basis" packages/server/src/modules/FinancialStatements --include="*.ts"` lists them; none of the four sibling repository files contain a `basis` reference. Fixes scoped out of the P&L PR:
