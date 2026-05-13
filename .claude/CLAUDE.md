@@ -19,7 +19,7 @@ Husky hooks are tracked as 100755 and active on every commit.
 - **`.husky/pre-commit`** runs `pnpm exec lint-staged`, which formats staged JS/TS/JSON/MD/YAML/SCSS/CSS files via Prettier. Each package's local `.prettierrc` is auto-resolved by Prettier based on file path, so `packages/server` and `packages/webapp` keep their own formatting preferences.
 - **`.husky/commit-msg`** runs `pnpm exec commitlint --edit "$1"`, enforcing Conventional Commits. The `scope-enum` in `commitlint.config.js` is restricted:
   - **Workspace packages** (auto-derived equivalents): `server`, `webapp`, `utils`, `email-components`, `pdf-templates`, `sdk-ts`.
-  - **Domain scopes**: `accounts`, `banking`, `ci`, `contacts`, `currency`, `docker`, `docs`, `expenses`, `financial-statements`, `husky`, `import`, `infra`, `inventory`, `ledger`, `models`, `organization`, `payment-received`, `reports`, `resource`, `sandbox`, `square`, `square-pull`, `ui`.
+  - **Domain scopes**: `accounts`, `banking`, `ci`, `contacts`, `currency`, `docker`, `docs`, `expenses`, `financial-statements`, `husky`, `import`, `infra`, `inventory`, `ledger`, `models`, `organization`, `payment-received`, `payments`, `reports`, `resource`, `sandbox`, `square`, `square-pull`, `ui`. Use `payments` for changes that touch both PaymentMade and PaymentReceived (or are about payments generally); `payment-received` remains for receivable-only work.
   - To add a new scope, edit `commitlint.config.js` — don't bypass with `--no-verify`.
 
 **Never use `pnpx` / `pnpm dlx` in committed hooks or scripts.** Both fetch the _latest_ version from the registry, ignoring whatever is pinned in `node_modules`. Use `pnpm exec <bin>` so the local devDependency version runs.
