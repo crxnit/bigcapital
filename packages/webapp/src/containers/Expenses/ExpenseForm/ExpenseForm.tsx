@@ -57,23 +57,20 @@ function ExpenseForm({
   const history = useHistory();
 
   // Form initial values.
-  const initialValues = useMemo(
-    () => {
-      if (!isEmpty(expense)) {
-        return { ...transformToEditForm(expense, defaultExpense) };
-      }
-      const preferredId = defaultTo(preferredPaymentAccount, '');
-      const payment_splits = [
-        { ...defaultExpense.payment_splits[0], payment_account_id: preferredId },
-      ];
-      return {
-        ...defaultExpense,
-        currency_code: base_currency,
-        payment_splits,
-      };
-    },
-    [expense, base_currency, preferredPaymentAccount],
-  );
+  const initialValues = useMemo(() => {
+    if (!isEmpty(expense)) {
+      return { ...transformToEditForm(expense, defaultExpense) };
+    }
+    const preferredId = defaultTo(preferredPaymentAccount, '');
+    const payment_splits = [
+      { ...defaultExpense.payment_splits[0], payment_account_id: preferredId },
+    ];
+    return {
+      ...defaultExpense,
+      currency_code: base_currency,
+      payment_splits,
+    };
+  }, [expense, base_currency, preferredPaymentAccount]);
 
   //  Handle form submit.
   const handleSubmit = (values, { setSubmitting, setErrors, resetForm }) => {
@@ -120,6 +117,7 @@ function ExpenseForm({
           isNewMode
             ? 'the_expense_has_been_created_successfully'
             : 'the_expense_has_been_edited_successfully',
+          { number: values.reference_no || '' },
         ),
         intent: Intent.SUCCESS,
       });
