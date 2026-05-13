@@ -191,15 +191,20 @@ export class Bill extends TenantBaseModel {
 
   /**
    * Invoice total. (Tax included)
+   *
+   * Note: `this.subtotal` already includes `categoriesTotal` because the DTO
+   * transformer sums `itemsTotal + categoriesTotal` into the `amount`/
+   * `balance` column, and `subtotal === amount === balance`. Don't add
+   * categoriesTotal a second time here — that would double-count direct
+   * allocations and make the displayed total disagree with the GL.
+   *
    * @returns {number}
    */
   get total(): number {
     const adjustmentAmount = defaultTo(this.adjustment, 0);
-    const categoriesTotal = this.categoriesTotal;
 
     return R.compose(
       R.add(adjustmentAmount),
-      R.add(categoriesTotal),
       R.subtract(R.__, this.discountAmount),
       R.when(R.always(this.isInclusiveTax), R.add(this.taxAmountWithheld)),
     )(this.subtotal);

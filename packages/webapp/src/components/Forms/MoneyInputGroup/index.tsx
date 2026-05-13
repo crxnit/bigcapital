@@ -52,6 +52,11 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
     groupSeparator,
     turnOffSeparators,
     prefix,
+    // Thread fixedDecimalLength through so prop-time formatting pads zeros
+    // (e.g. value={100} with fixedDecimalLength=2 renders as "100.00").
+    // Without this, only the blur handler padded — and a parseFloat'd prop
+    // on the next render dropped the trailing zeros again.
+    fixedDecimalLength,
   };
 
   const cleanValueOptions: Partial<CleanValueOptions> = {

@@ -357,16 +357,25 @@ export const useBillAggregatedTaxRates = () => {
 };
 
 /**
- * Retrieves the bill subtotal.
+ * Retrieves the bill subtotal. Includes BOTH the items-entries pre-tax
+ * total AND the new direct-account allocations (`categories`) so the
+ * footer updates as the user fills either table. Mirrors the server: the
+ * stored `balance` column = items pre-tax + categories total.
  * @returns {number}
  */
 export const useBillSubtotal = () => {
   const {
-    values: { entries },
+    values: { entries, categories },
   } = useFormikContext();
 
-  // Calculate the total due amount of bill entries.
-  return React.useMemo(() => getEntriesTotal(entries), [entries]);
+  return React.useMemo(() => {
+    const itemsTotal = getEntriesTotal(entries) || 0;
+    const categoriesTotal = (categories || []).reduce(
+      (sum, c) => sum + (Number(c.amount) || 0),
+      0,
+    );
+    return itemsTotal + categoriesTotal;
+  }, [entries, categories]);
 };
 
 /**
