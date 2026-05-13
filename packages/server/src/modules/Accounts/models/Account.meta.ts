@@ -1,4 +1,25 @@
-import { ACCOUNT_TYPES } from "../Accounts.constants";
+import { ACCOUNT_TYPES } from '../Accounts.constants';
+
+/**
+ * Natural numeric-aware sort for the alphanumeric `code` column.
+ *
+ * Default `ORDER BY CODE` is lexicographic, so user-visible numeric codes
+ * like 2, 10, 100, 30001 sort as `10, 100, 2, 30001`. Sorting by string
+ * length first puts shorter codes ahead of longer ones (2 before 10),
+ * then lexicographic within length keeps codes of equal length in stable
+ * order. Works for pure-numeric codes AND mixed/prefixed codes like
+ * `1000-A`. `??` is a Knex identifier binding so the
+ * `snakeCaseMappers({ upperCase: true })` rewrite maps `code` → `CODE`
+ * on MariaDB-on-Linux; `direction` is sanitized to `'asc'`/`'desc'`
+ * before being interpolated.
+ */
+function CodeFieldSortQuery(query, role) {
+  const direction =
+    String(role.order).toLowerCase() === 'desc' ? 'desc' : 'asc';
+  query
+    .orderByRaw(`LENGTH(??) ${direction}`, ['code'])
+    .orderBy('code', direction);
+}
 
 export const AccountMeta = {
   defaultFilterField: 'name',
@@ -33,6 +54,7 @@ export const AccountMeta = {
       name: 'account.field.code',
       column: 'code',
       fieldType: 'text',
+      sortCustomQuery: CodeFieldSortQuery,
     },
     root_type: {
       name: 'account.field.root_type',
