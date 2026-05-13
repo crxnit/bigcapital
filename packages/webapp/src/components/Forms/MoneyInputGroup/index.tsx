@@ -23,6 +23,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   maxLength: userMaxLength,
   value: userValue,
   onChange,
+  onBlur: userOnBlur,
   onBlurValue,
   fixedDecimalLength,
   placeholder,
@@ -136,15 +137,17 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
     processChange(value, selectionStart);
   };
 
-  const handleOnBlur = ({
-    target: { value },
-  }: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleOnBlur = (event: React.FocusEvent<HTMLInputElement>): void => {
     setIsFocused(false);
+    const value = event.target.value;
     const valueOnly = cleanValue({ value, ...cleanValueOptions });
 
     if (valueOnly === '-' || !valueOnly) {
       onBlurValue && onBlurValue(undefined, name);
       setStateValue('');
+      // Still run the consumer's onBlur (e.g. MoneyFieldCell's
+      // handleFieldBlur which propagates the value to the form state).
+      userOnBlur && userOnBlur(event);
       return;
     }
 
@@ -168,6 +171,14 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       ...formatValueOptions,
     });
     setStateValue(formattedValue);
+
+    // Run the consumer's onBlur last (after internal state + onChange) so
+    // when it reads form state via setFieldValue the latest value is in
+    // place. Previously this handler was bypassed entirely when the
+    // consumer passed an `onBlur` prop (JSX-spread ordering), so my
+    // `setIsFocused(false)` never fired and the input stayed in "typing"
+    // mode after blur.
+    userOnBlur && userOnBlur(event);
   };
 
   const handleOnKeyDown = ({ key }: React.KeyboardEvent<HTMLInputElement>) => {
