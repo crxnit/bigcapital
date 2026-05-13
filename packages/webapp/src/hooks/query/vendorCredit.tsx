@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useQueryClient, useMutation } from 'react-query';
 import { useRequestQuery } from '../useQueryRequest';
-import { transformPagination } from '@/utils';
+import { transformPagination, transformToCamelCase } from '@/utils';
 import useApiRequest from '../useRequest';
 import t from './types';
 
@@ -57,16 +57,13 @@ export function useCreateVendorCredit(props) {
   const queryClient = useQueryClient();
   const apiRequest = useApiRequest();
 
-  return useMutation(
-    (values) => apiRequest.post('vendor-credits', values),
-    {
-      onSuccess: (res, values) => {
-        // Common invalidate queries.
-        commonInvalidateQueries(queryClient);
-      },
-      ...props,
+  return useMutation((values) => apiRequest.post('vendor-credits', values), {
+    onSuccess: (res, values) => {
+      // Common invalidate queries.
+      commonInvalidateQueries(queryClient);
     },
-  );
+    ...props,
+  });
 }
 
 /**
@@ -98,19 +95,16 @@ export function useDeleteVendorCredit(props) {
   const queryClient = useQueryClient();
   const apiRequest = useApiRequest();
 
-  return useMutation(
-    (id) => apiRequest.delete(`vendor-credits/${id}`),
-    {
-      onSuccess: (res, id) => {
-        // Common invalidate queries.
-        commonInvalidateQueries(queryClient);
+  return useMutation((id) => apiRequest.delete(`vendor-credits/${id}`), {
+    onSuccess: (res, id) => {
+      // Common invalidate queries.
+      commonInvalidateQueries(queryClient);
 
-        // Invalidate vendor credit query.
-        queryClient.invalidateQueries([t.VENDOR_CREDIT_NOTE, id]);
-      },
-      ...props,
+      // Invalidate vendor credit query.
+      queryClient.invalidateQueries([t.VENDOR_CREDIT_NOTE, id]);
     },
-  );
+    ...props,
+  });
 }
 
 /**
@@ -224,8 +218,7 @@ export function useCreateRefundVendorCredit(props) {
   const apiRequest = useApiRequest();
 
   return useMutation(
-    ([id, values]) =>
-      apiRequest.post(`vendor-credits/${id}/refund`, values),
+    ([id, values]) => apiRequest.post(`vendor-credits/${id}/refund`, values),
     {
       onSuccess: (res, [id, values]) => {
         // Common invalidate queries.
@@ -289,19 +282,16 @@ export function useOpenVendorCredit(props) {
   const queryClient = useQueryClient();
   const apiRequest = useApiRequest();
 
-  return useMutation(
-    (id) => apiRequest.post(`vendor-credits/${id}/open`),
-    {
-      onSuccess: (res, id) => {
-        // Common invalidate queries.
-        commonInvalidateQueries(queryClient);
+  return useMutation((id) => apiRequest.post(`vendor-credits/${id}/open`), {
+    onSuccess: (res, id) => {
+      // Common invalidate queries.
+      commonInvalidateQueries(queryClient);
 
-        // Invalidate specific.
-        queryClient.invalidateQueries([t.VENDOR_CREDIT, id]);
-      },
-      ...props,
+      // Invalidate specific.
+      queryClient.invalidateQueries([t.VENDOR_CREDIT, id]);
     },
-  );
+    ...props,
+  });
 }
 
 /**

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useQueryClient, useMutation } from 'react-query';
 import { useRequestQuery } from '../useQueryRequest';
-import { transformPagination } from '@/utils';
+import { transformPagination, transformToCamelCase } from '@/utils';
 import useApiRequest from '../useRequest';
 import t from './types';
 
@@ -68,19 +68,16 @@ export function useEditBill(props) {
   const queryClient = useQueryClient();
   const apiRequest = useApiRequest();
 
-  return useMutation(
-    ([id, values]) => apiRequest.put(`bills/${id}`, values),
-    {
-      onSuccess: (res, [id, values]) => {
-        // Common invalidate queries.
-        commonInvalidateQueries(queryClient);
+  return useMutation(([id, values]) => apiRequest.put(`bills/${id}`, values), {
+    onSuccess: (res, [id, values]) => {
+      // Common invalidate queries.
+      commonInvalidateQueries(queryClient);
 
-        // Invalidate bill query.
-        queryClient.invalidateQueries([t.BILL, id]);
-      },
-      ...props,
+      // Invalidate bill query.
+      queryClient.invalidateQueries([t.BILL, id]);
     },
-  );
+    ...props,
+  });
 }
 
 /**
