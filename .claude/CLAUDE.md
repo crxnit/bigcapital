@@ -150,6 +150,7 @@ See `docs/FUTURE-ENHANCEMENTS.md` for planned work including multi-organization 
 - **Backup env-file naming inconsistency**: sandbox uses `/etc/restic/bigcapital-sandbox.env`, staging uses `/etc/restic/bigcapital-staging-bc.env` (the `-bc` suffix leaks from the dir basename via the fallback case in `vps-backup.sh`). Cosmetic; rename to `bigcapital-uat.env` with a corresponding case branch in the script if it ever annoys.
 - **Production deploy (Phase 9) is deferred** until sandbox + staging have ridden a few real commits cleanly. Same recipe, new env dir, new SSH key, new GH Environment.
 - **GHCR PAT** on the VPS (in `/root/.docker/config.json`) expires in ~1 year (set 2027-05-12). Add a calendar reminder to rotate.
+- **Bump JavaScript Actions to Node 24** before 2026-09-16. GitHub deprecated Node 20 on Actions runners on 2025-09-19; starting 2026-06-02 they force Node 24 by default, and on 2026-09-16 Node 20 is removed entirely. UAT deploy log flags: `actions/checkout@v4`, `docker/build-push-action@v6`, `docker/login-action@v3`, `docker/setup-buildx-action@v3` currently run on Node 20. To opt in early without bumping action versions: set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` on the runner (or as a workflow env var). Cleaner path: bump each action to its newest major and verify CI still passes. Run the same sweep across every `.github/workflows/*.yml` so we don't regress when re-merging from upstream.
 
 ### Deferred ideas
 
