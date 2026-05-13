@@ -112,12 +112,19 @@ function ExpenseForm({
     form.publish = currentSubmitPayload.publish;
     // Handle request success.
     const handleSuccess = (response) => {
+      // Expenses don't have a `name` field; reference_no is user-entered and
+      // therefore often empty. Fall back to the system ID (from the create
+      // response in new mode, or the loaded expense in edit mode) so the
+      // toast always reads "The expense #<something> ..." instead of a
+      // stray `#`.
+      const number =
+        values.reference_no || response?.data?.id || expense?.id || '';
       AppToaster.show({
         message: intl.get(
           isNewMode
             ? 'the_expense_has_been_created_successfully'
             : 'the_expense_has_been_edited_successfully',
-          { number: values.reference_no || '' },
+          { number },
         ),
         intent: Intent.SUCCESS,
       });
