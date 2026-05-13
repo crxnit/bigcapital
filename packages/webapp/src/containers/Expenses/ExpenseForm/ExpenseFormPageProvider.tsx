@@ -53,8 +53,15 @@ function ExpenseFormPageProvider({ query, expenseId, ...props }) {
     isSuccess: isBranchesSuccess,
   } = useBranches(query, { enabled: isBranchFeatureCan });
 
-  // Fetch accounts list.
-  const { data: accounts, isLoading: isAccountsLoading } = useAccounts();
+  // Fetch accounts list. Request a large page so the full chart is in memory:
+  // the payment-splits dropdown (AccountsListFieldCell) and the categories
+  // expense-account picker both filter client-side over this `accounts` array,
+  // so any account paged off would render as an empty dropdown row when an
+  // existing expense is re-opened — matches the "payment account deleted"
+  // symptom users reported when their account sat beyond page 1.
+  const { data: accounts, isLoading: isAccountsLoading } = useAccounts({
+    page_size: 10000,
+  });
 
   // Fetch the  projects list.
   const {
