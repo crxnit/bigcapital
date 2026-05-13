@@ -61,6 +61,19 @@ grep -q "${WEBAPP_IMAGE_BASE}:sha-${WEBAPP_SHA}" "$COMPOSE_FILE" \
 
 log "Image tags pinned in $COMPOSE_FILE"
 
+# --- Free up disk before pull ----------------------------------------------
+#
+# Each deploy pulls fresh server + webapp images (~600 MB each before extract,
+# ~1.5 GB on disk after extraction into overlayfs). With 5+ deploys in a day
+# the VPS' /var/lib/containerd hit "no space left on device" mid-extract,
+# which both failed the deploy and left orphan partial layers. Prune
+# unused (untagged + unreferenced) images older than 72h before pulling
+# — keeps the last ~3 days of tags for rollback while reliably reclaiming
+# headroom.
+
+log "Pruning unused images older than 72h to free disk…"
+docker image prune -af --filter "until=72h" 2>&1 | tail -5 || true
+
 # --- Pull images ------------------------------------------------------------
 
 log "Pulling images from GHCR…"
