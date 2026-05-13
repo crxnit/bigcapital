@@ -68,7 +68,10 @@ function BillForm({
     const entries = filterNonZeroEntries(values.entries);
     const totalQuantity = safeSumBy(entries, 'quantity');
     const categories = filterNonZeroCategories(values.categories || []);
-    const categoriesTotal = safeSumBy(categories, (c) => Number(c.amount));
+    // `safeSumBy` uses `_.get(row, path)` and only accepts a STRING path
+    // (a function returns undefined → toSafeNumber → 0). Pass the column
+    // name directly — `Number()` coercion is already inside safeSumBy.
+    const categoriesTotal = safeSumBy(categories, 'amount');
 
     // Only block when the bill is genuinely empty. With the new direct-
     // account allocations panel, a bill may have zero items entries (and
