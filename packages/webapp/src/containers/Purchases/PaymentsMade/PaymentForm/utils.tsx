@@ -25,9 +25,17 @@ export const ERRORS = {
   PAYMENT_NUMBER_NOT_UNIQUE: 'PAYMENT.NUMBER.NOT.UNIQUE',
 };
 
-// Default payment made entry values.
+// Default payment made entry values. `bill_date` and `bill_no` are display-only
+// columns in the entries table; they're stripped from the submit body by
+// `transformFormToRequest` (which picks only `bill_id` + `payment_amount`),
+// but they must be listed here so `transformToForm` doesn't drop them when
+// projecting the API response into Formik state — otherwise the table shows
+// `moment(undefined).format(...) === today` for every bill date and `-`
+// for every bill number.
 export const defaultPaymentMadeEntry = {
   bill_id: '',
+  bill_no: '',
+  bill_date: '',
   payment_amount: '',
   currency_code: '',
   id: null,
@@ -115,7 +123,8 @@ export const transformFormToRequest = (form) => {
 
 export const useSetPrimaryBranchToForm = () => {
   const { setFieldValue } = useFormikContext();
-  const { branches, isBranchesSuccess, isNewMode } = usePaymentMadeFormContext();
+  const { branches, isBranchesSuccess, isNewMode } =
+    usePaymentMadeFormContext();
 
   React.useEffect(() => {
     if (isBranchesSuccess && isNewMode) {
