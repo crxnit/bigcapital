@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import { PaymentReceived } from '@/modules/PaymentReceived/models/PaymentReceived';
 import { BillPayment } from '@/modules/BillPayments/models/BillPayment';
@@ -34,19 +34,33 @@ import {
  * can union the result with the existing direct-cash-movement aggregates and
  * sum on top.
  */
-@Injectable({ scope: Scope.TRANSIENT })
+// Default scope (singleton) is fine — this service is stateless. The injected
+// model proxies are CLS-aware factories (`type: 'function'` providers in
+// Tenancy.module), so each call to `this.paymentReceivedModel()` resolves to
+// the tenant-bound model for the current request even when the service itself
+// is shared. TRANSIENT scope here previously combined with class-field arrow
+// methods to produce `aggregateTotals is not a function` at runtime — the
+// per-context Nest proxy wrapper for TRANSIENT injection did not expose the
+// instance methods that the constructor sets. Constructor injection plus
+// default scope sidesteps that entirely.
+@Injectable()
 export class CashBasisProjection {
-  @Inject(PaymentReceived.name)
-  paymentReceivedModel!: TenantModelProxy<typeof PaymentReceived>;
-
-  @Inject(BillPayment.name)
-  billPaymentModel!: TenantModelProxy<typeof BillPayment>;
-
-  @Inject(RefundCreditNote.name)
-  refundCreditNoteModel!: TenantModelProxy<typeof RefundCreditNote>;
-
-  @Inject(RefundVendorCredit.name)
-  refundVendorCreditModel!: TenantModelProxy<typeof RefundVendorCredit>;
+  constructor(
+    @Inject(PaymentReceived.name)
+    private readonly paymentReceivedModel: TenantModelProxy<
+      typeof PaymentReceived
+    >,
+    @Inject(BillPayment.name)
+    private readonly billPaymentModel: TenantModelProxy<typeof BillPayment>,
+    @Inject(RefundCreditNote.name)
+    private readonly refundCreditNoteModel: TenantModelProxy<
+      typeof RefundCreditNote
+    >,
+    @Inject(RefundVendorCredit.name)
+    private readonly refundVendorCreditModel: TenantModelProxy<
+      typeof RefundVendorCredit
+    >,
+  ) {}
 
   public aggregateTotals = async (
     fromDate: moment.MomentInput,
