@@ -167,3 +167,48 @@ const StatusTag = styled(Tag)`
   min-width: 65px;
   text-align: center;
 `;
+
+/**
+ * Retrieve bill readonly direct-account allocations (categories) table
+ * columns. Mirrors the form's "Direct expense allocations" section but
+ * read-only.
+ */
+export const useBillReadonlyCategoriesTableColumns = () => {
+  const {
+    bill: { categories },
+  } = useBillDrawerContext();
+
+  return React.useMemo(
+    () => [
+      {
+        Header: intl.get('account') || 'Account',
+        accessor: 'expense_account.name',
+        Cell: TextOverviewTooltipCell,
+        width: 200,
+        disableSortBy: true,
+        textOverview: true,
+        className: 'account',
+      },
+      {
+        Header: intl.get('description') || 'Description',
+        accessor: 'description',
+        Cell: TextOverviewTooltipCell,
+        className: 'description',
+        disableSortBy: true,
+        textOverview: true,
+      },
+      {
+        Header: intl.get('amount') || 'Amount',
+        accessor: 'amount_formatted',
+        width: getColumnWidth(categories, 'amount', {
+          minWidth: 60,
+          magicSpacing: 5,
+        }),
+        disableSortBy: true,
+        className: 'amount',
+        align: 'right',
+      },
+    ],
+    [categories],
+  );
+};

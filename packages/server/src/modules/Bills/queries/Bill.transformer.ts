@@ -1,3 +1,4 @@
+import { isUndefined } from 'lodash';
 import { Transformer } from '@/modules/Transformer/Transformer';
 import { Bill } from '../models/Bill';
 import { ItemEntryTransformer } from '@/modules/TransactionItemEntry/ItemEntry.transformer';
@@ -243,11 +244,21 @@ export class BillTransformer extends Transformer {
   };
 
   /**
-   * Retrieves the bill direct-account allocations (categories). Pass-through
-   * — no per-field formatting beyond what the model already exposes.
+   * Retrieves the bill direct-account allocations (categories). Adds the
+   * `amountFormatted` virtual attribute so the drawer's read-only table
+   * can render a localized amount string without re-formatting client-side.
    */
   protected categories = (bill: Bill) => {
-    return bill.categories || [];
+    return (bill.categories || []).map((category: any) => {
+      const raw = !isUndefined(category.toJSON) ? category.toJSON() : category;
+      return {
+        ...raw,
+        amountFormatted: this.formatNumber(category.amount, {
+          currencyCode: bill.currencyCode,
+          money: false,
+        }),
+      };
+    });
   };
 
   /**

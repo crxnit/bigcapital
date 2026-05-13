@@ -3,6 +3,7 @@ import React from 'react';
 
 import BillDetailHeader from './BillDetailHeader';
 import BillDetailTable from './BillDetailTable';
+import BillDetailCategoriesTable from './BillDetailCategoriesTable';
 import BillDetailFooter from './BillDetailFooter';
 import { CommercialDocBox } from '@/components';
 import { BillDetailTableFooter } from './BillDetailTableFooter';
@@ -15,6 +16,7 @@ export default function BillDetailTab() {
     <CommercialDocBox>
       <BillDetailHeader />
       <BillDetailTable />
+      <BillDetailCategoriesTable />
       <BillDetailTableFooter />
       <BillDetailFooter />
     </CommercialDocBox>
