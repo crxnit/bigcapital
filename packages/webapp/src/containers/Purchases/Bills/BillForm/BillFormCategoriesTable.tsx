@@ -64,9 +64,11 @@ export default function BillFormCategoriesTable({
         width: 120,
         align: Align.Right,
         // Display as accounting format (two fixed decimals + group separators)
-        // instead of bare integers. MoneyFieldCell now reads
-        // `column.moneyInputGroupProps` as a default for every row.
-        moneyInputGroupProps: { fixedDecimalLength: 2 },
+        // instead of bare integers. Use `displayDecimalLength`, NOT
+        // `fixedDecimalLength` — the latter triggers cents-mode in the
+        // underlying CurrencyInput library (typing "100" → blur → "1.00").
+        // `displayDecimalLength` pads at render only.
+        moneyInputGroupProps: { displayDecimalLength: 2 },
       },
       {
         Header: '',

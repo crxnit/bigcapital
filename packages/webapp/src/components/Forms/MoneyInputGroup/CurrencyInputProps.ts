@@ -55,9 +55,21 @@ export type CurrencyInputProps = Overwrite<
     disabled?: boolean;
 
     /**
-     * Value will always have the specified length of decimals
+     * Value will always have the specified length of decimals.
+     * NOTE: this triggers "cents-mode" — typing "100" on blur becomes
+     * "1.00" (interpreted as 100 cents). Use `displayDecimalLength`
+     * below if you want zero-padding for accounting-style display
+     * without the cents-mode reinterpretation.
      */
     fixedDecimalLength?: number;
+
+    /**
+     * Pad / trim decimals to this length AT RENDER TIME only. Doesn't
+     * change how typing or blur are handled (no cents-mode). Use this
+     * when you just want `100` to display as `100.00` after blur but
+     * still want the user to enter dollar values directly.
+     */
+    displayDecimalLength?: number;
 
     /**
      * Handle change in value

@@ -26,6 +26,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   onBlur: userOnBlur,
   onBlurValue,
   fixedDecimalLength,
+  displayDecimalLength,
   placeholder,
   precision,
   prefix,
@@ -48,19 +49,23 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
     throw new Error('groupSeparator cannot be a number');
   }
 
-  // `formatValueOptions` is used during typing (processChange / handleOnBlur),
-  // where padding to fixedDecimalLength must NOT happen — it would turn
-  // `1` into `1.00` on the first keystroke and trap the cursor. The
-  // prop-render path uses `propFormatValueOptions` below, which does pad.
+  // `formatValueOptions` is used during typing (processChange / handleOnBlur).
+  // Padding must NOT happen here — it would turn `1` into `1.00` on the
+  // first keystroke and trap the cursor.
   const formatValueOptions = {
     decimalSeparator,
     groupSeparator,
     turnOffSeparators,
     prefix,
   };
+  // `propFormatValueOptions` is used at render-time to format the prop value
+  // shown when the field is NOT focused. `displayDecimalLength` is the
+  // display-only pad (e.g. `100` → `100.00`); it deliberately doesn't go
+  // through `fixedDecimalLength`, which the library's blur handler would
+  // reinterpret as cents-mode (`100` → `1.00`).
   const propFormatValueOptions = {
     ...formatValueOptions,
-    fixedDecimalLength,
+    fixedDecimalLength: displayDecimalLength ?? fixedDecimalLength,
   };
 
   const cleanValueOptions: Partial<CleanValueOptions> = {
