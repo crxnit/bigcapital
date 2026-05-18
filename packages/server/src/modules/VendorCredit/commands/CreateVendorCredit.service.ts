@@ -55,8 +55,10 @@ export class CreateVendorCreditService {
       .findById(vendorCreditCreateDTO.vendorId)
       .throwIfNotFound();
 
-    // Validate items should be sellable items.
-    await this.itemsEntriesService.validateNonSellableEntriesItems(
+    // Validate items should be purchasable — a vendor credit is a purchase-side
+    // document (vendor refunding/crediting items you bought), so the entries
+    // must reference purchasable items, not sellable ones.
+    await this.itemsEntriesService.validateNonPurchasableEntriesItems(
       vendorCreditCreateDTO.entries,
     );
     // Transforms the credit DTO to storage layer.

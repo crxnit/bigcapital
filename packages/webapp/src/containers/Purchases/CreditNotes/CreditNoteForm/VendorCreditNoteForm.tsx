@@ -70,16 +70,16 @@ function VendorCreditNoteForm({
     () => ({
       ...(!isEmpty(vendorCredit)
         ? {
-          ...transformToEditForm(vendorCredit),
-        }
+            ...transformToEditForm(vendorCredit),
+          }
         : {
-          ...defaultVendorsCreditNote,
-          ...(vendorcreditAutoIncrement && {
-            vendor_credit_number: vendorCreditNumber,
+            ...defaultVendorsCreditNote,
+            ...(vendorcreditAutoIncrement && {
+              vendor_credit_number: vendorCreditNumber,
+            }),
+            currency_code: base_currency,
+            ...newVendorCredit,
           }),
-          currency_code: base_currency,
-          ...newVendorCredit,
-        }),
     }),
     [vendorCredit, base_currency],
   );
@@ -123,12 +123,27 @@ function VendorCreditNoteForm({
         resetForm();
       }
     };
-    // Handle the request error.
-    const onError = ({
-      response: {
-        data: { errors },
-      },
-    }) => {
+    // Handle the request error. Surface whatever the server reported so the
+    // user isn't left wondering why nothing happened — class-validator
+    // returns `message: string | string[]`, the legacy handler returns
+    // `errors: [{ message }]`.
+    const onError = (error) => {
+      const data = error?.response?.data;
+      const messages: string[] = [];
+      if (Array.isArray(data?.message)) messages.push(...data.message);
+      else if (typeof data?.message === 'string') messages.push(data.message);
+      if (Array.isArray(data?.errors)) {
+        data.errors.forEach((e) => {
+          if (e?.message) messages.push(e.message);
+        });
+      }
+      AppToaster.show({
+        message:
+          messages.join(' • ') ||
+          intl.get('something_wentwrong') ||
+          'Save failed.',
+        intent: Intent.DANGER,
+      });
       setSubmitting(false);
     };
     if (isNewMode) {

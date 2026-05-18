@@ -63,8 +63,10 @@ export class EditVendorCreditService {
     await this.itemsEntriesService.validateItemsIdsExistance(
       vendorCreditDTO.entries,
     );
-    // Validate non-sellable entries items.
-    await this.itemsEntriesService.validateNonSellableEntriesItems(
+    // Validate items should be purchasable — a vendor credit is a purchase-side
+    // document (vendor refunding/crediting items you bought), so the entries
+    // must reference purchasable items, not sellable ones.
+    await this.itemsEntriesService.validateNonPurchasableEntriesItems(
       vendorCreditDTO.entries,
     );
     // Validate the items entries existance.
