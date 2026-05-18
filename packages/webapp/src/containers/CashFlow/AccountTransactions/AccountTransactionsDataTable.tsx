@@ -129,6 +129,7 @@ function AccountTransactionsDataTable({
       noInitialFetch={true}
       columns={columns}
       data={cashflowTransactions}
+      initialSortBy={[{ id: 'date', desc: false }]}
       sticky={true}
       loading={isCashFlowTransactionsLoading}
       headerLoading={isCashFlowTransactionsLoading}

@@ -65,6 +65,10 @@ export function DataTable(props) {
     // Hidden columns.
     initialHiddenColumns = [],
 
+    // Initial sort state: array of { id, desc } passed to react-table's
+    // useSortBy initialState. Default [] = no initial sort.
+    initialSortBy = [],
+
     updateDebounceTime = 200,
     selectionColumnWidth = 42,
 
@@ -119,6 +123,7 @@ export function DataTable(props) {
           columnWidths: initialColumnsWidths || {},
         },
         hiddenColumns: initialHiddenColumns,
+        sortBy: initialSortBy,
       },
       manualPagination,
       pageCount: controlledPageCount,
