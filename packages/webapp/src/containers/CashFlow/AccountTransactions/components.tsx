@@ -87,10 +87,19 @@ export function useAccountTransactionsColumns() {
         // Without a custom comparator react-table v7 falls back to a string
         // sort on that label, ordering months alphabetically (Apr < Aug …)
         // instead of chronologically. Compare the raw `date` from the row
-        // payload so the column sorts as a real date.
-        sortType: (rowA, rowB) =>
-          new Date(rowA.original.date).getTime() -
-          new Date(rowB.original.date).getTime(),
+        // payload so the column sorts as a real date, and tie-break on
+        // `created_at` so within-date ordering stays chronological in both
+        // directions — otherwise stable sort preserves the server's reverse
+        // creation order inside same-date groups and the running balance
+        // appears to move the wrong way at those tie-points.
+        sortType: (rowA, rowB) => {
+          const dateA = new Date(rowA.original.date).getTime();
+          const dateB = new Date(rowB.original.date).getTime();
+          if (dateA !== dateB) return dateA - dateB;
+          const tA = new Date(rowA.original.created_at).getTime() || 0;
+          const tB = new Date(rowB.original.created_at).getTime() || 0;
+          return tA - tB;
+        },
         width: 110,
         className: 'date',
         clickable: true,

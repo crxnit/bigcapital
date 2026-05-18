@@ -100,6 +100,9 @@ export class GetBankAccountTransactions extends FinancialSheet {
       this.getUncategorizedTransId(transaction);
 
     return {
+      id: transaction.id,
+      createdAt: transaction.createdAt,
+
       date: transaction.date,
       formattedDate: this.getDateFormatted(transaction.date),
 
