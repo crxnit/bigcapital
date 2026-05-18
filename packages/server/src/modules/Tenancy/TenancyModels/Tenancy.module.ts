@@ -42,6 +42,7 @@ import { ManualJournal } from '@/modules/ManualJournals/models/ManualJournal';
 import { ManualJournalEntry } from '@/modules/ManualJournals/models/ManualJournalEntry';
 import { RefundCreditNote } from '@/modules/CreditNoteRefunds/models/RefundCreditNote';
 import { VendorCredit } from '@/modules/VendorCredit/models/VendorCredit';
+import { VendorCreditExpenseCategory } from '@/modules/VendorCredit/models/VendorCreditExpenseCategory.model';
 import { RefundVendorCredit } from '@/modules/VendorCreditsRefund/models/RefundVendorCredit';
 import { PaymentReceived } from '@/modules/PaymentReceived/models/PaymentReceived';
 import { Model } from 'objection';
@@ -88,6 +89,7 @@ const models = [
   ManualJournal,
   ManualJournalEntry,
   VendorCredit,
+  VendorCreditExpenseCategory,
   VendorCreditAppliedBill,
   RefundVendorCredit,
   PaymentIntegration,

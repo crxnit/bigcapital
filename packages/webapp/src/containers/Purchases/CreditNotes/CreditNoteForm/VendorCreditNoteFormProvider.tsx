@@ -7,6 +7,7 @@ import { transformToEditForm } from './utils';
 import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
 import {
+  useAccounts,
   useCreateVendorCredit,
   useEditVendorCredit,
   useVendorCredit,
@@ -37,6 +38,13 @@ function VendorCreditNoteFormProvider({ vendorCreditId, ...props }) {
     data: { items },
     isLoading: isItemsLoading,
   } = useItems({
+    page_size: 10000,
+  });
+
+  // Handle fetch accounts. Request a large page so the full chart is in
+  // memory — the categories table's AccountsListFieldCell filters
+  // client-side over this `accounts` array (FSelect pagination gotcha).
+  const { data: accounts, isLoading: isAccountsLoading } = useAccounts({
     page_size: 10000,
   });
 
@@ -96,6 +104,7 @@ function VendorCreditNoteFormProvider({ vendorCreditId, ...props }) {
   // Provider payload.
   const provider = {
     items,
+    accounts,
     vendors,
     vendorCredit,
     warehouses,
@@ -119,6 +128,7 @@ function VendorCreditNoteFormProvider({ vendorCreditId, ...props }) {
       loading={
         isVendorCreditLoading ||
         isItemsLoading ||
+        isAccountsLoading ||
         isVendorsLoading ||
         isVendorCreditLoading ||
         isBillLoading

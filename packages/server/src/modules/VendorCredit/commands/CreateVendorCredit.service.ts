@@ -11,6 +11,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ItemsEntriesService } from '@/modules/Items/ItemsEntries.service';
 import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
 import { VendorCreditDTOTransformService } from './VendorCreditDTOTransform.service';
+import { VendorCreditsValidators } from './VendorCreditsValidators.service';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { CreateVendorCreditDto } from '../dtos/VendorCredit.dto';
 
@@ -28,6 +29,7 @@ export class CreateVendorCreditService {
     private readonly itemsEntriesService: ItemsEntriesService,
     private readonly eventPublisher: EventEmitter2,
     private readonly vendorCreditDTOTransformService: VendorCreditDTOTransformService,
+    private readonly validators: VendorCreditsValidators,
 
     @Inject(VendorCredit.name)
     private readonly vendorCreditModel: TenantModelProxy<typeof VendorCredit>,
@@ -55,12 +57,33 @@ export class CreateVendorCreditService {
       .findById(vendorCreditCreateDTO.vendorId)
       .throwIfNotFound();
 
+    // Credits may now ship without any items entries (direct-account
+    // allocations only). The entries-array validators are array-based; pass
+    // an empty array so they no-op cleanly when only categories were entered.
+    const dtoEntries = vendorCreditCreateDTO.entries || [];
+
+    // Validate at least one line (entries OR categories) is non-empty.
+    this.validators.validateAtLeastOneLine(
+      dtoEntries,
+      vendorCreditCreateDTO.categories,
+    );
+
     // Validate items should be purchasable — a vendor credit is a purchase-side
     // document (vendor refunding/crediting items you bought), so the entries
     // must reference purchasable items, not sellable ones.
     await this.itemsEntriesService.validateNonPurchasableEntriesItems(
-      vendorCreditCreateDTO.entries,
+      dtoEntries,
     );
+
+    // Validate direct-account allocation rows reference expense-type accounts.
+    if (
+      vendorCreditCreateDTO.categories &&
+      vendorCreditCreateDTO.categories.length > 0
+    ) {
+      await this.validators.validateCategoryAccountsType(
+        vendorCreditCreateDTO.categories,
+      );
+    }
     // Transforms the credit DTO to storage layer.
     const vendorCreditModel =
       await this.vendorCreditDTOTransformService.transformCreateEditDTOToModel(

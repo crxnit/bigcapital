@@ -1,7 +1,7 @@
-import { AttachmentTransformer } from "@/modules/Attachments/Attachment.transformer";
-import { ItemEntryTransformer } from "@/modules/TransactionItemEntry/ItemEntry.transformer";
-import { Transformer } from "@/modules/Transformer/Transformer";
-import { VendorCredit } from "../models/VendorCredit";
+import { AttachmentTransformer } from '@/modules/Attachments/Attachment.transformer';
+import { ItemEntryTransformer } from '@/modules/TransactionItemEntry/ItemEntry.transformer';
+import { Transformer } from '@/modules/Transformer/Transformer';
+import { VendorCredit } from '../models/VendorCredit';
 
 export class VendorCreditTransformer extends Transformer {
   /**
@@ -26,6 +26,7 @@ export class VendorCreditTransformer extends Transformer {
 
       'totalFormatted',
       'entries',
+      'categories',
       'attachments',
     ];
   };
@@ -35,7 +36,9 @@ export class VendorCreditTransformer extends Transformer {
    * @param {VendorCredit} credit
    * @returns {String}
    */
-  protected formattedVendorCreditDate = (vendorCredit: VendorCredit): string => {
+  protected formattedVendorCreditDate = (
+    vendorCredit: VendorCredit,
+  ): string => {
     return this.formatDate(vendorCredit.vendorCreditDate);
   };
 
@@ -167,6 +170,14 @@ export class VendorCreditTransformer extends Transformer {
     return this.item(vendorCredit.entries, new ItemEntryTransformer(), {
       currencyCode: vendorCredit.currencyCode,
     });
+  };
+
+  /**
+   * Retrieves the vendor credit direct-account allocations (categories).
+   * Pass-through — no per-field formatting beyond what the model exposes.
+   */
+  protected categories = (vendorCredit: VendorCredit) => {
+    return vendorCredit.categories || [];
   };
 
   /**

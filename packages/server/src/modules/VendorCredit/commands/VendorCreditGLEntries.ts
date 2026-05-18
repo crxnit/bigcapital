@@ -25,11 +25,12 @@ export class VendorCreditGLEntries {
     vendorCreditId: number,
     trx?: Knex.Transaction,
   ) => {
-    // Vendor credit with entries items.
+    // Vendor credit with entries items + direct-account allocations.
     const vendorCredit = await this.vendorCreditModel()
       .query(trx)
       .findById(vendorCreditId)
-      .withGraphFetched('entries.item');
+      .withGraphFetched('entries.item')
+      .withGraphFetched('categories');
 
     // Retrieve the payable account (A/P) account.
     const APAccount = await this.accountRepository.findOrCreateAccountsPayable(

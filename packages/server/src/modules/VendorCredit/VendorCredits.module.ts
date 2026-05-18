@@ -3,6 +3,7 @@ import { CreateVendorCreditService } from './commands/CreateVendorCredit.service
 import { DeleteVendorCreditService } from './commands/DeleteVendorCredit.service';
 import { EditVendorCreditService } from './commands/EditVendorCredit.service';
 import { VendorCreditDTOTransformService } from './commands/VendorCreditDTOTransform.service';
+import { VendorCreditsValidators } from './commands/VendorCreditsValidators.service';
 import { VendorCreditAutoIncrementService } from './commands/VendorCreditAutoIncrement.service';
 import { GetRefundVendorCreditService } from '../VendorCreditsRefund/queries/GetRefundVendorCredit.service';
 import { GetVendorCreditService } from './queries/GetVendorCredit.service';
@@ -50,6 +51,7 @@ import { ValidateBulkDeleteVendorCreditsService } from './ValidateBulkDeleteVend
     DeleteVendorCreditService,
     EditVendorCreditService,
     VendorCreditDTOTransformService,
+    VendorCreditsValidators,
     VendorCreditAutoIncrementService,
     GetRefundVendorCreditService,
     GetVendorCreditService,
@@ -83,4 +85,4 @@ import { ValidateBulkDeleteVendorCreditsService } from './ValidateBulkDeleteVend
   ],
   controllers: [VendorCreditsController],
 })
-export class VendorCreditsModule { }
+export class VendorCreditsModule {}

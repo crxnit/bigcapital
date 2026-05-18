@@ -31,7 +31,29 @@ export class VendorCreditDTOTransformService {
     private branchDTOTransform: BranchTransactionDTOTransformer,
     private warehouseDTOTransform: WarehouseTransactionDTOTransform,
     private vendorCreditAutoIncrement: VendorCreditAutoIncrementService,
-  ) { }
+  ) {}
+
+  /**
+   * Normalize direct-account allocation rows. Preserves `id` on edit so
+   * upsertGraph updates in place rather than delete+reinsert.
+   */
+  private normalizeCategories(categories: any[] = []): Array<{
+    id?: number;
+    index: number;
+    expenseAccountId: number;
+    description?: string;
+    amount: number;
+  }> {
+    return (categories || [])
+      .filter((c) => c && c.expenseAccountId != null && Number(c.amount) > 0)
+      .map((c, i) => ({
+        ...(c.id != null ? { id: c.id } : {}),
+        index: c.index ?? i + 1,
+        expenseAccountId: c.expenseAccountId,
+        description: c.description ?? '',
+        amount: Number(c.amount) || 0,
+      }));
+  }
 
   /**
    * Transforms the credit/edit vendor credit DTO to model.
@@ -45,10 +67,20 @@ export class VendorCreditDTOTransformService {
     vendorCurrencyCode: string,
     oldVendorCredit?: VendorCredit,
   ): Promise<VendorCredit> => {
+    const dtoEntries = vendorCreditDTO.entries || [];
+
     // Calculates the total amount of items entries.
-    const amount = this.itemsEntriesService.getTotalItemsEntries(
-      vendorCreditDTO.entries,
+    const itemsTotal =
+      this.itemsEntriesService.getTotalItemsEntries(dtoEntries);
+    const categories = this.normalizeCategories(vendorCreditDTO.categories);
+    const categoriesTotal = categories.reduce(
+      (sum, c) => sum + (Number(c.amount) || 0),
+      0,
     );
+    // `amount` stores the credit's gross balance at creation; direct-account
+    // allocations add to this alongside the items entries total.
+    const amount = itemsTotal + categoriesTotal;
+
     const entries = R.compose(
       // Associate the default index to each item entry.
       assocItemEntriesDefaultIndex,
@@ -58,7 +90,7 @@ export class VendorCreditDTOTransformService {
         referenceType: 'VendorCredit',
         ...entry,
       })),
-    )(vendorCreditDTO.entries);
+    )(dtoEntries);
 
     // Retreive the next vendor credit number.
     const autoNextNumber =
@@ -72,7 +104,7 @@ export class VendorCreditDTOTransformService {
 
     const initialDTO = {
       ...formatDateFields(
-        omit(vendorCreditDTO, ['open', 'attachments']),
+        omit(vendorCreditDTO, ['open', 'attachments', 'categories']),
         ['vendorCreditDate'],
       ),
       amount,
@@ -80,10 +112,11 @@ export class VendorCreditDTOTransformService {
       exchangeRate: vendorCreditDTO.exchangeRate || 1,
       vendorCreditNumber,
       entries,
+      categories,
       ...(vendorCreditDTO.open &&
         !oldVendorCredit?.openedAt && {
-        openedAt: moment().toMySqlDateTime(),
-      }),
+          openedAt: moment().toMySqlDateTime(),
+        }),
     };
     return composeAsync(
       this.branchDTOTransform.transformDTO<VendorCredit>,

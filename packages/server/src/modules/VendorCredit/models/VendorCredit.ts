@@ -45,6 +45,7 @@ export class VendorCredit extends TenantBaseModel {
   warehouse?: Warehouse;
   branch?: Branch;
   entries?: ItemEntry[];
+  categories?: any[];
   attachments?: Document[];
 
   createdAt: Date;
@@ -115,11 +116,29 @@ export class VendorCredit extends TenantBaseModel {
   }
 
   /**
+   * Sum of direct-account allocations (vendor_credit_expense_categories
+   * rows). Adds into the credit total alongside the items subtotal.
+   * Categories are pre-tax in v1 and don't carry a tax rate.
+   * @returns {number}
+   */
+  get categoriesTotal(): number {
+    const cats = this.categories || [];
+    let sum = 0;
+    for (const c of cats) sum += Number(c?.amount) || 0;
+    return sum;
+  }
+
+  /**
    * Vendor credit total.
    * @returns {number}
    */
   get total() {
-    return this.subtotal - this.discountAmount + this.adjustment;
+    return (
+      this.subtotal -
+      this.discountAmount +
+      this.adjustment +
+      this.categoriesTotal
+    );
   }
 
   /**
@@ -231,6 +250,8 @@ export class VendorCredit extends TenantBaseModel {
 
       'adjustmentLocal',
 
+      'categoriesTotal',
+
       'total',
       'totalLocal',
     ];
@@ -323,6 +344,23 @@ export class VendorCredit extends TenantBaseModel {
         },
         filter(builder) {
           builder.where('reference_type', 'VendorCredit');
+          builder.orderBy('index', 'ASC');
+        },
+      },
+
+      /**
+       * Vendor credit may has many direct-account allocations (categories).
+       */
+      categories: {
+        relation: Model.HasManyRelation,
+        // Relative require — `@/` alias does NOT resolve in relationMappings.
+        modelClass: require('./VendorCreditExpenseCategory.model')
+          .VendorCreditExpenseCategory,
+        join: {
+          from: 'vendor_credits.id',
+          to: 'vendor_credit_expense_categories.vendorCreditId',
+        },
+        filter(builder) {
           builder.orderBy('index', 'ASC');
         },
       },

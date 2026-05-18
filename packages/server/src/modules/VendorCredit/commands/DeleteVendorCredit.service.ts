@@ -7,6 +7,7 @@ import {
 } from '@/modules/VendorCredit/types/VendorCredit.types';
 import { ERRORS } from '../constants';
 import { VendorCredit } from '../models/VendorCredit';
+import { VendorCreditExpenseCategory } from '../models/VendorCreditExpenseCategory.model';
 import { ItemEntry } from '@/modules/TransactionItemEntry/models/ItemEntry';
 import { VendorCreditAppliedBill } from '../../VendorCreditsApplyBills/models/VendorCreditAppliedBill';
 import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
@@ -44,6 +45,11 @@ export class DeleteVendorCreditService {
     private vendorCreditAppliedBillModel: TenantModelProxy<
       typeof VendorCreditAppliedBill
     >,
+
+    @Inject(VendorCreditExpenseCategory.name)
+    private vendorCreditExpenseCategoryModel: TenantModelProxy<
+      typeof VendorCreditExpenseCategory
+    >,
   ) {}
 
   /**
@@ -79,6 +85,13 @@ export class DeleteVendorCreditService {
         .query(trx)
         .where('reference_id', vendorCreditId)
         .where('reference_type', 'VendorCredit')
+        .delete();
+
+      // Delete all associated direct-account allocations. Service-side
+      // cascade — the FK has no ON DELETE CASCADE per fork convention.
+      await this.vendorCreditExpenseCategoryModel()
+        .query(trx)
+        .where('vendorCreditId', vendorCreditId)
         .delete();
 
       // Deletes the credit note transaction.

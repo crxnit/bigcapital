@@ -22,6 +22,49 @@ enum DiscountType {
 
 export class VendorCreditEntryDto extends ItemEntryDto {}
 
+/**
+ * A direct-account allocation row on a vendor credit (Description + Account +
+ * Amount). Mirrors BillExpenseCategoryDto. Trimmed for v1: no percent/
+ * amount_type, no landed-cost flag.
+ */
+export class VendorCreditExpenseCategoryDto {
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({
+    description:
+      'The id of an existing category row. Preserve on edit so upsertGraph updates in place instead of delete+reinsert.',
+    required: false,
+  })
+  id?: number;
+
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({ description: 'Display order index of the row', example: 1 })
+  index?: number;
+
+  @IsNotEmpty()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({
+    description: 'Expense account the allocation credits',
+    example: 5000,
+  })
+  expenseAccountId: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ description: 'Row description', required: false })
+  description?: string;
+
+  @IsNotEmpty()
+  @ToNumber()
+  @IsNumber()
+  @ApiProperty({ description: 'Allocation amount (pre-tax)', example: 100 })
+  amount: number;
+}
+
 class AttachmentDto {
   @IsString()
   @IsNotEmpty()
@@ -102,11 +145,13 @@ export class CommandVendorCreditDto {
   })
   branchId?: number;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => VendorCreditEntryDto)
   @ApiProperty({
-    description: 'The entries of the vendor credit',
+    description:
+      'The entries of the vendor credit. Either entries or categories must be non-empty; both may be set.',
     example: [
       {
         itemId: 1,
@@ -119,7 +164,20 @@ export class CommandVendorCreditDto {
       },
     ],
   })
-  entries: VendorCreditEntryDto[];
+  entries?: VendorCreditEntryDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => VendorCreditExpenseCategoryDto)
+  @ApiProperty({
+    description:
+      'Direct-account allocations (Description + Account + Amount). Either entries or categories must be non-empty; both may be set.',
+    type: () => VendorCreditExpenseCategoryDto,
+    isArray: true,
+    required: false,
+  })
+  categories?: VendorCreditExpenseCategoryDto[];
 
   @IsArray()
   @ValidateNested({ each: true })

@@ -27,6 +27,7 @@ import {
 } from '@/containers/Attachments/utils';
 
 export const MIN_LINES_NUMBER = 1;
+export const MIN_CATEGORY_LINES = 1;
 
 // Default Vendors Credit Note entry.
 export const defaultCreditNoteEntry = {
@@ -35,6 +36,15 @@ export const defaultCreditNoteEntry = {
   rate: '',
   discount: '',
   quantity: '',
+  description: '',
+  amount: '',
+};
+
+// Default direct-account allocation row on a vendor credit. Renders as a
+// single Account + Description + Amount row in the categories table.
+export const defaultVendorCreditCategory = {
+  index: 0,
+  expense_account_id: '',
   description: '',
   amount: '',
 };
@@ -53,6 +63,7 @@ export const defaultVendorsCreditNote = {
   exchange_rate: 1,
   currency_code: '',
   entries: [...repeatValue(defaultCreditNoteEntry, MIN_LINES_NUMBER)],
+  categories: [...repeatValue(defaultVendorCreditCategory, MIN_CATEGORY_LINES)],
   attachments: [],
   discount: '',
   discount_type: 'amount',
@@ -77,11 +88,24 @@ export const transformToEditForm = (creditNote) => {
     updateItemsEntriesTotal,
   )(initialEntries);
 
+  // Hydrate direct-account categories from the server response. Preserve the
+  // server `id` on each row so the next save's upsertGraph updates in place
+  // rather than deleting and recreating.
+  const rawCategories = creditNote.categories || [];
+  const initialCategories =
+    rawCategories.length > 0
+      ? rawCategories.map((category) => ({
+          ...(category.id != null ? { id: category.id } : {}),
+          ...transformToForm(category, defaultVendorCreditCategory),
+        }))
+      : [...repeatValue(defaultVendorCreditCategory, MIN_CATEGORY_LINES)];
+
   const attachments = transformAttachmentsToForm(creditNote);
 
   return {
     ...transformToForm(creditNote, defaultVendorsCreditNote),
     entries,
+    categories: initialCategories,
     attachments,
   };
 };
@@ -108,15 +132,41 @@ export const filterNonZeroEntries = (entries) => {
 };
 
 /**
+ * Filters direct-account allocations (categories) to rows with both an
+ * account selected and a positive amount.
+ */
+export const filterNonZeroCategories = (categories = []) => {
+  return categories.filter(
+    (cat) => cat.expense_account_id && Number(cat.amount) > 0,
+  );
+};
+
+/**
+ * Shapes the form's categories array for the API. Preserves `id` so
+ * upsertGraph updates in place; index assigned by row order.
+ */
+export const transformCategoriesToSubmit = (categories = []) => {
+  return categories.map((cat, i) => ({
+    ...(cat.id != null ? { id: cat.id } : {}),
+    index: i + 1,
+    expense_account_id: cat.expense_account_id,
+    description: cat.description ?? '',
+    amount: Number(cat.amount) || 0,
+  }));
+};
+
+/**
  * Transformes form values to request body.
  */
 export const transformFormValuesToRequest = (values) => {
   const entries = filterNonZeroEntries(values.entries);
+  const categories = filterNonZeroCategories(values.categories || []);
   const attachments = transformAttachmentsToRequest(values);
 
   return {
     ...values,
     entries: transformEntriesToSubmit(entries),
+    categories: transformCategoriesToSubmit(categories),
     open: false,
     attachments,
   };
@@ -156,7 +206,8 @@ export const useObserveVendorCreditNoSettings = (prefix, nextNumber) => {
 
 export const useSetPrimaryBranchToForm = () => {
   const { setFieldValue } = useFormikContext();
-  const { branches, isBranchesSuccess, isNewMode } = useVendorCreditNoteFormContext();
+  const { branches, isBranchesSuccess, isNewMode } =
+    useVendorCreditNoteFormContext();
 
   React.useEffect(() => {
     if (isBranchesSuccess && isNewMode) {
@@ -171,7 +222,8 @@ export const useSetPrimaryBranchToForm = () => {
 
 export const useSetPrimaryWarehouseToForm = () => {
   const { setFieldValue } = useFormikContext();
-  const { warehouses, isWarehousesSuccess, isNewMode } = useVendorCreditNoteFormContext();
+  const { warehouses, isWarehousesSuccess, isNewMode } =
+    useVendorCreditNoteFormContext();
 
   React.useEffect(() => {
     if (isWarehousesSuccess && isNewMode) {

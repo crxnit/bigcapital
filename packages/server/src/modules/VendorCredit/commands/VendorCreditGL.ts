@@ -106,6 +106,38 @@ export class VendorCreditGL {
   }
 
   /**
+   * Retrieves a single direct-account allocation (category) GL entry.
+   * One CR per row against the category's expenseAccountId. Mirrors the
+   * mirror of `BillGL.getBillCategoryEntry` — vendor credit reverses the
+   * bill, so the entry side is CR (reduces the expense the bill had DR'd).
+   * @param {any} category - Vendor credit expense category row
+   * @param {number} index - Row index within the categories array
+   */
+  private getVendorCreditCategoryEntry(
+    category: {
+      expenseAccountId: number;
+      amount: number;
+      description?: string;
+    },
+    index: number,
+  ): ILedgerEntry {
+    const commonEntity = this.vendorCreditGLCommonEntry;
+    const localAmount = (category.amount || 0) * this.vendorCredit.exchangeRate;
+
+    return {
+      ...commonEntity,
+      credit: localAmount,
+      accountId: category.expenseAccountId,
+      accountNormal: AccountNormal.DEBIT,
+      note: category.description,
+      // Use indexGroup 15 so category lines render between the items entries
+      // and the discount/adjustment block in journal/GL views.
+      index: index + 1,
+      indexGroup: 15,
+    };
+  }
+
+  /**
    * Retrieves the vendor credit discount GL entry.
    * @returns {ILedgerEntry}
    */
@@ -147,13 +179,22 @@ export class VendorCreditGL {
    */
   public getVendorCreditGLEntries(): ILedgerEntry[] {
     const payableEntry = this.vendorCreditPayableGLEntry;
-    const itemsEntries = this.vendorCredit.entries.map((entry, index) =>
+    const itemsEntries = (this.vendorCredit.entries || []).map((entry, index) =>
       this.getVendorCreditGLItemEntry(entry, index),
+    );
+    const categoryEntries = (this.vendorCredit.categories || []).map(
+      (category, index) => this.getVendorCreditCategoryEntry(category, index),
     );
     const discountEntry = this.discountEntry;
     const adjustmentEntry = this.adjustmentEntry;
 
-    return [payableEntry, discountEntry, adjustmentEntry, ...itemsEntries];
+    return [
+      payableEntry,
+      discountEntry,
+      adjustmentEntry,
+      ...itemsEntries,
+      ...categoryEntries,
+    ];
   }
 
   /**

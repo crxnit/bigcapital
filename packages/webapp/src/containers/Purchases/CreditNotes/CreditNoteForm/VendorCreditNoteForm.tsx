@@ -16,6 +16,7 @@ import {
 
 import VendorCreditNoteFormHeader from './VendorCreditNoteFormHeader';
 import VendorCreditNoteItemsEntriesEditor from './VendorCreditNoteItemsEntriesEditor';
+import VendorCreditNoteCategoriesEditor from './VendorCreditNoteCategoriesEditor';
 import VendorCreditNoteFormFooter from './VendorCreditNoteFormFooter';
 import VendorCreditNoteFloatingActions from './VendorCreditNoteFloatingActions';
 import VendorCreditNoteFormDialogs from './VendorCreditNoteFormDialogs';
@@ -28,6 +29,7 @@ import { compose, safeSumBy, transactionNumber } from '@/utils';
 import {
   defaultVendorsCreditNote,
   filterNonZeroEntries,
+  filterNonZeroCategories,
   transformToEditForm,
   transformFormValuesToRequest,
 } from './utils';
@@ -90,9 +92,12 @@ function VendorCreditNoteForm({
     { setSubmitting, setErrors, resetForm },
   ) => {
     const entries = filterNonZeroEntries(values.entries);
+    const categories = filterNonZeroCategories(values.categories || []);
     const totalQuantity = safeSumBy(entries, 'quantity');
 
-    if (totalQuantity === 0) {
+    // Allow categories-only submits — block only when neither items nor
+    // categories carry any value.
+    if (totalQuantity === 0 && categories.length === 0) {
       AppToaster.show({
         message: intl.get('quantity_cannot_be_zero_or_empty'),
         intent: Intent.DANGER,
@@ -178,6 +183,12 @@ function VendorCreditNoteForm({
 
             <Box p="18px 32px 0">
               <VendorCreditNoteItemsEntriesEditor />
+              <Box mt={4}>
+                <Box mb={2} fontSize={13} fontWeight={500}>
+                  Direct expense allocations
+                </Box>
+                <VendorCreditNoteCategoriesEditor />
+              </Box>
             </Box>
 
             <VendorCreditNoteFormFooter />

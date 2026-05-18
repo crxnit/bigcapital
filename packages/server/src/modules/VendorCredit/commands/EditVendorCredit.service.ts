@@ -11,6 +11,7 @@ import { VendorCredit } from '../models/VendorCredit';
 import { Contact } from '@/modules/Contacts/models/Contact';
 import { events } from '@/common/events/events';
 import { VendorCreditDTOTransformService } from './VendorCreditDTOTransform.service';
+import { VendorCreditsValidators } from './VendorCreditsValidators.service';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { EditVendorCreditDto } from '../dtos/VendorCredit.dto';
 
@@ -28,6 +29,7 @@ export class EditVendorCreditService {
     private readonly uow: UnitOfWork,
     private readonly itemsEntriesService: ItemsEntriesService,
     private readonly vendorCreditDTOTransform: VendorCreditDTOTransformService,
+    private readonly validators: VendorCreditsValidators,
 
     @Inject(VendorCredit.name)
     private readonly vendorCreditModel: TenantModelProxy<typeof VendorCredit>,
@@ -59,22 +61,36 @@ export class EditVendorCreditService {
       .findById(vendorCreditDTO.vendorId)
       .throwIfNotFound();
 
-    // Validate items ids existance.
-    await this.itemsEntriesService.validateItemsIdsExistance(
-      vendorCreditDTO.entries,
+    // Credits may have no items entries (direct-account allocations only);
+    // pass an empty array so the shared validators don't crash on undefined.
+    const dtoEntries = vendorCreditDTO.entries || [];
+
+    this.validators.validateAtLeastOneLine(
+      dtoEntries,
+      vendorCreditDTO.categories,
     );
+
+    // Validate items ids existance.
+    await this.itemsEntriesService.validateItemsIdsExistance(dtoEntries);
     // Validate items should be purchasable — a vendor credit is a purchase-side
     // document (vendor refunding/crediting items you bought), so the entries
     // must reference purchasable items, not sellable ones.
     await this.itemsEntriesService.validateNonPurchasableEntriesItems(
-      vendorCreditDTO.entries,
+      dtoEntries,
     );
     // Validate the items entries existance.
     await this.itemsEntriesService.validateEntriesIdsExistance(
       vendorCreditId,
       'VendorCredit',
-      vendorCreditDTO.entries,
+      dtoEntries,
     );
+
+    // Validate direct-account allocation rows reference expense-type accounts.
+    if (vendorCreditDTO.categories && vendorCreditDTO.categories.length > 0) {
+      await this.validators.validateCategoryAccountsType(
+        vendorCreditDTO.categories,
+      );
+    }
     // Transformes edit DTO to model storage layer.
     const vendorCreditModel =
       await this.vendorCreditDTOTransform.transformCreateEditDTOToModel(
