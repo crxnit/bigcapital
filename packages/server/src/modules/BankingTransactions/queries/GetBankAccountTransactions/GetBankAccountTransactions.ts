@@ -136,17 +136,15 @@ export class GetBankAccountTransactions extends FinancialSheet {
   private transactionRunningBalance = (
     transaction: ICashflowAccountTransaction,
   ): ICashflowAccountTransaction => {
-    const amount = transaction.deposit - transaction.withdrawal;
-
-    const biggerThanZero = R.lt(0, amount);
-    const lowerThanZero = R.gt(0, amount);
-
-    const absAmount = Math.abs(amount);
-
-    R.when(R.always(biggerThanZero), this.runningBalance.decrement)(absAmount);
-    R.when(R.always(lowerThanZero), this.runningBalance.increment)(absAmount);
-
+    // Transactions are walked newest -> oldest from the latest account balance,
+    // so the accumulator currently equals the balance AFTER this row's
+    // transaction. Capture it for the row, then unwind so the next (older)
+    // iteration sees the balance before this row.
     const runningBalance = this.runningBalance.amount();
+
+    const amount = transaction.deposit - transaction.withdrawal;
+    if (amount > 0) this.runningBalance.decrement(amount);
+    else if (amount < 0) this.runningBalance.increment(-amount);
 
     return {
       ...transaction,
@@ -163,15 +161,10 @@ export class GetBankAccountTransactions extends FinancialSheet {
   private transactionBalance = (
     transaction: ICashflowAccountTransaction,
   ): ICashflowAccountTransaction => {
-    const balance =
-      transaction.runningBalance +
-      transaction.withdrawal * -1 +
-      transaction.deposit;
-
     return {
       ...transaction,
-      balance,
-      formattedBalance: this.formatNumber(balance),
+      balance: transaction.runningBalance,
+      formattedBalance: transaction.formattedRunningBalance,
     };
   };
 
