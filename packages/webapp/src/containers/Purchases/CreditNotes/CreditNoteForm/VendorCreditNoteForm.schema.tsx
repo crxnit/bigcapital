@@ -44,24 +44,23 @@ const getSchema = Yup.object().shape({
   ),
   // Direct-account allocations. An account must be picked when an amount is
   // entered (and vice versa); fully-blank rows are dropped at submit by
-  // `filterNonZeroCategories` so they don't need to validate.
+  // `filterNonZeroCategories`. Use a single object-level `.test` instead of
+  // mutual `.when()`s — Yup toposort raises a cyclic-dependency error when
+  // two fields reference each other via `.when()` (fixed for bills in
+  // 2ab04caf7).
   categories: Yup.array().of(
-    Yup.object().shape({
-      expense_account_id: Yup.number()
-        .nullable()
-        .when('amount', {
-          is: (amount) => !isBlank(amount) && Number(amount) > 0,
-          then: Yup.number().required(),
-        }),
-      amount: Yup.number()
-        .nullable()
-        .min(0)
-        .when('expense_account_id', {
-          is: (id) => !isBlank(id),
-          then: Yup.number().required().min(0.01),
-        }),
-      description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
-    }),
+    Yup.object()
+      .shape({
+        expense_account_id: Yup.number().nullable(),
+        amount: Yup.number().nullable().min(0),
+        description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
+      })
+      .test('paired', 'Account and amount must both be set', (value) => {
+        if (!value) return true;
+        const hasAccount = !isBlank(value.expense_account_id);
+        const hasAmount = !isBlank(value.amount) && Number(value.amount) > 0;
+        return hasAccount === hasAmount;
+      }),
   ),
 });
 
