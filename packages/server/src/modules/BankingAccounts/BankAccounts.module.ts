@@ -12,6 +12,7 @@ import { PlaidModule } from '../Plaid/Plaid.module';
 import { BankRulesModule } from '../BankRules/BankRules.module';
 import { BankingTransactionsRegonizeModule } from '../BankingTranasctionsRegonize/BankingTransactionsRegonize.module';
 import { BankingTransactionsModule } from '../BankingTransactions/BankingTransactions.module';
+import { BankingMatchingModule } from '../BankingMatching/BankingMatching.module';
 import { GetBankAccountsService } from './queries/GetBankAccounts';
 import { DynamicListModule } from '../DynamicListing/DynamicList.module';
 import { GetBankAccountSummary } from './queries/GetBankAccountSummary';
@@ -25,6 +26,7 @@ import { MutateBaseCurrencyAccounts } from '../Accounts/MutateBaseCurrencyAccoun
     BankRulesModule,
     BankingTransactionsRegonizeModule,
     BankingTransactionsModule,
+    BankingMatchingModule,
     DynamicListModule,
   ],
   providers: [
