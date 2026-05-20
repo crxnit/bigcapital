@@ -111,8 +111,12 @@ export function useDeleteAccount(props) {
   const apiRequest = useApiRequest();
 
   return useMutation((id) => apiRequest.delete(`accounts/${id}`), {
-    onSuccess: () => {
-      // Common invalidate queries.
+    onSuccess: (_data, id) => {
+      // Evict the deleted account's per-id queries so common invalidate
+      // doesn't refetch them and 404. The detail drawer may still be open
+      // when the alert closes.
+      client.removeQueries([t.ACCOUNT, id]);
+      client.removeQueries([t.ACCOUNT_TRANSACTION, id]);
       commonInvalidateQueries(client);
     },
     ...props,
