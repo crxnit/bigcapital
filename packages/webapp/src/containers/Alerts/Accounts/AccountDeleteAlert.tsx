@@ -2,6 +2,7 @@
 import React from 'react';
 import intl from 'react-intl-universal';
 import { Intent, Alert } from '@blueprintjs/core';
+import { useHistory } from 'react-router-dom';
 import {
   AppToaster,
   FormattedMessage as T,
@@ -26,7 +27,7 @@ function AccountDeleteAlert({
 
   // #withAlertStoreConnect
   isOpen,
-  payload: { accountId },
+  payload: { accountId, redirectTo },
 
   // #withAlertActions
   closeAlert,
@@ -35,6 +36,7 @@ function AccountDeleteAlert({
   closeDrawer,
 }) {
   const { isLoading, mutateAsync: deleteAccount } = useDeleteAccount();
+  const history = useHistory();
 
   // handle cancel delete account alert.
   const handleCancelAccountDelete = () => {
@@ -50,6 +52,12 @@ function AccountDeleteAlert({
         });
         closeAlert(name);
         closeDrawer(DRAWERS.ACCOUNT_DETAILS);
+        // When opened from a per-account page (e.g. /cashflow-accounts/:id/transactions),
+        // the caller passes `redirectTo` so we navigate away — otherwise the
+        // page's `useAccount(id)` keeps refetching the deleted id and 404s.
+        if (redirectTo) {
+          history.push(redirectTo);
+        }
       })
       .catch((error) => {
         const errors = error?.response?.data?.errors ?? [];

@@ -220,6 +220,10 @@ function AccountTransactionsActionsBar({
   const handleDeleteAccountClick = () => {
     openAlert('account-delete', {
       accountId,
+      // Page route is /cashflow-accounts/:id/transactions — once the account
+      // is gone, useAccount(id) on this page refetches and 404s. Send the
+      // user back to the bank-accounts list.
+      redirectTo: '/cashflow-accounts',
     });
   };
 
