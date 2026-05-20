@@ -45,8 +45,19 @@ export class UncategorizedTransactionsImportable extends Importable {
     createDTO: CreateUncategorizedTransactionDTO,
     context?: ImportableContext,
   ): CreateUncategorizedTransactionDTO {
+    // `type` is a transient import-only column from the meta — apply the
+    // direction (deposit/credit → +, withdrawal/debit → -) and strip it from
+    // the DTO before insert. When absent, leave the amount sign untouched so
+    // signed-amount CSVs still work.
+    const { type, amount, ...rest } = createDTO as any;
+    let signedAmount = amount;
+    if (type) {
+      const abs = Math.abs(amount);
+      signedAmount = type === 'withdrawal' || type === 'debit' ? -abs : abs;
+    }
     return {
-      ...createDTO,
+      ...rest,
+      amount: signedAmount,
       accountId: context.import.paramsParsed.accountId,
       batch: context.import.paramsParsed.batch,
     };

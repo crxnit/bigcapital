@@ -68,5 +68,19 @@ export const UncategorizedBankTransactionMeta = {
       fieldType: 'number',
       required: true,
     },
+    type: {
+      name: 'Type',
+      fieldType: 'enumeration',
+      // Optional. When present, the importable forces the amount sign:
+      // deposit/credit → positive, withdrawal/debit → negative. When absent,
+      // the amount's existing sign is preserved (so signed-amount CSVs still
+      // work). The enum parser is case-insensitive and matches key or label.
+      options: [
+        { key: 'deposit', label: 'Deposit' },
+        { key: 'credit', label: 'Credit' },
+        { key: 'withdrawal', label: 'Withdrawal' },
+        { key: 'debit', label: 'Debit' },
+      ],
+    },
   },
 };

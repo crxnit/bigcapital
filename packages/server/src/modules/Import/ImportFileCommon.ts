@@ -22,7 +22,7 @@ export class ImportFileCommon {
     private readonly importFileValidator: ImportFileDataValidator,
     private readonly resource: ResourceService,
     private readonly importableRegistry: ImportableRegistry,
-  ) { }
+  ) {}
 
   /**
    * Imports the given parsed data to the resource storage through registered importable service.
@@ -80,10 +80,17 @@ export class ImportFileCommon {
             ];
             failed.push({ index, error });
           } else {
+            // Surface the actual error rather than masking as "Unknown".
+            // The previous generic message hid downstream failures (DB
+            // constraints, parser bugs, subscriber errors) from the user.
+            // Log the full error for server-side debugging too.
+            // eslint-disable-next-line no-console
+            console.error('[Import] row failed', errorContext, err);
             const error: ImportInsertError[] = [
               {
                 errorCode: 'UnknownError',
-                errorMessage: 'Unknown error occurred',
+                errorMessage:
+                  err?.message || String(err) || 'Unknown error occurred',
                 ...errorContext,
               },
             ];
