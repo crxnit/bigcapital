@@ -68,14 +68,14 @@ function RefundVendorCreditFormFields({
         <Col xs={5}>
           {/* ------------- Refund date ------------- */}
           <FFormGroup
-            name={'refund_date'}
+            name={'date'}
             label={<T id={'refund_vendor_credit.dialog.refund_date'} />}
             labelInfo={<FieldRequiredHint />}
             fill
             fastField
           >
             <FDateInput
-              name={'refund_date'}
+              name={'date'}
               {...momentFormatter('MM/DD/YYYY')}
               popoverProps={{ position: Position.BOTTOM, minimal: true }}
               inputProps={{
@@ -152,7 +152,12 @@ function RefundVendorCreditFormFields({
       </FFormGroup>
 
       {/* --------- Statement --------- */}
-      <FFormGroup name={'description'} label={<T id={'refund_vendor_credit.dialog.description'} />} fill fastField>
+      <FFormGroup
+        name={'description'}
+        label={<T id={'refund_vendor_credit.dialog.description'} />}
+        fill
+        fastField
+      >
         <FTextArea name={'description'} growVertically fill fastField />
       </FFormGroup>
     </div>
