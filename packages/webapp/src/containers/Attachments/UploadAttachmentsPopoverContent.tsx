@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { isEmpty } from 'lodash';
 import { Button, Intent, Text, Spinner } from '@blueprintjs/core';
-import { Box, Group, Icon, Stack } from '@/components';
+import { AppToaster, Box, Group, Icon, Stack } from '@/components';
 import {
   ImportDropzoneField,
   ImportDropzoneFieldProps,
@@ -16,13 +16,16 @@ import styles from './UploadAttachmentPopoverContent.module.scss';
 import { MIME_TYPES } from '@/components/Dropzone/mine-types';
 import { formatBytes } from '@/utils/format-bytes';
 
+const MAX_ATTACHMENT_FILES = 10;
+const MAX_ATTACHMENT_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
+
 interface AttachmentFileCommon {
   originName: string;
   key: string;
   size: number;
   mimeType: string;
 }
-interface AttachmentFileLoaded extends AttachmentFileCommon { }
+interface AttachmentFileLoaded extends AttachmentFileCommon {}
 interface AttachmentFileLoading extends AttachmentFileCommon {
   loading: boolean;
 }
@@ -54,14 +57,20 @@ export function UploadAttachmentsPopoverContent({
     value,
     onChange: onChange,
   });
+  // Ref mirrors `localFiles`. With multi-file uploads firing in parallel, each
+  // mutation's onSuccess closure would otherwise capture stale state and clobber
+  // peers' updates. Reading/writing the ref keeps all in-flight updates linear.
+  const localFilesRef = useRef<AttachmentFile[]>(localFiles);
+  localFilesRef.current = localFiles;
+
   // Stops loading of the given attachment key and updates it to new key,
   // that came from the server-side after uploading is done.
   const stopLoadingAttachment = (
-    localFiles: AttachmentFile[],
+    files: AttachmentFile[],
     internalKey: string,
     newKey: string,
   ) => {
-    return localFiles.map((localFile) => {
+    return files.map((localFile) => {
       if (localFile.key === internalKey) {
         return {
           ...localFile,
@@ -75,40 +84,71 @@ export function UploadAttachmentsPopoverContent({
   // Uploads the attachments.
   const { mutateAsync: uploadAttachments } = useUploadAttachments({
     onSuccess: (data, formData) => {
-      const newLocalFiles = stopLoadingAttachment(
-        localFiles,
+      const updated = stopLoadingAttachment(
+        localFilesRef.current,
         formData.get('internalKey'),
         data.key,
       );
-      handleFilesChange(newLocalFiles);
-      onUploadedChange && onUploadedChange(newLocalFiles);
+      localFilesRef.current = updated;
+      handleFilesChange(updated);
+      onUploadedChange && onUploadedChange(updated);
     },
   });
   // Deletes the attachment of the given file key.
   const handleClick = (key: string) => () => {
-    const updatedFiles = localFiles.filter((file, i) => file.key !== key);
+    const updatedFiles = localFilesRef.current.filter(
+      (file) => file.key !== key,
+    );
+    localFilesRef.current = updatedFiles;
     handleFilesChange(updatedFiles);
     onUploadedChange && onUploadedChange(updatedFiles);
   };
 
-  // Handle change dropzone.
-  const handleChangeDropzone = (file: File) => {
-    const formData = new FormData();
-    const key = Date.now().toString();
+  // Handle dropped files. Multi-file: prepend N pending entries in a single
+  // state update, then fire N uploads in parallel. onSuccess folds each result
+  // into the shared ref so completions don't clobber each other.
+  const handleDropFiles = (files: File[]) => {
+    if (!files.length) return;
 
-    formData.append('file', file);
-    formData.append('internalKey', key);
+    const pending: AttachmentFileLoading[] = files.map((file) => ({
+      originName: file.name,
+      size: file.size,
+      // Random suffix avoids key collisions on rapid drops.
+      key: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      loading: true,
+    }));
 
-    handleFilesChange([
-      {
-        originName: file.name,
-        size: file.size,
-        key,
-        loading: true,
-      },
-      ...localFiles,
-    ]);
-    uploadAttachments(formData);
+    const next = [...pending, ...localFilesRef.current];
+    localFilesRef.current = next;
+    handleFilesChange(next);
+
+    pending.forEach((entry, i) => {
+      const formData = new FormData();
+      formData.append('file', files[i]);
+      formData.append('internalKey', entry.key);
+      uploadAttachments(formData);
+    });
+  };
+
+  // Surface dropzone rejections (oversize, wrong MIME, too many at once) as a
+  // toast — silent rejects are the worst UX failure mode for file pickers.
+  const handleRejectFiles = (rejections: any[]) => {
+    if (!rejections?.length) return;
+    const reasons = new Set<string>();
+    rejections.forEach((r) =>
+      (r.errors || []).forEach((e: any) => reasons.add(e.code || e.message)),
+    );
+    const hint = reasons.has('file-too-large')
+      ? `Files must be ${MAX_ATTACHMENT_FILE_SIZE / (1024 * 1024)} MB or smaller.`
+      : reasons.has('too-many-files')
+        ? `Drop up to ${MAX_ATTACHMENT_FILES} files at a time.`
+        : reasons.has('file-invalid-type')
+          ? `Allowed types: PDF, DOC, DOCX, PNG, JPEG.`
+          : `Some files were rejected.`;
+    AppToaster.show({
+      message: `${rejections.length} file(s) rejected. ${hint}`,
+      intent: Intent.DANGER,
+    });
   };
 
   return (
@@ -120,10 +160,14 @@ export function UploadAttachmentsPopoverContent({
             uploadIcon={null}
             value={null}
             title={''}
-            subtitle={'Drag and drop file here or choose file'}
+            subtitle={'Drag and drop files here or choose files'}
             classNames={{ root: styles.dropzoneRoot }}
-            onChange={handleChangeDropzone}
             dropzoneProps={{
+              multiple: true,
+              maxFiles: MAX_ATTACHMENT_FILES,
+              maxSize: MAX_ATTACHMENT_FILE_SIZE,
+              onDrop: handleDropFiles,
+              onReject: handleRejectFiles,
               accept: [
                 MIME_TYPES.doc,
                 MIME_TYPES.docx,
@@ -135,7 +179,7 @@ export function UploadAttachmentsPopoverContent({
             {...dropzoneFieldProps}
           />
           <Group className={styles.hintText}>
-            <Box>Maximum: 25MB</Box>
+            <Box>Up to {MAX_ATTACHMENT_FILES} files, 25MB each</Box>
           </Group>
         </Stack>
 
