@@ -41,13 +41,17 @@ export class GetMatchedTransactionsByInvoices extends GetMatchedTransactionsByTy
   public async getMatchedTransactions(
     filter: GetMatchedTransactionsFilter,
   ): Promise<MatchedTransactionsPOJO> {
-    // Retrieve the invoices that not matched, unpaid.
+    // Retrieve the invoices with a remaining due amount. The `unpaid`
+    // modifier filters `PAYMENT_AMOUNT = 0`, which hides partially-paid
+    // invoices entirely — use `dueInvoices` (balance − paymentAmount −
+    // writenoffAmount − creditedAmount > 0) so partial-paid invoices are
+    // still matchable. Mirrors the bills-side fix.
     const invoices = await this.saleInvoiceModel()
       .query()
       .onBuild((q) => {
         q.withGraphJoined('matchedBankTransaction');
         q.whereNull('matchedBankTransaction.id');
-        q.modify('unpaid');
+        q.modify('dueInvoices');
         q.modify('published');
 
         if (filter.fromDate) {

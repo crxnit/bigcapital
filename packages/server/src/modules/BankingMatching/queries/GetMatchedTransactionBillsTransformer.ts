@@ -1,4 +1,4 @@
-import { Transformer } from "@/modules/Transformer/Transformer";
+import { Transformer } from '@/modules/Transformer/Transformer';
 
 export class GetMatchedTransactionBillsTransformer extends Transformer {
   /**
@@ -41,21 +41,26 @@ export class GetMatchedTransactionBillsTransformer extends Transformer {
   }
 
   /**
-   * Retrieve the amount of the bill.
+   * Retrieve the outstanding (due) amount of the bill — the gross total
+   * minus any payments and credit-note applications. The bank-transaction
+   * matcher uses this value to verify the candidate sums to the
+   * uncategorized transaction amount (`sumMatchTranasctions` in
+   * `_utils.ts`); returning the gross `bill.amount` made partial-paid
+   * bills unmatchable because the sum could never balance.
    * @param {Object} bill - The bill object.
    * @returns {number}
    */
   protected amount(bill) {
-    return bill.amount;
+    return bill.dueAmount;
   }
 
   /**
-   * Retrieve the formatted amount of the bill.
+   * Retrieve the formatted outstanding amount of the bill.
    * @param {Object} bill - The bill object.
    * @returns {string}
    */
   protected amountFormatted(bill) {
-    return this.formatNumber(bill.amount, {
+    return this.formatNumber(bill.dueAmount, {
       currencyCode: bill.currencyCode,
       money: true,
     });

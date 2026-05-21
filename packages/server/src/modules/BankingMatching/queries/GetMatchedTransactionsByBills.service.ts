@@ -38,13 +38,17 @@ export class GetMatchedTransactionsByBills extends GetMatchedTransactionsByType 
    * @param {GetMatchedTransactionsFilter} filter -
    */
   public async getMatchedTransactions(filter: GetMatchedTransactionsFilter) {
-    // Retrieves the bill matches.
+    // Retrieves the bill matches. Restrict to bills with a remaining due
+    // amount (`dueBills` modifier: amount − paymentAmount − creditedAmount
+    // > 0). Otherwise fully-paid bills appear as candidates and can never
+    // balance the bank transaction.
     const bills = await this.billModel()
       .query()
       .onBuild((q) => {
         q.withGraphJoined('matchedBankTransaction');
         q.whereNull('matchedBankTransaction.id');
         q.modify('published');
+        q.modify('dueBills');
 
         if (filter.fromDate) {
           q.where('billDate', '>=', filter.fromDate);
