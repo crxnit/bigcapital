@@ -3,24 +3,15 @@ import { FastField } from 'formik';
 import InvoiceFormCategoriesTable from './InvoiceFormCategoriesTable';
 import { defaultFastFieldShouldUpdate } from '@/utils';
 
-const categoriesFieldShouldUpdate = (newProps, oldProps) => {
-  return (
-    newProps.accounts !== oldProps.accounts ||
-    defaultFastFieldShouldUpdate(newProps, oldProps)
-  );
-};
-
 /**
  * Formik FastField wrapper around InvoiceFormCategoriesTable. Mirrors
- * `BillFormCategoriesEditor.tsx` but for the revenue side.
+ * `BillFormCategoriesEditor.tsx` but for the revenue side. Accounts come
+ * from `useInvoiceFormContext()` inside the table, so the editor itself
+ * has no props.
  */
-export default function InvoiceFormCategoriesEditor({ accounts }) {
+export default function InvoiceFormCategoriesEditor() {
   return (
-    <FastField
-      name={'categories'}
-      accounts={accounts}
-      shouldUpdate={categoriesFieldShouldUpdate}
-    >
+    <FastField name={'categories'} shouldUpdate={defaultFastFieldShouldUpdate}>
       {({
         form: { values, setFieldValue },
         field: { value },

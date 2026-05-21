@@ -18,7 +18,7 @@ export class GetSaleInvoice {
 
     @Inject(SaleInvoice.name)
     private saleInvoiceModel: TenantModelProxy<typeof SaleInvoice>,
-  ) { }
+  ) {}
 
   /**
    * Retrieve sale invoice with associated entries.
@@ -35,6 +35,10 @@ export class GetSaleInvoice {
       .findById(saleInvoiceId)
       .withGraphFetched('entries.item')
       .withGraphFetched('entries.tax')
+      // Direct-account income allocations. Without this, the edit form
+      // hydrates with an empty categories table even when the invoice has
+      // stored rows — and the next save's upsertGraph deletes them all.
+      .withGraphFetched('categories.incomeAccount')
       .withGraphFetched('customer')
       .withGraphFetched('branch')
       .withGraphFetched('taxes.taxRate')

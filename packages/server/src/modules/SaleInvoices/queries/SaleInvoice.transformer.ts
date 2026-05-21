@@ -1,3 +1,4 @@
+import { isUndefined } from 'lodash';
 import { Transformer } from '@/modules/Transformer/Transformer';
 import { SaleInvoice } from '../models/SaleInvoice';
 import { ItemEntryTransformer } from '../../TransactionItemEntry/ItemEntry.transformer';
@@ -31,6 +32,7 @@ export class SaleInvoiceTransformer extends Transformer {
       'adjustmentFormatted',
       'taxes',
       'entries',
+      'categories',
       'attachments',
     ];
   };
@@ -70,7 +72,7 @@ export class SaleInvoiceTransformer extends Transformer {
   protected dueAmountFormatted = (invoice: SaleInvoice): string => {
     return this.formatNumber(invoice.dueAmount, {
       currencyCode: invoice.currencyCode,
-      money: true
+      money: true,
     });
   };
 
@@ -156,7 +158,9 @@ export class SaleInvoiceTransformer extends Transformer {
    * @param invoice
    * @returns {string}
    */
-  protected taxAmountWithheldLocalFormatted = (invoice: SaleInvoice): string => {
+  protected taxAmountWithheldLocalFormatted = (
+    invoice: SaleInvoice,
+  ): string => {
     return this.formatNumber(invoice.taxAmountWithheldLocal, {
       currencyCode: this.context.organization.baseCurrency,
     });
@@ -170,7 +174,7 @@ export class SaleInvoiceTransformer extends Transformer {
   protected totalFormatted = (invoice: SaleInvoice): string => {
     return this.formatNumber(invoice.total, {
       currencyCode: invoice.currencyCode,
-      money: true
+      money: true,
     });
   };
 
@@ -209,14 +213,14 @@ export class SaleInvoiceTransformer extends Transformer {
 
   /**
    * Retrieves formatted adjustment amount.
-   * @param invoice 
+   * @param invoice
    * @returns {string}
    */
   protected adjustmentFormatted = (invoice: SaleInvoice): string => {
     return this.formatNumber(invoice.adjustment, {
       currencyCode: invoice.currencyCode,
-    })
-  }
+    });
+  };
 
   /**
    * Retrieve the taxes lines of sale invoice.
@@ -238,6 +242,25 @@ export class SaleInvoiceTransformer extends Transformer {
   protected entries = (invoice: SaleInvoice) => {
     return this.item(invoice.entries, new ItemEntryTransformer(), {
       currencyCode: invoice.currencyCode,
+    });
+  };
+
+  /**
+   * Retrieves the sale invoice direct-account income allocations
+   * (categories). Adds the `amountFormatted` virtual attribute so the
+   * drawer's read-only table can render a localized amount string without
+   * re-formatting client-side. Mirrors the Bill transformer.
+   */
+  protected categories = (invoice: SaleInvoice) => {
+    return (invoice.categories || []).map((category: any) => {
+      const raw = !isUndefined(category.toJSON) ? category.toJSON() : category;
+      return {
+        ...raw,
+        amountFormatted: this.formatNumber(category.amount, {
+          currencyCode: invoice.currencyCode,
+          money: false,
+        }),
+      };
     });
   };
 
