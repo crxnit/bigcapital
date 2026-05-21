@@ -62,9 +62,26 @@ export class GetMatchedTransactions {
 
     const totalPending = sumBy(uncategorizedTransactions, 'amount');
 
+    // Direction-aware candidate filter. A withdrawal (money out — bank
+    // transaction with negative amount, e.g. a credit-card charge) can
+    // only match outflow-side records (Bills, Expenses); a deposit (money
+    // in) can only match inflow-side records (SaleInvoices). Cashflow
+    // (transfers) and ManualJournal flow either way. Without this, the
+    // matching panel showed e.g. SaleInvoices as candidates for a credit-
+    // card charge.
+    const firstUnc = first(uncategorizedTransactions);
+    const txAmount = Number(firstUnc?.amount ?? 0);
+    const isWithdrawal = txAmount < 0;
+    const isDeposit = txAmount > 0;
+    const directionAllowed = (type: string): boolean => {
+      if (type === 'SaleInvoice') return !isWithdrawal;
+      if (type === 'Bill' || type === 'Expense') return !isDeposit;
+      return true;
+    };
+
     const filtered = filter.transactionType
       ? this.registered.filter((item) => item.type === filter.transactionType)
-      : this.registered;
+      : this.registered.filter((item) => directionAllowed(item.type));
 
     // All uncategorized transactions being matched together live on the same
     // bank account (same ledger being reconciled). Propagate that account id
