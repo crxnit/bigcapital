@@ -38,17 +38,21 @@ export class GetMatchedTransactionsByBills extends GetMatchedTransactionsByType 
    * @param {GetMatchedTransactionsFilter} filter -
    */
   public async getMatchedTransactions(filter: GetMatchedTransactionsFilter) {
-    // Retrieves the bill matches. Restrict to bills with a remaining due
-    // amount (`dueBills` modifier: amount − paymentAmount − creditedAmount
-    // > 0). Otherwise fully-paid bills appear as candidates and can never
-    // balance the bank transaction.
+    // Retrieves the published, not-yet-matched bills.
+    //
+    // Note: the previous version of this query chained `q.modify('dueBills')`
+    // (a raw-SQL WHERE on `COALESCE(AMOUNT,0)-COALESCE(PAYMENT_AMOUNT,0)-
+    // COALESCE(CREDITED_AMOUNT,0)>0`). Combined with `withGraphJoined`, that
+    // raw expression silently failed and the upstream `PromisePool` in
+    // `GetMatchedTransactions` swallowed the per-task error — leaving the
+    // bills service returning zero rows (no 500, just an empty candidate
+    // list). Filter on the `dueAmount` virtual in JS to sidestep the trap.
     const bills = await this.billModel()
       .query()
       .onBuild((q) => {
         q.withGraphJoined('matchedBankTransaction');
         q.whereNull('matchedBankTransaction.id');
         q.modify('published');
-        q.modify('dueBills');
 
         if (filter.fromDate) {
           q.where('billDate', '>=', filter.fromDate);
@@ -59,8 +63,10 @@ export class GetMatchedTransactionsByBills extends GetMatchedTransactionsByType 
         q.orderBy('billDate', 'DESC');
       });
 
+    const billsWithDue = bills.filter((b) => Number(b.dueAmount) > 0);
+
     return this.transformer.transform(
-      bills,
+      billsWithDue,
       new GetMatchedTransactionBillsTransformer(),
     );
   }

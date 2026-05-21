@@ -29,6 +29,12 @@ export class GetMatchedTransactionsByCashflow extends GetMatchedTransactionsByTy
   async getMatchedTransactions(
     filter: Omit<GetMatchedTransactionsFilter, 'transactionType'>,
   ) {
+    // Cashflow candidates are pre-recorded Money In/Out/Transfer/etc.
+    // entries that reconcile against an incoming bank-statement
+    // transaction on the SAME account. Without an account scope the
+    // listing showed owner-drawing and transfer entries from unrelated
+    // accounts as candidates for a credit-card charge — noise the user
+    // had to ignore.
     const transactions = await this.bankTransactionModel()
       .query()
       .onBuild((q) => {
@@ -41,6 +47,13 @@ export class GetMatchedTransactionsByCashflow extends GetMatchedTransactionsByTy
 
         // Published.
         q.modify('published');
+
+        // Same cashflow account as the uncategorized transaction. A
+        // recorded transfer creates one entry per account; only the one
+        // on this account can reconcile here.
+        if (filter.paymentAccountId) {
+          q.where('cashflowAccountId', filter.paymentAccountId);
+        }
 
         if (filter.fromDate) {
           q.where('date', '>=', filter.fromDate);
