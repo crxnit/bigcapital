@@ -169,6 +169,29 @@ PAT lifetime is 1 year; rotate before expiry.
 
 `deploy.sh` leaves the new containers running on smoke-test failure. Roll back manually if symptoms warrant.
 
+### Containerd layer-extraction flake on image pull
+
+Symptom: deploy step "Trigger remote deploy" fails partway through `docker compose pull` with
+
+```
+failed to extract layer (...): link /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/<N>/fs/app/node_modules/.pnpm/<pkg-A>/.../some.js /var/lib/.../snapshots/<N>/fs/app/node_modules/.pnpm/<pkg-B>/.../other.js: no such file or directory
+```
+
+The build itself succeeded — image is pushed to GHCR. The failure is the VPS-side extraction into the containerd overlayfs snapshotter, almost always a stale/half-extracted snapshot from a prior partial pull (we've seen it bite both sandbox and UAT after rapid back-to-back deploys). Retrying the workflow usually works because the next pull builds a fresh snapshot id. Hit it ≥2× on the same env, do a one-time cleanup on the VPS:
+
+```bash
+# stop the affected stack first if needed
+docker system prune -af --volumes=false        # safe — keeps named volumes
+# if it persists, the nuclear option (frees disk; next pull is a full pull):
+sudo systemctl stop docker
+sudo rm -rf /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots
+sudo systemctl start docker
+```
+
+Don't `prune --volumes` — that would delete the MariaDB and MinIO data.
+
+**Planned cleanup (2026-05-21):** schedule a monthly `docker system prune -af` on both VPS environments via cron, to keep cruft from accumulating. Not yet wired.
+
 ## Backups
 
 Runs nightly at 03:17 UTC (sandbox) / 03:47 UTC (UAT) — cron files in `deploy/bigcapital-*-backup.cron`. Each run:
