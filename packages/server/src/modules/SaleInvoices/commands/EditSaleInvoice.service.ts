@@ -67,20 +67,35 @@ export class EditSaleInvoice {
       .findById(saleInvoiceDTO.customerId)
       .throwIfNotFound();
 
-    // Validate items ids existance.
-    await this.itemsEntriesService.validateItemsIdsExistance(
-      saleInvoiceDTO.entries,
+    // Invoices may have no items entries (direct-account income
+    // allocations only); pass an empty array so the shared validators
+    // don't crash on undefined.
+    const invoiceEntries = saleInvoiceDTO.entries || [];
+
+    this.validators.validateAtLeastOneLine(
+      invoiceEntries,
+      saleInvoiceDTO.categories,
     );
+
+    // Validate items ids existance.
+    await this.itemsEntriesService.validateItemsIdsExistance(invoiceEntries);
     // Validate non-sellable entries items.
     await this.itemsEntriesService.validateNonSellableEntriesItems(
-      saleInvoiceDTO.entries,
+      invoiceEntries,
     );
     // Validate the items entries existance.
     await this.itemsEntriesService.validateEntriesIdsExistance(
       saleInvoiceId,
       'SaleInvoice',
-      saleInvoiceDTO.entries,
+      invoiceEntries,
     );
+
+    // Validate direct-account allocation rows reference income-type accounts.
+    if (saleInvoiceDTO.categories && saleInvoiceDTO.categories.length > 0) {
+      await this.validators.validateInvoiceCategoryAccountsType(
+        saleInvoiceDTO.categories,
+      );
+    }
     // Transform DTO object to model object.
     const saleInvoiceObj = await this.tranformEditDTOToModel(
       customer,

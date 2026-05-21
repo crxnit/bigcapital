@@ -33,6 +33,7 @@ import { BillLandedCost } from '@/modules/BillLandedCosts/models/BillLandedCost'
 import { BillExpenseCategory } from '@/modules/Bills/models/BillExpenseCategory.model';
 import { VendorCreditAppliedBill } from '@/modules/VendorCreditsApplyBills/models/VendorCreditAppliedBill';
 import { SaleInvoice } from '@/modules/SaleInvoices/models/SaleInvoice';
+import { SaleInvoiceIncomeCategory } from '@/modules/SaleInvoices/models/SaleInvoiceIncomeCategory.model';
 import { PaymentIntegration } from '@/modules/StripePayment/models/PaymentIntegration.model';
 import { PaymentReceivedEntry } from '@/modules/PaymentReceived/models/PaymentReceivedEntry';
 import { CreditNoteAppliedInvoice } from '@/modules/CreditNotesApplyInvoice/models/CreditNoteAppliedInvoice';
@@ -82,6 +83,7 @@ const models = [
   BillExpenseCategory,
   VendorCreditAppliedBill,
   SaleInvoice,
+  SaleInvoiceIncomeCategory,
   CreditNoteAppliedInvoice,
   CreditNote,
   RefundCreditNote,

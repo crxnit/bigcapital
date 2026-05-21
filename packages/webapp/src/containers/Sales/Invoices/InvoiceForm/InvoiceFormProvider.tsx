@@ -7,6 +7,7 @@ import { useFeatureCan } from '@/hooks/state';
 import { DashboardInsider } from '@/components/Dashboard';
 import { transformToEditForm, ITEMS_FILTER_ROLES_QUERY } from './utils';
 import {
+  useAccounts,
   useInvoice,
   useItems,
   useCustomers,
@@ -95,6 +96,14 @@ function InvoiceFormProvider({ invoiceId, baseCurrency, ...props }) {
     isLoading: isCustomersLoading,
   } = useCustomers({ page_size: 10000 });
 
+  // Handle fetch accounts. Request a large page so the full chart is in
+  // memory — InvoiceFormCategoriesTable's AccountsListFieldCell filters
+  // client-side over this `accounts` array (same FSelect-pagination gotcha
+  // documented in CLAUDE.md).
+  const { data: accounts, isLoading: isAccountsLoading } = useAccounts({
+    page_size: 10000,
+  });
+
   // Fetch warehouses list.
   const {
     data: warehouses,
@@ -138,11 +147,13 @@ function InvoiceFormProvider({ invoiceId, baseCurrency, ...props }) {
     isCustomersLoading ||
     isEstimateLoading ||
     isSettingsLoading ||
-    isInvoiceStateLoading;
+    isInvoiceStateLoading ||
+    isAccountsLoading;
 
   const provider = {
     invoice,
     items,
+    accounts,
     customers,
     newInvoice,
     estimateId,
@@ -156,6 +167,7 @@ function InvoiceFormProvider({ invoiceId, baseCurrency, ...props }) {
 
     isInvoiceLoading,
     isItemsLoading,
+    isAccountsLoading,
     isCustomersLoading,
     isSettingsLoading,
     isWarehouesLoading,

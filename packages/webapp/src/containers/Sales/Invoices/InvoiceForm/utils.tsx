@@ -35,6 +35,7 @@ import {
 import { convertBrandingTemplatesToOptions } from '@/containers/BrandingTemplates/BrandingTemplatesSelectFields';
 
 export const MIN_LINES_NUMBER = 1;
+export const MIN_CATEGORY_LINES = 1;
 
 // Default invoice entry object.
 export const defaultInvoiceEntry = {
@@ -48,6 +49,15 @@ export const defaultInvoiceEntry = {
   tax_rate_id: '',
   tax_rate: '',
   tax_amount: '',
+};
+
+// Default invoice direct-account income category row. Renders as a single
+// Description + Account + Amount row in the Categories table.
+export const defaultInvoiceCategory = {
+  index: 0,
+  income_account_id: '',
+  description: '',
+  amount: '',
 };
 
 // Default invoice object.
@@ -70,6 +80,7 @@ export const defaultInvoice = {
   project_id: '',
   pdf_template_id: '',
   entries: [...repeatValue(defaultInvoiceEntry, MIN_LINES_NUMBER)],
+  categories: [...repeatValue(defaultInvoiceCategory, MIN_CATEGORY_LINES)],
   attachments: [],
   payment_methods: {},
   discount: '',
@@ -106,12 +117,25 @@ export function transformToEditForm(invoice) {
     updateItemsEntriesTotal,
   )(initialEntries);
 
+  // Hydrate direct-account income allocations from the server response.
+  // Preserve the server `id` on each row so the next save's upsertGraph
+  // updates in place rather than deleting and recreating.
+  const rawCategories = invoice.categories || [];
+  const initialCategories =
+    rawCategories.length > 0
+      ? rawCategories.map((category) => ({
+          ...(category.id != null ? { id: category.id } : {}),
+          ...transformToForm(category, defaultInvoiceCategory),
+        }))
+      : [...repeatValue(defaultInvoiceCategory, MIN_CATEGORY_LINES)];
+
   return {
     ...transformToForm(invoice, defaultInvoice),
     inclusive_exclusive_tax: invoice.is_inclusive_tax
       ? TaxType.Inclusive
       : TaxType.Exclusive,
     entries,
+    categories: initialCategories,
     attachments: transformAttachmentsToForm(invoice),
     payment_methods: transformPaymentMethodsToForm(invoice?.payment_methods),
   };
@@ -207,14 +231,40 @@ const transformEntriesToRequest = (entries) => {
 /**
  * Filters the givne non-zero entries.
  */
-const filterNonZeroEntries = (entries) => {
+export const filterNonZeroEntries = (entries) => {
   return entries.filter((item) => item.item_id && item.quantity);
+};
+
+/**
+ * Filters direct-account income allocations (categories) to rows with both
+ * an account selected and a positive amount.
+ */
+export const filterNonZeroCategories = (categories = []) => {
+  return categories.filter(
+    (cat) => cat.income_account_id && Number(cat.amount) > 0,
+  );
+};
+
+/**
+ * Shapes the form's categories array for the API. Preserves `id` so
+ * upsertGraph updates in place; index assigned by row order.
+ */
+export const transformCategoriesToSubmit = (categories = []) => {
+  return categories.map((cat, i) => ({
+    ...(cat.id != null ? { id: cat.id } : {}),
+    index: i + 1,
+    income_account_id: cat.income_account_id,
+    description: cat.description ?? '',
+    amount: Number(cat.amount) || 0,
+  }));
 };
 
 /**
  * Transformes the form values to request body values.
  */
 export function transformValueToRequest(values) {
+  const categories = filterNonZeroCategories(values.categories || []);
+
   return {
     ...omit(values, [
       'invoice_no',
@@ -228,6 +278,7 @@ export function transformValueToRequest(values) {
     }),
     is_inclusive_tax: values.inclusive_exclusive_tax === TaxType.Inclusive,
     entries: transformEntriesToRequest(values.entries),
+    categories: transformCategoriesToSubmit(categories),
     delivered: false,
     attachments: transformAttachmentsToRequest(values),
     payment_methods: transformPaymentMethodsToRequest(values?.payment_methods),
@@ -264,7 +315,8 @@ const transformPaymentMethodsToForm = (
 
 export const useSetPrimaryWarehouseToForm = () => {
   const { setFieldValue } = useFormikContext();
-  const { warehouses, isWarehousesSuccess, isNewMode } = useInvoiceFormContext();
+  const { warehouses, isWarehousesSuccess, isNewMode } =
+    useInvoiceFormContext();
 
   React.useEffect(() => {
     if (isWarehousesSuccess && isNewMode) {
@@ -294,16 +346,25 @@ export const useSetPrimaryBranchToForm = () => {
 };
 
 /**
- * Retrieves the invoice subtotal.
+ * Retrieves the invoice subtotal. Includes BOTH the items-entries pre-tax
+ * total AND the new direct-account income allocations (`categories`) so
+ * the footer updates as the user fills either table. Mirrors the server:
+ * the stored `balance` column = items pre-tax + categories total.
  * @returns {number}
  */
 export const useInvoiceSubtotal = () => {
   const {
-    values: { entries },
+    values: { entries, categories },
   } = useFormikContext();
 
-  // Calculate the total due amount of invoice entries.
-  return React.useMemo(() => getEntriesTotal(entries), [entries]);
+  return React.useMemo(() => {
+    const itemsTotal = getEntriesTotal(entries) || 0;
+    const categoriesTotal = (categories || []).reduce(
+      (sum, c) => sum + (Number(c.amount) || 0),
+      0,
+    );
+    return itemsTotal + categoriesTotal;
+  }, [entries, categories]);
 };
 
 /**

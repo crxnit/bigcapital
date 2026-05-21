@@ -7,6 +7,7 @@ import {
 } from '../SaleInvoice.types';
 import { ItemEntry } from '@/modules/TransactionItemEntry/models/ItemEntry';
 import { SaleInvoice } from '../models/SaleInvoice';
+import { SaleInvoiceIncomeCategory } from '../models/SaleInvoiceIncomeCategory.model';
 import { UnlinkConvertedSaleEstimate } from '@/modules/SaleEstimates/commands/UnlinkConvertedSaleEstimate.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
@@ -47,7 +48,12 @@ export class DeleteSaleInvoice {
 
     @Inject(ItemEntry.name)
     private itemEntryModel: TenantModelProxy<typeof ItemEntry>,
-  ) { }
+
+    @Inject(SaleInvoiceIncomeCategory.name)
+    private saleInvoiceIncomeCategoryModel: TenantModelProxy<
+      typeof SaleInvoiceIncomeCategory
+    >,
+  ) {}
 
   /**
    * Validate the sale invoice has no payment entries.
@@ -131,6 +137,13 @@ export class DeleteSaleInvoice {
         .query(trx)
         .where('reference_id', saleInvoiceId)
         .where('reference_type', 'SaleInvoice')
+        .delete();
+
+      // Delete all associated direct-account income allocations. Service-
+      // side cascade — the FK has no ON DELETE CASCADE per fork convention.
+      await this.saleInvoiceIncomeCategoryModel()
+        .query(trx)
+        .where('saleInvoiceId', saleInvoiceId)
         .delete();
 
       await this.saleInvoiceModel().query(trx).findById(saleInvoiceId).delete();

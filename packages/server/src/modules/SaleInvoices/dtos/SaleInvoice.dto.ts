@@ -3,7 +3,6 @@ import { ItemEntryDto } from '@/modules/TransactionItemEntry/dto/ItemEntry.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -19,6 +18,49 @@ import {
 enum DiscountType {
   Percentage = 'percentage',
   Amount = 'amount',
+}
+
+/**
+ * A direct-account allocation row on an invoice (Description + Account +
+ * Amount). Mirrors BillExpenseCategoryDto but credits an income account
+ * instead of debiting an expense account.
+ */
+export class SaleInvoiceIncomeCategoryDto {
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({
+    description:
+      'The id of an existing category row. Preserve on edit so upsertGraph updates in place instead of delete+reinsert.',
+    required: false,
+  })
+  id?: number;
+
+  @IsOptional()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({ description: 'Display order index of the row', example: 1 })
+  index?: number;
+
+  @IsNotEmpty()
+  @ToNumber()
+  @IsInt()
+  @ApiProperty({
+    description: 'Income account the allocation credits',
+    example: 4000,
+  })
+  incomeAccountId: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ description: 'Row description', required: false })
+  description?: string;
+
+  @IsNotEmpty()
+  @ToNumber()
+  @IsNumber()
+  @ApiProperty({ description: 'Allocation amount (pre-tax)', example: 100 })
+  amount: number;
 }
 
 export class PaymentMethodDto {
@@ -143,16 +185,29 @@ class CommandSaleInvoiceDto {
   })
   isInclusiveTax?: boolean;
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ItemEntryDto)
-  @ArrayMinSize(1)
   @ApiProperty({
     description: 'Invoice line items',
     type: [ItemEntryDto],
-    minItems: 1,
+    required: false,
   })
-  entries: ItemEntryDto[];
+  entries?: ItemEntryDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SaleInvoiceIncomeCategoryDto)
+  @ApiProperty({
+    description:
+      'Direct-account income allocations (Description + Account + Amount). Either entries or categories must be non-empty; both may be set.',
+    type: () => SaleInvoiceIncomeCategoryDto,
+    isArray: true,
+    required: false,
+  })
+  categories?: SaleInvoiceIncomeCategoryDto[];
 
   @IsOptional()
   @ToNumber()

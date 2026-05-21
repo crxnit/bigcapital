@@ -13,6 +13,7 @@ import {
 
 import InvoiceFormHeader from './InvoiceFormHeader';
 import InvoiceItemsEntriesEditorField from './InvoiceItemsEntriesEditorField';
+import InvoiceFormCategoriesEditor from './InvoiceFormCategoriesEditor';
 import InvoiceFloatingActions from './InvoiceFloatingActions';
 import InvoiceFormFooter from './InvoiceFormFooter';
 import InvoiceFormDialogs from './InvoiceFormDialogs';
@@ -32,6 +33,7 @@ import {
   transformErrors,
   transformValueToRequest,
   resetFormState,
+  filterNonZeroCategories,
 } from './utils';
 import {
   InvoiceExchangeRateSync,
@@ -99,9 +101,14 @@ function InvoiceFormRoot({
       (item) => item.item_id && item.quantity,
     );
     const totalQuantity = sumBy(entries, (entry) => parseInt(entry.quantity));
+    const categories = filterNonZeroCategories(values.categories || []);
+    const categoriesTotal = sumBy(categories, (c) => Number(c.amount) || 0);
 
-    // Throw danger toaster in case total quantity equals zero.
-    if (totalQuantity === 0) {
+    // Only block when the invoice is genuinely empty. With the new direct-
+    // account income allocations panel, an invoice may have zero items
+    // entries (and therefore zero quantity) yet still be valid because the
+    // categories table carries the full amount.
+    if (totalQuantity === 0 && categoriesTotal === 0) {
       AppToaster.show({
         message: intl.get('quantity_cannot_be_zero_or_empty'),
         intent: Intent.DANGER,
@@ -182,6 +189,12 @@ function InvoiceFormRoot({
             <Box p="18px 32px 0">
               <InvoiceFormActions />
               <InvoiceItemsEntriesEditorField />
+              <Box mt={4}>
+                <Box mb={2} fontSize={13} fontWeight={500}>
+                  Direct revenue allocations
+                </Box>
+                <InvoiceFormCategoriesEditor />
+              </Box>
             </Box>
             <InvoiceFormFooter />
           </PageForm.Body>

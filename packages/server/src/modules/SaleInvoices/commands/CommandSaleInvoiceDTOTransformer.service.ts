@@ -47,6 +47,28 @@ export class CommandSaleInvoiceDTOTransformer {
   ) {}
 
   /**
+   * Normalize direct-account income allocation rows. Preserves `id` on
+   * edit so upsertGraph updates in place rather than delete+reinsert.
+   */
+  private normalizeInvoiceCategories(categories: any[] = []): Array<{
+    id?: number;
+    index: number;
+    incomeAccountId: number;
+    description?: string;
+    amount: number;
+  }> {
+    return (categories || [])
+      .filter((c) => c && c.incomeAccountId != null && Number(c.amount) > 0)
+      .map((c, i) => ({
+        ...(c.id != null ? { id: c.id } : {}),
+        index: c.index ?? i + 1,
+        incomeAccountId: c.incomeAccountId,
+        description: c.description ?? '',
+        amount: Number(c.amount) || 0,
+      }));
+  }
+
+  /**
    * Transformes the create DTO to invoice object model.
    * @param {ISaleInvoiceCreateDTO} saleInvoiceDTO - Sale invoice DTO.
    * @param {ISaleInvoice} oldSaleInvoice - Old sale invoice.
@@ -58,7 +80,17 @@ export class CommandSaleInvoiceDTOTransformer {
     oldSaleInvoice?: SaleInvoice,
   ): Promise<SaleInvoice> {
     const entriesModels = this.transformDTOEntriesToModels(saleInvoiceDTO);
-    const amount = this.getDueBalanceItemEntries(entriesModels);
+    const itemsTotal = this.getDueBalanceItemEntries(entriesModels);
+
+    // Normalize direct-account income allocations.
+    const categories = this.normalizeInvoiceCategories(
+      saleInvoiceDTO.categories,
+    );
+    const categoriesTotal = sumBy(categories, (c) => Number(c.amount) || 0);
+    // `balance` stores the invoice's gross amount (decremented by payments
+    // later). Direct-account category allocations add to this alongside
+    // the items-entries total.
+    const amount = itemsTotal + categoriesTotal;
 
     // Retreive the next invoice number.
     const autoNextNumber = await this.invoiceIncrement.getNextInvoiceNumber();
@@ -73,19 +105,23 @@ export class CommandSaleInvoiceDTOTransformer {
     // Validate the invoice is required.
     this.validators.validateInvoiceNoRequire(invoiceNo);
 
-    const initialEntries = saleInvoiceDTO.entries.map((entry) => ({
+    const dtoEntries = saleInvoiceDTO.entries || [];
+    const initialEntries = dtoEntries.map((entry) => ({
       referenceType: 'SaleInvoice',
       isInclusiveTax: saleInvoiceDTO.isInclusiveTax,
       ...entry,
     }));
-    const asyncEntries = await composeAsync(
-      // Associate tax rate from tax id to entries.
-      this.taxDTOTransformer.assocTaxRateFromTaxIdToEntries,
-      // Associate tax rate id from tax code to entries.
-      this.taxDTOTransformer.assocTaxRateIdFromCodeToEntries,
-      // Sets default cost and sell account to invoice items entries.
-      this.itemsEntriesService.setItemsEntriesDefaultAccounts,
-    )(initialEntries);
+    const asyncEntries =
+      initialEntries.length > 0
+        ? await composeAsync(
+            // Associate tax rate from tax id to entries.
+            this.taxDTOTransformer.assocTaxRateFromTaxIdToEntries,
+            // Associate tax rate id from tax code to entries.
+            this.taxDTOTransformer.assocTaxRateIdFromCodeToEntries,
+            // Sets default cost and sell account to invoice items entries.
+            this.itemsEntriesService.setItemsEntriesDefaultAccounts,
+          )(initialEntries)
+        : [];
 
     const entries = R.compose(
       // Remove tax code from entries.
@@ -100,6 +136,7 @@ export class CommandSaleInvoiceDTOTransformer {
         omit(saleInvoiceDTO, [
           'delivered',
           'entries',
+          'categories',
           'fromEstimateId',
           'attachments',
         ]),
@@ -117,6 +154,7 @@ export class CommandSaleInvoiceDTOTransformer {
       ...(!oldSaleInvoice && { paymentAmount: 0 }),
       ...(invoiceNo ? { invoiceNo } : {}),
       entries,
+      categories,
       userId: authorizedUser.id,
     } as SaleInvoice;
 
@@ -143,7 +181,7 @@ export class CommandSaleInvoiceDTOTransformer {
   private transformDTOEntriesToModels = (
     saleInvoiceDTO: CreateSaleInvoiceDto | EditSaleInvoiceDto,
   ): ItemEntry[] => {
-    return saleInvoiceDTO.entries.map((entry) => {
+    return (saleInvoiceDTO.entries || []).map((entry) => {
       return ItemEntry.fromJson({
         ...entry,
         isInclusiveTax: saleInvoiceDTO.isInclusiveTax,

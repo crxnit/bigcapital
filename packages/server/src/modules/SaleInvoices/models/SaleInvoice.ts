@@ -60,6 +60,7 @@ export class SaleInvoice extends TenantBaseModel {
 
   public taxes!: TaxRateTransaction[];
   public entries!: ItemEntry[];
+  public categories?: any[];
   public attachments!: Document[];
   public writtenoffExpenseAccount!: Account;
   public paymentMethods!: TransactionPaymentServiceEntry[];
@@ -110,6 +111,7 @@ export class SaleInvoice extends TenantBaseModel {
       'discountAmountLocal',
       'discountPercentage',
 
+      'categoriesTotal',
       'total',
       'totalLocal',
 
@@ -204,7 +206,28 @@ export class SaleInvoice extends TenantBaseModel {
   }
 
   /**
+   * Sum of direct-account allocations (sale_invoice_income_categories
+   * rows). Adds into the invoice total alongside the item-entries subtotal.
+   * Categories are pre-tax and don't carry their own tax rate in v1.
+   * @returns {number}
+   */
+  get categoriesTotal(): number {
+    const cats = this.categories || [];
+    let sum = 0;
+    for (const c of cats) sum += Number(c?.amount) || 0;
+    return sum;
+  }
+
+  /**
    * Invoice total. (Tax included)
+   *
+   * Note: `this.subtotal` already includes `categoriesTotal` because the
+   * DTO transformer sums `itemsTotal + categoriesTotal` into the `balance`
+   * column, and `subtotal === amount === balance`. Don't add
+   * categoriesTotal a second time here — that would double-count direct
+   * allocations and make the AR receivable entry disagree with the sum of
+   * revenue + category CR rows.
+   *
    * @returns {number}
    */
   get total() {
@@ -538,6 +561,23 @@ export class SaleInvoice extends TenantBaseModel {
         },
         filter(builder) {
           builder.where('reference_type', 'SaleInvoice');
+          builder.orderBy('index', 'ASC');
+        },
+      },
+
+      /**
+       * Direct-account income allocations.
+       */
+      categories: {
+        relation: Model.HasManyRelation,
+        // Relative require — `@/` alias does NOT resolve in relationMappings.
+        modelClass: require('./SaleInvoiceIncomeCategory.model')
+          .SaleInvoiceIncomeCategory,
+        join: {
+          from: 'sales_invoices.id',
+          to: 'sale_invoice_income_categories.saleInvoiceId',
+        },
+        filter(builder) {
           builder.orderBy('index', 'ASC');
         },
       },

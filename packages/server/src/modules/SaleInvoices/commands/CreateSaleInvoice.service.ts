@@ -76,14 +76,31 @@ export class CreateSaleInvoice {
       // Validate the sale estimate is not already converted to invoice.
       this.commandEstimateValidators.validateEstimateNotConverted(fromEstimate);
     }
-    // Validate items ids existance.
-    await this.itemsEntriesService.validateItemsIdsExistance(
-      saleInvoiceDTO.entries,
+    // Invoices may now ship without any items entries (direct-account
+    // income allocations only). Each entry-level validator is array-based;
+    // pass an empty array so we don't crash on undefined and still no-op
+    // when the user only used the categories panel.
+    const invoiceEntries = saleInvoiceDTO.entries || [];
+
+    // Validate at least one line (entries OR categories) is non-empty.
+    this.validators.validateAtLeastOneLine(
+      invoiceEntries,
+      saleInvoiceDTO.categories,
     );
+
+    // Validate items ids existance.
+    await this.itemsEntriesService.validateItemsIdsExistance(invoiceEntries);
     // Validate items should be sellable items.
     await this.itemsEntriesService.validateNonSellableEntriesItems(
-      saleInvoiceDTO.entries,
+      invoiceEntries,
     );
+
+    // Validate direct-account allocation rows reference income-type accounts.
+    if (saleInvoiceDTO.categories && saleInvoiceDTO.categories.length > 0) {
+      await this.validators.validateInvoiceCategoryAccountsType(
+        saleInvoiceDTO.categories,
+      );
+    }
     // Transform DTO object to model object.
     const saleInvoiceObj = await this.transformCreateDTOToModel(
       customer,
