@@ -69,11 +69,24 @@ export class GetMatchedTransactions {
     // (transfers) and ManualJournal flow either way. Without this, the
     // matching panel showed e.g. SaleInvoices as candidates for a credit-
     // card charge.
+    //
+    // Precondition: all uncategorized transactions in the group are
+    // assumed to share a sign (the matching UI already enforces this by
+    // disabling cross-direction multi-select). We infer direction from
+    // the first row; a mixed batch would silently get filtered to one
+    // side's candidates. If the UI ever permits mixed batches, replace
+    // this with `uncategorizedTransactions.every(t => Math.sign(t.amount)
+    // === Math.sign(first.amount))` and throw on mismatch.
+    //
+    // A zero-amount transaction (neither withdrawal nor deposit) falls
+    // through to "all types allowed" — the most permissive default and
+    // the same behaviour the code had before this guard was documented.
     const firstUnc = first(uncategorizedTransactions);
     const txAmount = Number(firstUnc?.amount ?? 0);
     const isWithdrawal = txAmount < 0;
     const isDeposit = txAmount > 0;
     const directionAllowed = (type: string): boolean => {
+      if (!isWithdrawal && !isDeposit) return true;
       if (type === 'SaleInvoice') return !isWithdrawal;
       if (type === 'Bill' || type === 'Expense') return !isDeposit;
       return true;
