@@ -20,7 +20,7 @@ export default function InvoiceFormCategoriesEditor() {
         <InvoiceFormCategoriesTable
           categories={value}
           onChange={(rows) => setFieldValue('categories', rows)}
-          errors={error}
+          error={error}
           currencyCode={values.currency_code}
         />
       )}

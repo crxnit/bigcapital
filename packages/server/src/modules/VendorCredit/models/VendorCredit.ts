@@ -12,6 +12,7 @@ import { VendorCreditMeta } from './VendorCredit.meta';
 import { InjectModelDefaultViews } from '@/modules/Views/decorators/InjectModelDefaultViews.decorator';
 import { VendorCreditDefaultViews } from '../constants';
 import { InjectAttachable } from '@/modules/Attachments/decorators/InjectAttachable.decorator';
+import type { VendorCreditExpenseCategory } from './VendorCreditExpenseCategory.model';
 
 @InjectAttachable()
 @ExportableModel()
@@ -45,7 +46,7 @@ export class VendorCredit extends TenantBaseModel {
   warehouse?: Warehouse;
   branch?: Branch;
   entries?: ItemEntry[];
-  categories?: any[];
+  categories?: VendorCreditExpenseCategory[];
   attachments?: Document[];
 
   createdAt: Date;

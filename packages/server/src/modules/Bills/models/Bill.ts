@@ -14,6 +14,7 @@ import { BillMeta } from './Bill.meta';
 import { InjectModelDefaultViews } from '@/modules/Views/decorators/InjectModelDefaultViews.decorator';
 import { BillDefaultViews } from '../Bills.constants';
 import { InjectAttachable } from '@/modules/Attachments/decorators/InjectAttachable.decorator';
+import type { BillExpenseCategory } from './BillExpenseCategory.model';
 
 @InjectAttachable()
 @ExportableModel()
@@ -53,7 +54,7 @@ export class Bill extends TenantBaseModel {
   public updatedAt: Date | null;
 
   public entries?: ItemEntry[];
-  public categories?: any[];
+  public categories?: BillExpenseCategory[];
   public attachments!: Document[];
   public locatedLandedCosts?: BillLandedCost[];
   /**

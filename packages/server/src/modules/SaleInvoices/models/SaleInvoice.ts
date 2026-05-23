@@ -18,6 +18,7 @@ import { InjectModelMeta } from '@/modules/Tenancy/TenancyModels/decorators/Inje
 import { SaleInvoiceMeta } from './SaleInvoice.meta';
 import { InjectModelDefaultViews } from '@/modules/Views/decorators/InjectModelDefaultViews.decorator';
 import { SaleInvoiceDefaultViews } from '../constants';
+import type { SaleInvoiceIncomeCategory } from './SaleInvoiceIncomeCategory.model';
 
 @InjectAttachable()
 @ExportableModel()
@@ -60,7 +61,7 @@ export class SaleInvoice extends TenantBaseModel {
 
   public taxes!: TaxRateTransaction[];
   public entries!: ItemEntry[];
-  public categories?: any[];
+  public categories?: SaleInvoiceIncomeCategory[];
   public attachments!: Document[];
   public writtenoffExpenseAccount!: Account;
   public paymentMethods!: TransactionPaymentServiceEntry[];
