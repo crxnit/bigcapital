@@ -26,8 +26,21 @@ import {
   transformAttachmentsToRequest,
 } from '@/containers/Attachments/utils';
 import { convertBrandingTemplatesToOptions } from '@/containers/BrandingTemplates/BrandingTemplatesSelectFields';
+import {
+  MIN_CATEGORY_LINES,
+  filterNonZeroAllocations,
+  hydrateAllocationsForEdit,
+  makeDefaultAllocationCategory,
+  transformAllocationsToSubmit,
+} from '@/containers/_shared/Allocations/utils';
 
 export const MIN_LINES_NUMBER = 1;
+export { MIN_CATEGORY_LINES };
+
+// Default credit note direct-account income category row. Renders as a
+// single Account + Description + Amount row in the Categories table.
+export const defaultCreditNoteCategory =
+  makeDefaultAllocationCategory('income_account_id');
 
 // Default entry object.
 export const defaultCreditNoteEntry = {
@@ -56,6 +69,7 @@ export const defaultCreditNote = {
   exchange_rate: 1,
   currency_code: '',
   entries: [...repeatValue(defaultCreditNoteEntry, MIN_LINES_NUMBER)],
+  categories: [...repeatValue(defaultCreditNoteCategory, MIN_CATEGORY_LINES)],
   attachments: [],
   pdf_template_id: '',
   discount: '',
@@ -81,11 +95,17 @@ export function transformToEditForm(creditNote) {
     updateItemsEntriesTotal,
   )(initialEntries);
 
+  const initialCategories = hydrateAllocationsForEdit(
+    creditNote.categories,
+    'income_account_id',
+  );
+
   const attachment = transformAttachmentsToForm(creditNote);
 
   return {
     ...transformToForm(creditNote, defaultCreditNote),
     entries,
+    categories: initialCategories,
     attachment,
   };
 }
@@ -112,15 +132,31 @@ export const filterNonZeroEntries = (entries) => {
 };
 
 /**
+ * Filters direct-account income allocations (categories) to rows with both
+ * an account selected and a positive amount.
+ */
+export const filterNonZeroCategories = (categories = []) =>
+  filterNonZeroAllocations(categories, 'income_account_id');
+
+/**
+ * Shapes the form's categories array for the API. Preserves `id` so
+ * upsertGraph updates in place; index assigned by row order.
+ */
+export const transformCategoriesToSubmit = (categories = []) =>
+  transformAllocationsToSubmit(categories, 'income_account_id');
+
+/**
  * Transformes form values to request body.
  */
 export const transformFormValuesToRequest = (values) => {
   const entries = filterNonZeroEntries(values.entries);
+  const categories = filterNonZeroCategories(values.categories || []);
   const attachments = transformAttachmentsToRequest(values);
 
   return {
     ...values,
     entries: transformEntriesToSubmit(entries),
+    categories: transformCategoriesToSubmit(categories),
     open: false,
     attachments,
   };
@@ -163,7 +199,8 @@ export const useSetPrimaryBranchToForm = () => {
 
 export const useSetPrimaryWarehouseToForm = () => {
   const { setFieldValue } = useFormikContext();
-  const { warehouses, isWarehousesSuccess, isNewMode } = useCreditNoteFormContext();
+  const { warehouses, isWarehousesSuccess, isNewMode } =
+    useCreditNoteFormContext();
 
   React.useEffect(() => {
     if (isWarehousesSuccess && isNewMode) {

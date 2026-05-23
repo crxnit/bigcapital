@@ -1,8 +1,9 @@
 import { ILedgerEntry } from '@/modules/Ledger/types/Ledger.types';
 import { CreditNote } from '../models/CreditNote';
-import { AccountNormal } from '@/interfaces/Account';
+import { AccountNormal } from '@/modules/Accounts/Accounts.types';
 import { Ledger } from '@/modules/Ledger/Ledger';
 import { ItemEntry } from '@/modules/TransactionItemEntry/models/ItemEntry';
+import { mapAllocationLedgerEntries } from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 export class CreditNoteGL {
   creditNoteModel: CreditNote;
@@ -162,13 +163,29 @@ export class CreditNoteGL {
   public getCreditNoteGLEntries(): ILedgerEntry[] {
     const AREntry = this.creditNoteAREntry;
 
-    const itemsEntries = this.creditNoteModel.entries.map((entry, index) =>
-      this.getCreditNoteItemEntry(entry, index),
+    const itemsEntries = (this.creditNoteModel.entries || []).map(
+      (entry, index) => this.getCreditNoteItemEntry(entry, index),
+    );
+    const categoryEntries = mapAllocationLedgerEntries(
+      this.creditNoteModel.categories,
+      {
+        accountField: 'incomeAccountId',
+        side: 'debit',
+        accountNormal: AccountNormal.CREDIT,
+        commonEntry: this.creditNoteCommonEntry,
+        exchangeRate: this.creditNoteModel.exchangeRate,
+      },
     );
     const discountEntry = this.discountEntry;
     const adjustmentEntry = this.adjustmentEntry;
 
-    return [AREntry, discountEntry, adjustmentEntry, ...itemsEntries];
+    return [
+      AREntry,
+      discountEntry,
+      adjustmentEntry,
+      ...itemsEntries,
+      ...categoryEntries,
+    ];
   }
 
   /**

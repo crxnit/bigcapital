@@ -13,6 +13,13 @@ import { events } from '@/common/events/events';
 import { CommandCreditNoteDTOTransform } from './CommandCreditNoteDTOTransform.service';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { EditCreditNoteDto } from '../dtos/CreditNote.dto';
+import { Account } from '@/modules/Accounts/models/Account.model';
+import { ACCOUNT_ROOT_TYPE } from '@/constants/accounts';
+import {
+  validateAllocationAtLeastOneLine,
+  validateAllocationCategoryAccountsType,
+} from '@/modules/_shared/allocations/AllocationCategory.helpers';
+import { ERRORS } from '../constants';
 
 @Injectable()
 export class EditCreditNoteService {
@@ -30,6 +37,9 @@ export class EditCreditNoteService {
 
     @Inject(Contact.name)
     private contactModel: TenantModelProxy<typeof Contact>,
+
+    @Inject(Account.name)
+    private accountModel: TenantModelProxy<typeof Account>,
 
     private commandCreditNoteDTOTransform: CommandCreditNoteDTOTransform,
     private itemsEntriesService: ItemsEntriesService,
@@ -56,20 +66,44 @@ export class EditCreditNoteService {
       .query()
       .findById(creditNoteEditDTO.customerId);
 
-    // Validate items ids existance.
-    await this.itemsEntriesService.validateItemsIdsExistance(
-      creditNoteEditDTO.entries,
+    // Credit notes may have no items entries (direct-account income
+    // allocations only); pass an empty array so the shared validators
+    // don't crash on undefined.
+    const creditNoteEntries = creditNoteEditDTO.entries || [];
+
+    validateAllocationAtLeastOneLine(
+      creditNoteEntries,
+      creditNoteEditDTO.categories,
+      ERRORS.CREDIT_NOTE_NO_LINES,
     );
+
+    // Validate items ids existance.
+    await this.itemsEntriesService.validateItemsIdsExistance(creditNoteEntries);
     // Validate non-sellable entries items.
     await this.itemsEntriesService.validateNonSellableEntriesItems(
-      creditNoteEditDTO.entries,
+      creditNoteEntries,
     );
     // Validate the items entries existance.
     await this.itemsEntriesService.validateEntriesIdsExistance(
       creditNoteId,
       'CreditNote',
-      creditNoteEditDTO.entries,
+      creditNoteEntries,
     );
+    // Validate direct-account allocation rows reference income-type accounts.
+    if (
+      creditNoteEditDTO.categories &&
+      creditNoteEditDTO.categories.length > 0
+    ) {
+      await validateAllocationCategoryAccountsType(
+        creditNoteEditDTO.categories,
+        this.accountModel,
+        {
+          accountField: 'incomeAccountId',
+          rootType: ACCOUNT_ROOT_TYPE.INCOME,
+          errorCode: ERRORS.CREDIT_NOTE_CATEGORY_ACCOUNT_INVALID_TYPE,
+        },
+      );
+    }
     // Transformes the given DTO to storage layer data.
     const creditNoteModel =
       await this.commandCreditNoteDTOTransform.transformCreateEditDTOToModel(

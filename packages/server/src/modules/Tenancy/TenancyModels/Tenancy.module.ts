@@ -38,6 +38,7 @@ import { PaymentIntegration } from '@/modules/StripePayment/models/PaymentIntegr
 import { PaymentReceivedEntry } from '@/modules/PaymentReceived/models/PaymentReceivedEntry';
 import { CreditNoteAppliedInvoice } from '@/modules/CreditNotesApplyInvoice/models/CreditNoteAppliedInvoice';
 import { CreditNote } from '@/modules/CreditNotes/models/CreditNote';
+import { CreditNoteIncomeCategory } from '@/modules/CreditNotes/models/CreditNoteIncomeCategory.model';
 import { SaleReceipt } from '@/modules/SaleReceipts/models/SaleReceipt';
 import { ManualJournal } from '@/modules/ManualJournals/models/ManualJournal';
 import { ManualJournalEntry } from '@/modules/ManualJournals/models/ManualJournalEntry';
@@ -86,6 +87,7 @@ const models = [
   SaleInvoiceIncomeCategory,
   CreditNoteAppliedInvoice,
   CreditNote,
+  CreditNoteIncomeCategory,
   RefundCreditNote,
   SaleReceipt,
   ManualJournal,

@@ -1,6 +1,7 @@
-import { AttachmentTransformer } from "@/modules/Attachments/Attachment.transformer";
-import { ItemEntryTransformer } from "@/modules/TransactionItemEntry/ItemEntry.transformer";
-import { Transformer } from "@/modules/Transformer/Transformer";
+import { isUndefined } from 'lodash';
+import { AttachmentTransformer } from '@/modules/Attachments/Attachment.transformer';
+import { ItemEntryTransformer } from '@/modules/TransactionItemEntry/ItemEntry.transformer';
+import { Transformer } from '@/modules/Transformer/Transformer';
 
 export class CreditNoteTransformer extends Transformer {
   /**
@@ -29,6 +30,7 @@ export class CreditNoteTransformer extends Transformer {
       'totalLocalFormatted',
 
       'entries',
+      'categories',
       'attachments',
     ];
   };
@@ -180,6 +182,25 @@ export class CreditNoteTransformer extends Transformer {
   protected entries = (credit) => {
     return this.item(credit.entries, new ItemEntryTransformer(), {
       currencyCode: credit.currencyCode,
+    });
+  };
+
+  /**
+   * Retrieves the credit note direct-account income allocations
+   * (categories). Adds an `amountFormatted` virtual attribute so the
+   * drawer/read-only table can render a localized amount string without
+   * re-formatting client-side. Mirrors the SaleInvoice transformer.
+   */
+  protected categories = (credit) => {
+    return (credit.categories || []).map((category: any) => {
+      const raw = !isUndefined(category.toJSON) ? category.toJSON() : category;
+      return {
+        ...raw,
+        amountFormatted: this.formatNumber(category.amount, {
+          currencyCode: credit.currencyCode,
+          money: false,
+        }),
+      };
     });
   };
 

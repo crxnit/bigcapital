@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { omit } from 'lodash';
+import { omit, sumBy } from 'lodash';
 import * as moment from 'moment';
 import * as composeAsync from 'async/compose';
 import * as R from 'ramda';
@@ -18,6 +18,7 @@ import {
   CreditNoteEntryDto,
   EditCreditNoteDto,
 } from '../dtos/CreditNote.dto';
+import { normalizeAllocationCategories } from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 @Injectable()
 export class CommandCreditNoteDTOTransform {
@@ -34,7 +35,7 @@ export class CommandCreditNoteDTOTransform {
     private readonly warehouseDTOTransform: WarehouseTransactionDTOTransform,
     private readonly brandingTemplatesTransformer: BrandingTemplateDTOTransformer,
     private readonly creditNoteAutoIncrement: CreditNoteAutoIncrementService,
-  ) { }
+  ) {}
 
   /**
    * Transforms the credit/edit DTO to model.
@@ -46,10 +47,19 @@ export class CommandCreditNoteDTOTransform {
     customerCurrencyCode: string,
     oldCreditNote?: CreditNote,
   ): Promise<CreditNote> => {
-    // Retrieve the total amount of the given items entries.
-    const amount = this.itemsEntriesService.getTotalItemsEntries(
-      creditNoteDTO.entries,
-    );
+    const dtoEntries = creditNoteDTO.entries || [];
+
+    // Calculates the total amount of items entries.
+    const itemsTotal =
+      this.itemsEntriesService.getTotalItemsEntries(dtoEntries);
+    const categories = normalizeAllocationCategories(creditNoteDTO.categories, {
+      accountField: 'incomeAccountId',
+    });
+    const categoriesTotal = sumBy(categories, (c) => Number(c.amount) || 0);
+    // `amount` stores the credit note's gross balance; direct-account
+    // category allocations add to this alongside the items entries total.
+    const amount = itemsTotal + categoriesTotal;
+
     const entries = R.compose(
       // Associate the default index to each item entry.
       assocItemEntriesDefaultIndex,
@@ -59,7 +69,7 @@ export class CommandCreditNoteDTOTransform {
         ...entry,
         referenceType: 'CreditNote',
       })),
-    )(creditNoteDTO.entries);
+    )(dtoEntries);
 
     // Retrieves the next credit note number.
     const autoNextNumber = this.creditNoteAutoIncrement.getNextCreditNumber();
@@ -72,7 +82,7 @@ export class CommandCreditNoteDTOTransform {
 
     const initialDTO = {
       ...formatDateFields(
-        omit(creditNoteDTO, ['open', 'attachments']),
+        omit(creditNoteDTO, ['open', 'attachments', 'categories']),
         ['creditNoteDate'],
       ),
       creditNoteNumber,
@@ -80,10 +90,11 @@ export class CommandCreditNoteDTOTransform {
       currencyCode: customerCurrencyCode,
       exchangeRate: creditNoteDTO.exchangeRate || 1,
       entries,
+      categories,
       ...(creditNoteDTO.open &&
         !oldCreditNote?.openedAt && {
-        openedAt: moment().toMySqlDateTime(),
-      }),
+          openedAt: moment().toMySqlDateTime(),
+        }),
       refundedAmount: 0,
       invoicesAmount: 0,
     };

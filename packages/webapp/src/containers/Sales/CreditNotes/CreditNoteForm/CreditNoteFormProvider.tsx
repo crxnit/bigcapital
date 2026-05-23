@@ -8,6 +8,7 @@ import { Features } from '@/constants';
 import { useFeatureCan } from '@/hooks/state';
 
 import {
+  useAccounts,
   useCreditNote,
   useCreateCreditNote,
   useEditCreditNote,
@@ -54,6 +55,14 @@ function CreditNoteFormProvider({ creditNoteId, ...props }) {
     data: { items },
     isLoading: isItemsLoading,
   } = useItems({
+    page_size: 10000,
+  });
+
+  // Handle fetch accounts. Request a large page so the full chart is in
+  // memory — AllocationsCategoriesTable's AccountsListFieldCell filters
+  // client-side over this `accounts` array (same FSelect-pagination gotcha
+  // documented in CLAUDE.md).
+  const { data: accounts, isLoading: isAccountsLoading } = useAccounts({
     page_size: 10000,
   });
 
@@ -118,7 +127,8 @@ function CreditNoteFormProvider({ creditNoteId, ...props }) {
     isCustomersLoading ||
     isCreditNoteLoading ||
     isInvoiceLoading ||
-    isBrandingTemplatesLoading;
+    isBrandingTemplatesLoading ||
+    isAccountsLoading;
 
   // Provider payload.
   const provider = {
@@ -127,12 +137,14 @@ function CreditNoteFormProvider({ creditNoteId, ...props }) {
     creditNote,
     branches,
     warehouses,
+    accounts,
     submitPayload,
     isNewMode,
     newCreditNote,
 
     isItemsLoading,
     isCustomersLoading,
+    isAccountsLoading,
     isFeatureLoading,
     isBranchesSuccess,
     isWarehousesSuccess,

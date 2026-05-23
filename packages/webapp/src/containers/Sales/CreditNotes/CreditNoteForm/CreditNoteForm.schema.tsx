@@ -3,11 +3,14 @@ import * as Yup from 'yup';
 import intl from 'react-intl-universal';
 import { DATATYPES_LENGTH } from '@/constants/dataTypes';
 import { isBlank } from '@/utils';
+import { makeAllocationCategoriesSchema } from '@/containers/_shared/Allocations/schema';
 
 const getSchema = () =>
   Yup.object().shape({
     customer_id: Yup.string().label(intl.get('customer_name_')).required(),
-    credit_note_date: Yup.date().required().label(intl.get('credit_note_date_')),
+    credit_note_date: Yup.date()
+      .required()
+      .label(intl.get('credit_note_date_')),
     credit_note_number: Yup.string()
       .max(DATATYPES_LENGTH.STRING)
       .label(intl.get('credit_note_no_')),
@@ -25,7 +28,7 @@ const getSchema = () =>
       .label(intl.get('note')),
     branch_id: Yup.string(),
     warehouse_id: Yup.string(),
-    exchange_rate:Yup.number(),
+    exchange_rate: Yup.number(),
     entries: Yup.array().of(
       Yup.object().shape({
         quantity: Yup.number()
@@ -46,6 +49,7 @@ const getSchema = () =>
         description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
       }),
     ),
+    categories: makeAllocationCategoriesSchema('income_account_id'),
   });
 
 export const CreateCreditNoteFormSchema = getSchema;

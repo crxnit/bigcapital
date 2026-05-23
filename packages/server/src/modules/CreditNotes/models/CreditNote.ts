@@ -12,6 +12,7 @@ import { CreditNoteMeta } from './CreditNote.meta';
 import { InjectModelDefaultViews } from '@/modules/Views/decorators/InjectModelDefaultViews.decorator';
 import { CreditNoteDefaultViews } from '../constants';
 import { InjectAttachable } from '@/modules/Attachments/decorators/InjectAttachable.decorator';
+import type { CreditNoteIncomeCategory } from './CreditNoteIncomeCategory.model';
 
 @InjectAttachable()
 @ExportableModel()
@@ -40,6 +41,7 @@ export class CreditNote extends TenantBaseModel {
 
   public customer!: Customer;
   public entries!: ItemEntry[];
+  public categories?: CreditNoteIncomeCategory[];
 
   public branch!: Branch;
   public warehouse!: Warehouse;
@@ -82,11 +84,32 @@ export class CreditNote extends TenantBaseModel {
       'discountAmountLocal',
       'discountPercentage',
 
+      'categoriesTotal',
       'total',
       'totalLocal',
 
       'adjustmentLocal',
     ];
+  }
+
+  /**
+   * Sum of direct-account allocations (credit_note_income_categories
+   * rows). Adds into the credit note total alongside the item-entries
+   * subtotal. Categories are pre-tax in v1.
+   *
+   * Note: `this.subtotal` (which equals `this.amount`) already includes
+   * categoriesTotal because the DTO transformer sums itemsTotal +
+   * categoriesTotal into the `amount` column. Do NOT add categoriesTotal
+   * to `total` a second time — that would double-count the allocations
+   * and make the AR receivable entry disagree with the sum of income +
+   * category DR legs.
+   * @returns {number}
+   */
+  get categoriesTotal(): number {
+    const cats = this.categories || [];
+    let sum = 0;
+    for (const c of cats) sum += Number(c?.amount) || 0;
+    return sum;
   }
 
   /**
@@ -315,6 +338,23 @@ export class CreditNote extends TenantBaseModel {
         },
         filter(builder) {
           builder.where('reference_type', 'CreditNote');
+          builder.orderBy('index', 'ASC');
+        },
+      },
+
+      /**
+       * Direct-account income allocations.
+       */
+      categories: {
+        relation: Model.HasManyRelation,
+        // Relative require — `@/` alias does NOT resolve in relationMappings.
+        modelClass: require('./CreditNoteIncomeCategory.model')
+          .CreditNoteIncomeCategory,
+        join: {
+          from: 'credit_notes.id',
+          to: 'credit_note_income_categories.creditNoteId',
+        },
+        filter(builder) {
           builder.orderBy('index', 'ASC');
         },
       },

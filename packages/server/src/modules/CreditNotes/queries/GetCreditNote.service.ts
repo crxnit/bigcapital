@@ -25,6 +25,11 @@ export class GetCreditNoteService {
       .query()
       .findById(creditNoteId)
       .withGraphFetched('entries.item')
+      // Direct-account income allocations. Without this, the edit form
+      // hydrates with an empty categories table even when the credit note
+      // has stored rows — and the next save's upsertGraph deletes them all
+      // (same data-destruction trap that hit SaleInvoice in 877284f72).
+      .withGraphFetched('categories.incomeAccount')
       .withGraphFetched('customer')
       .withGraphFetched('branch')
       .withGraphFetched('attachments');

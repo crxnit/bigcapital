@@ -6,6 +6,7 @@ import {
 } from '../types/CreditNotes.types';
 import { ERRORS } from '../constants';
 import { CreditNote } from '../models/CreditNote';
+import { CreditNoteIncomeCategory } from '../models/CreditNoteIncomeCategory.model';
 import { CreditNoteAppliedInvoice } from '../../CreditNotesApplyInvoice/models/CreditNoteAppliedInvoice';
 import { RefundCreditNote as RefundCreditNoteModel } from '../../CreditNoteRefunds/models/RefundCreditNote';
 import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
@@ -44,6 +45,11 @@ export class DeleteCreditNoteService {
     private readonly refundCreditNoteModel: TenantModelProxy<
       typeof RefundCreditNoteModel
     >,
+
+    @Inject(CreditNoteIncomeCategory.name)
+    private readonly creditNoteIncomeCategoryModel: TenantModelProxy<
+      typeof CreditNoteIncomeCategory
+    >,
   ) {}
 
   /**
@@ -81,6 +87,13 @@ export class DeleteCreditNoteService {
         .query(trx)
         .where('reference_id', creditNoteId)
         .where('reference_type', 'CreditNote')
+        .delete();
+
+      // Delete all associated direct-account income allocations. Service-
+      // side cascade — the FK has no ON DELETE CASCADE per fork convention.
+      await this.creditNoteIncomeCategoryModel()
+        .query(trx)
+        .where('creditNoteId', creditNoteId)
         .delete();
 
       // Deletes the credit note transaction.
