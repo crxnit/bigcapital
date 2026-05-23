@@ -32,9 +32,16 @@ import {
   transformAttachmentsToForm,
   transformAttachmentsToRequest,
 } from '@/containers/Attachments/utils';
+import {
+  MIN_CATEGORY_LINES,
+  filterNonZeroAllocations,
+  hydrateAllocationsForEdit,
+  makeDefaultAllocationCategory,
+  transformAllocationsToSubmit,
+} from '@/containers/_shared/Allocations/utils';
 
 export const MIN_LINES_NUMBER = 1;
-export const MIN_CATEGORY_LINES = 1;
+export { MIN_CATEGORY_LINES };
 
 // Default bill entry.
 export const defaultBillEntry = {
@@ -53,12 +60,8 @@ export const defaultBillEntry = {
 
 // Default bill direct-account category row. Renders as a single
 // Description + Account + Amount row in the Categories table.
-export const defaultBillCategory = {
-  index: 0,
-  expense_account_id: '',
-  description: '',
-  amount: '',
-};
+export const defaultBillCategory =
+  makeDefaultAllocationCategory('expense_account_id');
 
 // Default bill.
 export const defaultBill = {
@@ -112,17 +115,10 @@ export const transformToEditForm = (bill) => {
     updateItemsEntriesTotal,
   )(initialEntries);
 
-  // Hydrate direct-account categories from the server response. Preserve the
-  // server `id` on each row so the next save's upsertGraph updates in place
-  // rather than deleting and recreating.
-  const rawCategories = bill.categories || [];
-  const initialCategories =
-    rawCategories.length > 0
-      ? rawCategories.map((category) => ({
-          ...(category.id != null ? { id: category.id } : {}),
-          ...transformToForm(category, defaultBillCategory),
-        }))
-      : [...repeatValue(defaultBillCategory, MIN_CATEGORY_LINES)];
+  const initialCategories = hydrateAllocationsForEdit(
+    bill.categories,
+    'expense_account_id',
+  );
 
   const attachments = transformAttachmentsToForm(bill);
 
@@ -159,25 +155,15 @@ export const filterNonZeroEntries = (entries) => {
  * Filters direct-account allocations (categories) to rows with both an
  * account selected and a positive amount.
  */
-export const filterNonZeroCategories = (categories = []) => {
-  return categories.filter(
-    (cat) => cat.expense_account_id && Number(cat.amount) > 0,
-  );
-};
+export const filterNonZeroCategories = (categories = []) =>
+  filterNonZeroAllocations(categories, 'expense_account_id');
 
 /**
  * Shapes the form's categories array for the API. Preserves `id` so
  * upsertGraph updates in place; index assigned by row order.
  */
-export const transformCategoriesToSubmit = (categories = []) => {
-  return categories.map((cat, i) => ({
-    ...(cat.id != null ? { id: cat.id } : {}),
-    index: i + 1,
-    expense_account_id: cat.expense_account_id,
-    description: cat.description ?? '',
-    amount: Number(cat.amount) || 0,
-  }));
-};
+export const transformCategoriesToSubmit = (categories = []) =>
+  transformAllocationsToSubmit(categories, 'expense_account_id');
 
 /**
  * Transformes form values to request body.

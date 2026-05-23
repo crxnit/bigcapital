@@ -5,6 +5,7 @@ import intl from 'react-intl-universal';
 import { DATATYPES_LENGTH } from '@/constants/dataTypes';
 import { isBlank } from '@/utils';
 import { TaxType } from '@/interfaces/TaxRates';
+import { makeAllocationCategoriesSchema } from '@/containers/_shared/Allocations/schema';
 
 const getSchema = () =>
   Yup.object().shape({
@@ -63,25 +64,7 @@ const getSchema = () =>
         description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
       }),
     ),
-    // Direct-account income allocations. An account must be picked when an
-    // amount is entered (and vice versa); fully-blank rows are dropped at
-    // submit by `filterNonZeroCategories`. Use a single object-level
-    // `.test` instead of mutual `.when()`s — Yup toposort raises a cyclic-
-    // dependency error when two fields reference each other via `.when()`.
-    categories: Yup.array().of(
-      Yup.object()
-        .shape({
-          income_account_id: Yup.number().nullable(),
-          amount: Yup.number().nullable().min(0),
-          description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
-        })
-        .test('paired', 'Account and amount must both be set', (value) => {
-          if (!value) return true;
-          const hasAccount = !isBlank(value.income_account_id);
-          const hasAmount = !isBlank(value.amount) && Number(value.amount) > 0;
-          return hasAccount === hasAmount;
-        }),
-    ),
+    categories: makeAllocationCategoriesSchema('income_account_id'),
   });
 
 export const getCreateInvoiceFormSchema = getSchema;

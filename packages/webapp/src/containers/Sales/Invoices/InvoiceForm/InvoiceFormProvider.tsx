@@ -97,7 +97,7 @@ function InvoiceFormProvider({ invoiceId, baseCurrency, ...props }) {
   } = useCustomers({ page_size: 10000 });
 
   // Handle fetch accounts. Request a large page so the full chart is in
-  // memory — InvoiceFormCategoriesTable's AccountsListFieldCell filters
+  // memory — AllocationsCategoriesTable's AccountsListFieldCell filters
   // client-side over this `accounts` array (same FSelect-pagination gotcha
   // documented in CLAUDE.md).
   const { data: accounts, isLoading: isAccountsLoading } = useAccounts({

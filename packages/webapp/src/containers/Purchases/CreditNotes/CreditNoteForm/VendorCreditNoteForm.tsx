@@ -16,7 +16,7 @@ import {
 
 import VendorCreditNoteFormHeader from './VendorCreditNoteFormHeader';
 import VendorCreditNoteItemsEntriesEditor from './VendorCreditNoteItemsEntriesEditor';
-import VendorCreditNoteCategoriesEditor from './VendorCreditNoteCategoriesEditor';
+import AllocationsCategoriesEditor from '@/containers/_shared/Allocations/AllocationsCategoriesEditor';
 import VendorCreditNoteFormFooter from './VendorCreditNoteFormFooter';
 import VendorCreditNoteFloatingActions from './VendorCreditNoteFloatingActions';
 import VendorCreditNoteFormDialogs from './VendorCreditNoteFormDialogs';
@@ -59,6 +59,7 @@ function VendorCreditNoteForm({
     newVendorCredit,
     createVendorCreditMutate,
     editVendorCreditMutate,
+    accounts,
   } = useVendorCreditNoteFormContext();
 
   // Credit number.
@@ -183,12 +184,13 @@ function VendorCreditNoteForm({
 
             <Box p="18px 32px 0">
               <VendorCreditNoteItemsEntriesEditor />
-              <Box mt={4}>
-                <Box mb={2} fontSize={13} fontWeight={500}>
-                  Direct expense allocations
-                </Box>
-                <VendorCreditNoteCategoriesEditor />
-              </Box>
+              <AllocationsCategoriesEditor
+                accounts={accounts}
+                accountField={'expense_account_id'}
+                accountRootType={'expense'}
+                tableName={'vendor-credit-categories'}
+                labelKey={'direct_expense_allocations'}
+              />
             </Box>
 
             <VendorCreditNoteFormFooter />

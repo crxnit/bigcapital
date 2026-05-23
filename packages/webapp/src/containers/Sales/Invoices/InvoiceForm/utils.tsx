@@ -33,9 +33,16 @@ import {
   transformAttachmentsToRequest,
 } from '@/containers/Attachments/utils';
 import { convertBrandingTemplatesToOptions } from '@/containers/BrandingTemplates/BrandingTemplatesSelectFields';
+import {
+  MIN_CATEGORY_LINES,
+  filterNonZeroAllocations,
+  hydrateAllocationsForEdit,
+  makeDefaultAllocationCategory,
+  transformAllocationsToSubmit,
+} from '@/containers/_shared/Allocations/utils';
 
 export const MIN_LINES_NUMBER = 1;
-export const MIN_CATEGORY_LINES = 1;
+export { MIN_CATEGORY_LINES };
 
 // Default invoice entry object.
 export const defaultInvoiceEntry = {
@@ -53,12 +60,8 @@ export const defaultInvoiceEntry = {
 
 // Default invoice direct-account income category row. Renders as a single
 // Description + Account + Amount row in the Categories table.
-export const defaultInvoiceCategory = {
-  index: 0,
-  income_account_id: '',
-  description: '',
-  amount: '',
-};
+export const defaultInvoiceCategory =
+  makeDefaultAllocationCategory('income_account_id');
 
 // Default invoice object.
 export const defaultInvoice = {
@@ -117,17 +120,10 @@ export function transformToEditForm(invoice) {
     updateItemsEntriesTotal,
   )(initialEntries);
 
-  // Hydrate direct-account income allocations from the server response.
-  // Preserve the server `id` on each row so the next save's upsertGraph
-  // updates in place rather than deleting and recreating.
-  const rawCategories = invoice.categories || [];
-  const initialCategories =
-    rawCategories.length > 0
-      ? rawCategories.map((category) => ({
-          ...(category.id != null ? { id: category.id } : {}),
-          ...transformToForm(category, defaultInvoiceCategory),
-        }))
-      : [...repeatValue(defaultInvoiceCategory, MIN_CATEGORY_LINES)];
+  const initialCategories = hydrateAllocationsForEdit(
+    invoice.categories,
+    'income_account_id',
+  );
 
   return {
     ...transformToForm(invoice, defaultInvoice),
@@ -239,25 +235,15 @@ export const filterNonZeroEntries = (entries) => {
  * Filters direct-account income allocations (categories) to rows with both
  * an account selected and a positive amount.
  */
-export const filterNonZeroCategories = (categories = []) => {
-  return categories.filter(
-    (cat) => cat.income_account_id && Number(cat.amount) > 0,
-  );
-};
+export const filterNonZeroCategories = (categories = []) =>
+  filterNonZeroAllocations(categories, 'income_account_id');
 
 /**
  * Shapes the form's categories array for the API. Preserves `id` so
  * upsertGraph updates in place; index assigned by row order.
  */
-export const transformCategoriesToSubmit = (categories = []) => {
-  return categories.map((cat, i) => ({
-    ...(cat.id != null ? { id: cat.id } : {}),
-    index: i + 1,
-    income_account_id: cat.income_account_id,
-    description: cat.description ?? '',
-    amount: Number(cat.amount) || 0,
-  }));
-};
+export const transformCategoriesToSubmit = (categories = []) =>
+  transformAllocationsToSubmit(categories, 'income_account_id');
 
 /**
  * Transformes the form values to request body values.

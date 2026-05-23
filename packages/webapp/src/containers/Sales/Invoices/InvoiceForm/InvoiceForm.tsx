@@ -13,7 +13,7 @@ import {
 
 import InvoiceFormHeader from './InvoiceFormHeader';
 import InvoiceItemsEntriesEditorField from './InvoiceItemsEntriesEditorField';
-import InvoiceFormCategoriesEditor from './InvoiceFormCategoriesEditor';
+import AllocationsCategoriesEditor from '@/containers/_shared/Allocations/AllocationsCategoriesEditor';
 import InvoiceFloatingActions from './InvoiceFloatingActions';
 import InvoiceFormFooter from './InvoiceFormFooter';
 import InvoiceFormDialogs from './InvoiceFormDialogs';
@@ -67,6 +67,7 @@ function InvoiceFormRoot({
     editInvoiceMutate,
     submitPayload,
     saleInvoiceState,
+    accounts,
   } = useInvoiceFormContext();
 
   // Invoice number.
@@ -189,12 +190,13 @@ function InvoiceFormRoot({
             <Box p="18px 32px 0">
               <InvoiceFormActions />
               <InvoiceItemsEntriesEditorField />
-              <Box mt={4}>
-                <Box mb={2} fontSize={13} fontWeight={500}>
-                  Direct revenue allocations
-                </Box>
-                <InvoiceFormCategoriesEditor />
-              </Box>
+              <AllocationsCategoriesEditor
+                accounts={accounts}
+                accountField={'income_account_id'}
+                accountRootType={'income'}
+                tableName={'invoice-categories'}
+                labelKey={'direct_revenue_allocations'}
+              />
             </Box>
             <InvoiceFormFooter />
           </PageForm.Body>

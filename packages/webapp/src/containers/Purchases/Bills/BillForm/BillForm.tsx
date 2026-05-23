@@ -14,7 +14,6 @@ import BillFormHeader from './BillFormHeader';
 import BillFloatingActions from './BillFloatingActions';
 import BillFormFooter from './BillFormFooter';
 import BillItemsEntriesEditor from './BillItemsEntriesEditor';
-import BillFormCategoriesEditor from './BillFormCategoriesEditor';
 import BillFormTopBar from './BillFormTopBar';
 
 import { AppToaster, Box } from '@/components';
@@ -29,6 +28,7 @@ import {
   transformFormValuesToRequest,
   handleErrors,
 } from './utils';
+import AllocationsCategoriesEditor from '@/containers/_shared/Allocations/AllocationsCategoriesEditor';
 import { withCurrentOrganization } from '@/containers/Organization/withCurrentOrganization';
 import { BillFormEntriesActions } from './BillFormEntriesActions';
 
@@ -42,8 +42,14 @@ function BillForm({
   const history = useHistory();
 
   // Bill form context.
-  const { bill, isNewMode, submitPayload, createBillMutate, editBillMutate } =
-    useBillFormContext();
+  const {
+    bill,
+    isNewMode,
+    submitPayload,
+    createBillMutate,
+    editBillMutate,
+    accounts,
+  } = useBillFormContext();
 
   // Initial values in create and edit mode.
   const initialValues = useMemo(
@@ -146,12 +152,13 @@ function BillForm({
             <Box p="18px 32px 0">
               <BillFormEntriesActions />
               <BillItemsEntriesEditor />
-              <Box mt={4}>
-                <Box mb={2} fontSize={13} fontWeight={500}>
-                  Direct expense allocations
-                </Box>
-                <BillFormCategoriesEditor />
-              </Box>
+              <AllocationsCategoriesEditor
+                accounts={accounts}
+                accountField={'expense_account_id'}
+                accountRootType={'expense'}
+                tableName={'bill-categories'}
+                labelKey={'direct_expense_allocations'}
+              />
             </Box>
             <BillFormFooter />
           </PageForm.Body>

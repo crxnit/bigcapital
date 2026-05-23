@@ -4,6 +4,7 @@ import moment from 'moment';
 import intl from 'react-intl-universal';
 import { DATATYPES_LENGTH } from '@/constants/dataTypes';
 import { isBlank } from '@/utils';
+import { makeAllocationCategoriesSchema } from '@/containers/_shared/Allocations/schema';
 
 const BillFormSchema = Yup.object().shape({
   vendor_id: Yup.number().required().label(intl.get('vendor_name_')),
@@ -51,25 +52,7 @@ const BillFormSchema = Yup.object().shape({
       description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
     }),
   ),
-  // Direct-account allocations. An account must be picked when an amount is
-  // entered (and vice versa); fully-blank rows are dropped at submit by
-  // `filterNonZeroCategories`. Use a single object-level `.test` instead of
-  // mutual `.when()`s — Yup toposort raises a cyclic-dependency error when
-  // two fields reference each other via `.when()`.
-  categories: Yup.array().of(
-    Yup.object()
-      .shape({
-        expense_account_id: Yup.number().nullable(),
-        amount: Yup.number().nullable().min(0),
-        description: Yup.string().nullable().max(DATATYPES_LENGTH.TEXT),
-      })
-      .test('paired', 'Account and amount must both be set', (value) => {
-        if (!value) return true;
-        const hasAccount = !isBlank(value.expense_account_id);
-        const hasAmount = !isBlank(value.amount) && Number(value.amount) > 0;
-        return hasAccount === hasAmount;
-      }),
-  ),
+  categories: makeAllocationCategoriesSchema('expense_account_id'),
 });
 
 const CreateBillFormSchema = BillFormSchema;

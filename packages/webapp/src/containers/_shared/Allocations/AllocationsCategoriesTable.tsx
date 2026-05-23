@@ -10,8 +10,6 @@ import {
 } from '@/components';
 import { ActionsCellRenderer } from '@/containers/Entries/components';
 import { Align } from '@/constants';
-import { useBillFormContext } from './BillFormProvider';
-import { defaultBillCategory, MIN_CATEGORY_LINES } from './utils';
 import {
   saveInvoke,
   compose,
@@ -20,33 +18,42 @@ import {
   updateAutoAddNewLine,
   updateRemoveLineByIndex,
 } from '@/utils';
+import { MIN_CATEGORY_LINES, makeDefaultAllocationCategory } from './utils';
 
 /**
- * Direct-account allocations table for the Bill form. Each row is
- * `Account + Description + Amount`. Lets a vendor bill carry expense
- * allocations without picking individual items, alongside (or instead of)
- * the existing items entries.
+ * Shared direct-account allocations table for Bill / VendorCredit /
+ * SaleInvoice / (soon) CreditNote forms. Each row is
+ * `Account + Description + Amount`. Caller controls account-field name
+ * (e.g. `expense_account_id` vs `income_account_id`) and the account
+ * root-type filter (`expense` vs `income`).
  */
-export default function BillFormCategoriesTable({
+export default function AllocationsCategoriesTable({
   categories,
   error,
   onChange,
   currencyCode,
+  accounts,
+  accountField,
+  accountRootType,
+  tableName,
   minLines = MIN_CATEGORY_LINES,
 }) {
-  const { accounts } = useBillFormContext();
+  const defaultRow = useMemo(
+    () => makeDefaultAllocationCategory(accountField),
+    [accountField],
+  );
 
   const columns = useMemo(
     () => [
       {
         Header: () => intl.get('account') || 'Account',
-        id: 'expense_account_id',
-        accessor: 'expense_account_id',
+        id: accountField,
+        accessor: accountField,
         Cell: AccountsListFieldCell,
-        className: 'expense_account_id',
+        className: accountField,
         disableSortBy: true,
         width: 200,
-        filterAccountsByRootTypes: ['expense'],
+        filterAccountsByRootTypes: [accountRootType],
         fieldProps: { allowCreate: true },
       },
       {
@@ -80,34 +87,34 @@ export default function BillFormCategoriesTable({
         align: Align.Center,
       },
     ],
-    [],
+    [accountField, accountRootType],
   );
 
   const handleUpdateData = useCallback(
     (rowIndex, columnId, value) => {
       const newRows = compose(
-        updateAutoAddNewLine(defaultBillCategory, ['expense_account_id']),
+        updateAutoAddNewLine(defaultRow, [accountField]),
         updateTableCell(rowIndex, columnId, value),
       )(categories);
       saveInvoke(onChange, newRows);
     },
-    [categories, onChange],
+    [categories, onChange, defaultRow, accountField],
   );
 
   const handleRemoveRow = useCallback(
     (rowIndex) => {
       const newRows = compose(
-        updateMinEntriesLines(minLines, defaultBillCategory),
+        updateMinEntriesLines(minLines, defaultRow),
         updateRemoveLineByIndex(rowIndex),
       )(categories);
       saveInvoke(onChange, newRows);
     },
-    [minLines, categories, onChange],
+    [minLines, categories, onChange, defaultRow],
   );
 
   return (
     <DataTableEditable
-      name={'bill-categories'}
+      name={tableName}
       columns={columns}
       data={categories}
       sticky={true}
@@ -116,7 +123,7 @@ export default function BillFormCategoriesTable({
         errors: error,
         updateData: handleUpdateData,
         removeRow: handleRemoveRow,
-        autoFocus: ['expense_account_id', 0],
+        autoFocus: [accountField, 0],
         currencyCode,
       }}
     />
