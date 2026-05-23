@@ -15,6 +15,7 @@ import { assocItemEntriesDefaultIndex } from '@/utils/associate-item-entries-ind
 import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { CreateBillDto } from '../dtos/Bill.dto';
+import { normalizeAllocationCategories } from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 @Injectable()
 export class BillDTOTransformer {
@@ -55,28 +56,6 @@ export class BillDTOTransformer {
   }
 
   /**
-   * Normalize direct-account allocation rows. Preserves `id` on edit so
-   * upsertGraph updates in place rather than delete+reinsert.
-   */
-  private normalizeBillCategories(categories: any[] = []): Array<{
-    id?: number;
-    index: number;
-    expenseAccountId: number;
-    description?: string;
-    amount: number;
-  }> {
-    return (categories || [])
-      .filter((c) => c && c.expenseAccountId != null && Number(c.amount) > 0)
-      .map((c, i) => ({
-        ...(c.id != null ? { id: c.id } : {}),
-        index: c.index ?? i + 1,
-        expenseAccountId: c.expenseAccountId,
-        description: c.description ?? '',
-        amount: Number(c.amount) || 0,
-      }));
-  }
-
-  /**
    * Converts create bill DTO to model.
    * @param {IBillDTO} billDTO
    * @param {IBill} oldBill
@@ -90,7 +69,9 @@ export class BillDTOTransformer {
     const itemsTotal = sumBy(billDTO.entries || [], (e) =>
       this.itemEntryModel().calcAmount(e),
     );
-    const categories = this.normalizeBillCategories(billDTO.categories);
+    const categories = normalizeAllocationCategories(billDTO.categories, {
+      accountField: 'expenseAccountId',
+    });
     const categoriesTotal = sumBy(categories, (c) => Number(c.amount) || 0);
     // `amount` stores the bill's gross balance at creation (decremented by
     // payments later). Direct-account category allocations add to this

@@ -7,6 +7,10 @@ import { ItemEntryDto } from '@/modules/TransactionItemEntry/dto/ItemEntry.dto';
 import { SaleInvoiceIncomeCategoryDto } from '../dtos/SaleInvoice.dto';
 import { Account } from '@/modules/Accounts/models/Account.model';
 import { ACCOUNT_ROOT_TYPE } from '@/constants/accounts';
+import {
+  validateAllocationAtLeastOneLine,
+  validateAllocationCategoryAccountsType,
+} from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 @Injectable()
 export class CommandSaleInvoiceValidators {
@@ -26,36 +30,29 @@ export class CommandSaleInvoiceValidators {
     entries: ItemEntryDto[] | undefined,
     categories: SaleInvoiceIncomeCategoryDto[] | undefined,
   ) {
-    const hasEntries = (entries || []).length > 0;
-    const hasCategories = (categories || []).length > 0;
-    if (!hasEntries && !hasCategories) {
-      throw new ServiceError(ERRORS.SALE_INVOICE_NO_LINES);
-    }
+    validateAllocationAtLeastOneLine(
+      entries,
+      categories,
+      ERRORS.SALE_INVOICE_NO_LINES,
+    );
   }
 
   /**
    * Each direct-account allocation must point at an INCOME-root-type
-   * account. Mirrors validateBillCategoryAccountsType on the expense side.
+   * account.
    */
   public async validateInvoiceCategoryAccountsType(
     categories: SaleInvoiceIncomeCategoryDto[],
   ) {
-    const accountIds = Array.from(
-      new Set(categories.map((c) => c.incomeAccountId).filter(Boolean)),
+    await validateAllocationCategoryAccountsType(
+      categories,
+      this.accountModel,
+      {
+        accountField: 'incomeAccountId',
+        rootType: ACCOUNT_ROOT_TYPE.INCOME,
+        errorCode: ERRORS.SALE_INVOICE_CATEGORY_ACCOUNT_INVALID_TYPE,
+      },
     );
-    if (accountIds.length === 0) return;
-    const accounts = await this.accountModel()
-      .query()
-      .whereIn('id', accountIds);
-    const byId = new Map(accounts.map((a) => [a.id, a]));
-    for (const id of accountIds) {
-      const acc = byId.get(id);
-      if (!acc || !acc.isRootType(ACCOUNT_ROOT_TYPE.INCOME)) {
-        throw new ServiceError(
-          ERRORS.SALE_INVOICE_CATEGORY_ACCOUNT_INVALID_TYPE,
-        );
-      }
-    }
   }
 
   /**

@@ -6,6 +6,7 @@ import { Bill } from '../models/Bill';
 import { AccountNormal } from '@/modules/Accounts/Accounts.types';
 import { Ledger } from '@/modules/Ledger/Ledger';
 import { BillLandedCost } from '@/modules/BillLandedCosts/models/BillLandedCost';
+import { mapAllocationLedgerEntries } from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 export class BillGL {
   private bill: Bill;
@@ -87,39 +88,6 @@ export class BillGL {
       indexGroup: 10,
       itemId: entry.itemId,
       accountNormal: AccountNormal.DEBIT,
-    };
-  }
-
-  /**
-   * Retrieves a single direct-account allocation (category) GL entry.
-   * One DR per row against the category's expenseAccountId, base-currency
-   * amount = category.amount × bill.exchangeRate. Mirrors Expense's
-   * `getExpenseGLCategoryEntry` pattern.
-   * @param {any} category - Bill expense category row
-   * @param {number} index - Row index within the categories array
-   */
-  private getBillCategoryEntry(
-    category: {
-      expenseAccountId: number;
-      amount: number;
-      description?: string;
-    },
-    index: number,
-  ): ILedgerEntry {
-    const commonJournalMeta = this.billCommonEntry;
-    const localAmount = (category.amount || 0) * this.bill.exchangeRate;
-
-    return {
-      ...commonJournalMeta,
-      debit: localAmount,
-      accountId: category.expenseAccountId,
-      accountNormal: AccountNormal.DEBIT,
-      note: category.description,
-      // Use indexGroup 15 (between item entries at 10 and landed costs at 20)
-      // so category lines render between the items and the landed-cost block
-      // in journal/GL views.
-      index: index + 1,
-      indexGroup: 15,
     };
   }
 
@@ -250,9 +218,13 @@ export class BillGL {
     const itemsEntries = (this.bill.entries || []).map((entry, index) =>
       this.getBillItemEntry(entry, index),
     );
-    const categoryEntries = (this.bill.categories || []).map(
-      (category, index) => this.getBillCategoryEntry(category, index),
-    );
+    const categoryEntries = mapAllocationLedgerEntries(this.bill.categories, {
+      accountField: 'expenseAccountId',
+      side: 'debit',
+      accountNormal: AccountNormal.DEBIT,
+      commonEntry: this.billCommonEntry,
+      exchangeRate: this.bill.exchangeRate,
+    });
     const landedCostEntries = (this.bill.locatedLandedCosts || []).map(
       (landedCost, index) => this.getBillLandedCostEntry(landedCost, index),
     );

@@ -17,6 +17,7 @@ import {
   EditVendorCreditDto,
   VendorCreditEntryDto,
 } from '../dtos/VendorCredit.dto';
+import { normalizeAllocationCategories } from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 @Injectable()
 export class VendorCreditDTOTransformService {
@@ -32,28 +33,6 @@ export class VendorCreditDTOTransformService {
     private warehouseDTOTransform: WarehouseTransactionDTOTransform,
     private vendorCreditAutoIncrement: VendorCreditAutoIncrementService,
   ) {}
-
-  /**
-   * Normalize direct-account allocation rows. Preserves `id` on edit so
-   * upsertGraph updates in place rather than delete+reinsert.
-   */
-  private normalizeCategories(categories: any[] = []): Array<{
-    id?: number;
-    index: number;
-    expenseAccountId: number;
-    description?: string;
-    amount: number;
-  }> {
-    return (categories || [])
-      .filter((c) => c && c.expenseAccountId != null && Number(c.amount) > 0)
-      .map((c, i) => ({
-        ...(c.id != null ? { id: c.id } : {}),
-        index: c.index ?? i + 1,
-        expenseAccountId: c.expenseAccountId,
-        description: c.description ?? '',
-        amount: Number(c.amount) || 0,
-      }));
-  }
 
   /**
    * Transforms the credit/edit vendor credit DTO to model.
@@ -72,7 +51,10 @@ export class VendorCreditDTOTransformService {
     // Calculates the total amount of items entries.
     const itemsTotal =
       this.itemsEntriesService.getTotalItemsEntries(dtoEntries);
-    const categories = this.normalizeCategories(vendorCreditDTO.categories);
+    const categories = normalizeAllocationCategories(
+      vendorCreditDTO.categories,
+      { accountField: 'expenseAccountId' },
+    );
     const categoriesTotal = categories.reduce(
       (sum, c) => sum + (Number(c.amount) || 0),
       0,

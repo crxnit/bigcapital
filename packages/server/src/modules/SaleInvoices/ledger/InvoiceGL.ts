@@ -5,6 +5,7 @@ import { ILedgerEntry } from '@/modules/Ledger/types/Ledger.types';
 import { ItemEntry } from '@/modules/TransactionItemEntry/models/ItemEntry';
 import { Ledger } from '@/modules/Ledger/Ledger';
 import { SaleInvoice } from '../models/SaleInvoice';
+import { mapAllocationLedgerEntries } from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 export class InvoiceGL {
   private saleInvoice: SaleInvoice;
@@ -124,39 +125,6 @@ export class InvoiceGL {
   );
 
   /**
-   * Retrieves a single direct-account income allocation (category) GL
-   * entry. One CR per row against the category's incomeAccountId, base-
-   * currency amount = category.amount × invoice.exchangeRate. Mirrors the
-   * Bill `getBillCategoryEntry` shape but reversed (CR vs DR) since
-   * invoices increase revenue.
-   * @param {any} category - SaleInvoice income category row
-   * @param {number} index - Row index within the categories array
-   */
-  private getInvoiceCategoryEntry(
-    category: {
-      incomeAccountId: number;
-      amount: number;
-      description?: string;
-    },
-    index: number,
-  ): ILedgerEntry {
-    const commonEntry = this.invoiceGLCommonEntry;
-    const localAmount = (category.amount || 0) * this.saleInvoice.exchangeRate;
-
-    return {
-      ...commonEntry,
-      credit: localAmount,
-      accountId: category.incomeAccountId,
-      accountNormal: AccountNormal.CREDIT,
-      note: category.description,
-      // Use indexGroup 15 (between item entries at 10 and tax entries at
-      // 30) so category lines render between the items and the tax block.
-      index: index + 1,
-      indexGroup: 15,
-    };
-  }
-
-  /**
    * Retreives the GL entry of tax payable.
    * @param {ItemEntry} entry - Item entry.
    * @param {number} index - Index.
@@ -219,8 +187,15 @@ export class InvoiceGL {
     const creditEntries = (this.saleInvoice.entries || []).map((entry, index) =>
       this.getInvoiceItemEntry(entry, index),
     );
-    const categoryEntries = (this.saleInvoice.categories || []).map(
-      (category, index) => this.getInvoiceCategoryEntry(category, index),
+    const categoryEntries = mapAllocationLedgerEntries(
+      this.saleInvoice.categories,
+      {
+        accountField: 'incomeAccountId',
+        side: 'credit',
+        accountNormal: AccountNormal.CREDIT,
+        commonEntry: this.invoiceGLCommonEntry,
+        exchangeRate: this.saleInvoice.exchangeRate,
+      },
     );
     const taxEntries = (this.saleInvoice.entries || [])
       .filter((entry) => entry.taxAmount > 0)

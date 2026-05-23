@@ -21,6 +21,7 @@ import {
   CreateSaleInvoiceDto,
   EditSaleInvoiceDto,
 } from '../dtos/SaleInvoice.dto';
+import { normalizeAllocationCategories } from '@/modules/_shared/allocations/AllocationCategory.helpers';
 
 @Injectable()
 export class CommandSaleInvoiceDTOTransformer {
@@ -47,28 +48,6 @@ export class CommandSaleInvoiceDTOTransformer {
   ) {}
 
   /**
-   * Normalize direct-account income allocation rows. Preserves `id` on
-   * edit so upsertGraph updates in place rather than delete+reinsert.
-   */
-  private normalizeInvoiceCategories(categories: any[] = []): Array<{
-    id?: number;
-    index: number;
-    incomeAccountId: number;
-    description?: string;
-    amount: number;
-  }> {
-    return (categories || [])
-      .filter((c) => c && c.incomeAccountId != null && Number(c.amount) > 0)
-      .map((c, i) => ({
-        ...(c.id != null ? { id: c.id } : {}),
-        index: c.index ?? i + 1,
-        incomeAccountId: c.incomeAccountId,
-        description: c.description ?? '',
-        amount: Number(c.amount) || 0,
-      }));
-  }
-
-  /**
    * Transformes the create DTO to invoice object model.
    * @param {ISaleInvoiceCreateDTO} saleInvoiceDTO - Sale invoice DTO.
    * @param {ISaleInvoice} oldSaleInvoice - Old sale invoice.
@@ -83,8 +62,9 @@ export class CommandSaleInvoiceDTOTransformer {
     const itemsTotal = this.getDueBalanceItemEntries(entriesModels);
 
     // Normalize direct-account income allocations.
-    const categories = this.normalizeInvoiceCategories(
+    const categories = normalizeAllocationCategories(
       saleInvoiceDTO.categories,
+      { accountField: 'incomeAccountId' },
     );
     const categoriesTotal = sumBy(categories, (c) => Number(c.amount) || 0);
     // `balance` stores the invoice's gross amount (decremented by payments
