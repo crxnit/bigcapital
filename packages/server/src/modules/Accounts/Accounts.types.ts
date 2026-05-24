@@ -2,10 +2,9 @@ import { Knex } from 'knex';
 import { Account } from './models/Account.model';
 // import { IDynamicListFilterDTO } from '@/interfaces/DynamicFilter';
 
-export enum AccountNormal {
-  DEBIT = 'debit',
-  CREDIT = 'credit',
-}
+// Single source of truth lives in the foundational interfaces layer; re-exported
+// here so module-side consumers (GL files, etc.) keep their `Accounts.types` import.
+export { AccountNormal } from '@/interfaces/Account';
 
 export interface IAccountsTransactionsFilter {
   accountId?: number;
