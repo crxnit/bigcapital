@@ -129,7 +129,7 @@ Production and UAT run via Docker (`docker-compose.prod.yml`). Traefik handles T
 
 `git push origin develop` → `.github/workflows/deploy.yml` builds linux/arm64 images for `server` + `webapp` → pushes to `ghcr.io/crxnit/bigcapital-{server,webapp}:sha-<short>` → Trivy HIGH/CRITICAL gate → SSH into VPS → `deploy.sh` pulls, runs tenant migration, brings up server+webapp with `/api/health` smoke gate.
 
-- **Sandbox** auto-deploys on push to `develop`.
+- **Sandbox** auto-deploys on push to `develop`. **Docs-only pushes don't deploy** — `deploy.yml` has `paths-ignore: docs/**, **/*.md, archive/**`, so a push touching only Markdown (incl. `.claude/CLAUDE.md`) triggers no run. Mix code + docs in one push to deploy both.
 - **UAT** triggers manually: `gh workflow run deploy.yml -f environment=uat`. If `gh workflow run` can't resolve by name, dispatch by ID: `gh api -X POST repos/crxnit/bigcapital/actions/workflows/275652569/dispatches --input - <<<'{"ref":"develop","inputs":{"environment":"uat"}}'`.
 - **Legacy tarball compose files** (`docker-compose.prod.yml`, `docker/sandbox-bc/docker-compose.yml`) remain as rollback paths.
 
