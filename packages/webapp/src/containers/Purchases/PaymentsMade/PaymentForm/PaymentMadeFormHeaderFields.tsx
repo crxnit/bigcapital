@@ -195,6 +195,7 @@ function PaymentMadeFormHeaderFields({ organization: { base_currency } }) {
             ACCOUNT_TYPE.CASH,
             ACCOUNT_TYPE.BANK,
             ACCOUNT_TYPE.OTHER_CURRENT_ASSET,
+            ACCOUNT_TYPE.CREDIT_CARD,
           ]}
           shouldUpdate={accountsFieldShouldUpdate}
           fastField={true}

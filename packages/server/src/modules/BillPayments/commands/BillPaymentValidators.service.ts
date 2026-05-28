@@ -63,12 +63,15 @@ export class BillPaymentValidators {
     if (!paymentAccount) {
       throw new ServiceError(ERRORS.PAYMENT_ACCOUNT_NOT_FOUND);
     }
-    // Validate the payment account type.
+    // Validate the payment account type. Credit Card is allowed because a
+    // bill can be paid by transferring the liability from AP to a CC account
+    // (DR AP / CR Credit Card).
     if (
       !paymentAccount.isAccountType([
         ACCOUNT_TYPE.BANK,
         ACCOUNT_TYPE.CASH,
         ACCOUNT_TYPE.OTHER_CURRENT_ASSET,
+        ACCOUNT_TYPE.CREDIT_CARD,
       ])
     ) {
       throw new ServiceError(ERRORS.PAYMENT_ACCOUNT_NOT_CURRENT_ASSET_TYPE);
