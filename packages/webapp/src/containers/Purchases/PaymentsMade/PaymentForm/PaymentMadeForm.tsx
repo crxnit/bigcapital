@@ -99,9 +99,10 @@ function PaymentMadeForm({
     }
     const excessAmount = getPaymentExcessAmountFromValues(values);
 
-    // Show the confirmation popup if the excess amount bigger than zero and
-    // has not been confirmed yet.
-    if (excessAmount > 0 && !isExcessConfirmed) {
+    // Show the confirmation popup if the excess amount bigger than half a cent
+    // and has not been confirmed yet. Threshold guards against IEEE-754 dust
+    // when entries net exactly to the payment amount.
+    if (excessAmount > 0.005 && !isExcessConfirmed) {
       openDialog('payment-made-excessed-payment');
       setSubmitting(false);
 

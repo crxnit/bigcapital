@@ -108,9 +108,10 @@ function PaymentReceiveFormRoot({
       setSubmitting(false);
       return;
     }
-    // Show the confirm popup if the excessed amount bigger than zero and
-    // excess confirmation has not been confirmed yet.
-    if (exceededAmount > 0 && !isExcessConfirmed) {
+    // Show the confirm popup if the excess amount bigger than half a cent and
+    // excess confirmation has not been confirmed yet. Threshold guards against
+    // IEEE-754 dust when entries net exactly to the payment amount.
+    if (exceededAmount > 0.005 && !isExcessConfirmed) {
       setSubmitting(false);
       openDialog('payment-received-excessed-payment');
       return;
