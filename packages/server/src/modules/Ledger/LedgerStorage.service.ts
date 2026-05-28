@@ -28,6 +28,14 @@ export class LedgerStorageService {
 
   /**
    * Commit the ledger to the storage layer as one unit-of-work.
+   *
+   * Sequential, not parallel: Knex transactions are not concurrency-safe.
+   * Running these three writers via `Promise.all` raced the entries
+   * inserts against the accounts/contacts balance updates on the same
+   * trx; collisions raised mysql2 transient errors that the @nestjs/
+   * event-emitter swallowed in the subscriber wrapper — committing the
+   * A/R debit while silently dropping per-item credit legs. Surfaced as
+   * a trial-balance break on staging SaleInvoice 114.
    * @param {ILedger} ledger
    * @returns {Promise<void>}
    */
@@ -35,38 +43,34 @@ export class LedgerStorageService {
     ledger: ILedger,
     trx?: Knex.Transaction,
   ): Promise<void> => {
-    const tasks = [
-      // Saves the ledger entries.
-      this.ledgerEntriesService.saveEntries(ledger, trx),
+    // Saves the ledger entries.
+    await this.ledgerEntriesService.saveEntries(ledger, trx);
 
-      // Mutates the associated accounts balances.
-      this.ledgerAccountsBalance.saveAccountsBalance(ledger, trx),
+    // Mutates the associated accounts balances.
+    await this.ledgerAccountsBalance.saveAccountsBalance(ledger, trx);
 
-      // Mutates the associated contacts balances.
-      this.ledgerContactsBalance.saveContactsBalance(ledger, trx),
-    ];
-    await Promise.all(tasks);
+    // Mutates the associated contacts balances.
+    await this.ledgerContactsBalance.saveContactsBalance(ledger, trx);
   };
 
   /**
    * Deletes the given ledger and revert balances.
+   *
+   * Sequential for the same reason as `commit` above.
    * @param {number} tenantId
    * @param {ILedger} ledger
    * @param {Knex.Transaction} trx
    * @returns {Promise<void>}
    */
   public delete = async (ledger: ILedger, trx?: Knex.Transaction) => {
-    const tasks = [
-      // Deletes the ledger entries.
-      this.ledgerEntriesService.deleteEntries(ledger, trx),
+    // Deletes the ledger entries.
+    await this.ledgerEntriesService.deleteEntries(ledger, trx);
 
-      // Mutates the associated accounts balances.
-      this.ledgerAccountsBalance.saveAccountsBalance(ledger, trx),
+    // Mutates the associated accounts balances.
+    await this.ledgerAccountsBalance.saveAccountsBalance(ledger, trx);
 
-      // Mutates the associated contacts balances.
-      this.ledgerContactsBalance.saveContactsBalance(ledger, trx),
-    ];
-    await Promise.all(tasks);
+    // Mutates the associated contacts balances.
+    await this.ledgerContactsBalance.saveContactsBalance(ledger, trx);
   };
 
   /**

@@ -70,17 +70,3 @@ export interface ILedgerEntry {
 
   costable?: boolean;
 }
-
-export interface ISaveAccountsBalanceQueuePayload {
-  ledger: ILedger;
-  tenantId: number;
-  accountId: number;
-  trx?: Knex.Transaction;
-}
-
-export interface ISaleContactsBalanceQueuePayload {
-  ledger: ILedger;
-  tenantId: number;
-  contactId: number;
-  trx?: Knex.Transaction;
-}

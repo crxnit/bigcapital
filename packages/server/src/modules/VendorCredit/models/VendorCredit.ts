@@ -131,15 +131,18 @@ export class VendorCredit extends TenantBaseModel {
 
   /**
    * Vendor credit total.
+   *
+   * Note: `this.subtotal` already includes `categoriesTotal` because the
+   * DTO transformer sums `itemsTotal + categoriesTotal` into the `amount`
+   * column, and `subtotal === amount`. Don't add categoriesTotal a second
+   * time here — that would double-count direct allocations and make the
+   * AP debit entry post at 2× the credit total for categories-only vendor
+   * credits (trial-balance break first observed on staging VC-00002).
+   * Mirrors the Bill and SaleInvoice `total` getters.
    * @returns {number}
    */
   get total() {
-    return (
-      this.subtotal -
-      this.discountAmount +
-      this.adjustment +
-      this.categoriesTotal
-    );
+    return this.subtotal - this.discountAmount + this.adjustment;
   }
 
   /**

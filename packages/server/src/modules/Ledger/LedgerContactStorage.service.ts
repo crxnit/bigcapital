@@ -1,10 +1,5 @@
-import * as async from 'async';
 import { Knex } from 'knex';
-import {
-  ILedger,
-  ILedgerEntry,
-  ISaleContactsBalanceQueuePayload,
-} from './types/Ledger.types';
+import { ILedger, ILedgerEntry } from './types/Ledger.types';
 import { ACCOUNT_TYPE } from '@/constants/accounts';
 import { Inject, Injectable } from '@nestjs/common';
 import { Contact } from '../Contacts/models/Contact';
@@ -26,6 +21,12 @@ export class LedgerContactsBalanceStorage {
 
   /**
    * Saves the contacts balance.
+   *
+   * Sequential, not `async.queue` with concurrency: Knex transactions are
+   * not concurrency-safe and `async.queue.push` is fire-and-forget without
+   * an error handler — `drain()` resolves regardless of per-task failures,
+   * silently dropping balance updates when racing on the same trx (see
+   * the trial-balance-break post-mortem in CLAUDE.md).
    * @param {ILedger} ledger
    * @param {Knex.Transaction} trx
    * @returns {Promise<void>}
@@ -34,31 +35,10 @@ export class LedgerContactsBalanceStorage {
     ledger: ILedger,
     trx?: Knex.Transaction,
   ): Promise<void> => {
-    // Save contact balance queue.
-    const saveContactsBalanceQueue = async.queue(
-      this.saveContactBalanceTask,
-      10,
-    );
-    // Retrieves the effected contacts ids.
     const effectedContactsIds = ledger.getContactsIds();
-
-    effectedContactsIds.forEach((contactId: number) => {
-      saveContactsBalanceQueue.push({ contactId, ledger, trx });
-    });
-    if (effectedContactsIds.length > 0) await saveContactsBalanceQueue.drain();
-  };
-
-  /**
-   * Saves the contact balance.
-   * @param {ISaleContactsBalanceQueuePayload} task
-   * @returns {Promise<void>}
-   */
-  private saveContactBalanceTask = async (
-    task: ISaleContactsBalanceQueuePayload,
-  ) => {
-    const { contactId, ledger, trx } = task;
-
-    await this.saveContactBalance(ledger, contactId, trx);
+    for (const contactId of effectedContactsIds) {
+      await this.saveContactBalance(ledger, contactId, trx);
+    }
   };
 
   /**

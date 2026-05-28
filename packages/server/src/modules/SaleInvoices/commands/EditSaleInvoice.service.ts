@@ -124,8 +124,12 @@ export class EditSaleInvoice {
       } as ISaleInvoiceEditingPayload);
 
       // Upsert the the invoice graph to the storage.
+      // `.query(trx)` (not `.query()`): the document write must share the
+      // UoW trx so the subsequent GL-rewrite event runs atomically with
+      // it — without trx, an autocommit upsert ahead of a failing GL
+      // write leaves the document mutated but the ledger stale.
       const saleInvoice = await this.saleInvoiceModel()
-        .query()
+        .query(trx)
         .upsertGraphAndFetch({
           id: saleInvoiceId,
           ...saleInvoiceObj,
