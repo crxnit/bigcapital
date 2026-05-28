@@ -1,62 +1,45 @@
-// import { Service, Inject } from 'typedi';
-// import {
-//   IRefundVendorCreditCreatedPayload,
-//   IRefundVendorCreditDeletedPayload,
-// } from '@/interfaces';
-// import events from '@/subscribers/events';
-// import RefundSyncCreditRefundedAmount from './RefundSyncCreditRefundedAmount';
+import { Injectable } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { events } from '@/common/events/events';
+import { RefundSyncCreditRefundedAmount } from '@/modules/VendorCreditsRefund/commands/RefundSyncCreditRefundedAmount.service';
+import {
+  IRefundVendorCreditCreatedPayload,
+  IRefundVendorCreditDeletedPayload,
+} from '@/modules/VendorCreditsRefund/types/VendorCreditRefund.types';
 
-// @Service()
-// export default class RefundSyncVendorCreditBalanceSubscriber {
-//   @Inject()
-//   refundSyncCreditRefunded: RefundSyncCreditRefundedAmount;
+@Injectable()
+export class RefundSyncVendorCreditBalanceSubscriber {
+  constructor(
+    private readonly refundSyncCreditRefunded: RefundSyncCreditRefundedAmount,
+  ) {}
 
-//   /**
-//    * Attaches events with handlers.
-//    */
-//   public attach = (bus) => {
-//     bus.subscribe(
-//       events.vendorCredit.onRefundCreated,
-//       this.incrementRefundedAmountOnceRefundCreated
-//     );
-//     bus.subscribe(
-//       events.vendorCredit.onRefundDeleted,
-//       this.decrementRefundedAmountOnceRefundDeleted
-//     );
-//   };
+  /**
+   * Increment refunded vendor credit amount once refund transaction created.
+   */
+  @OnEvent(events.vendorCredit.onRefundCreated)
+  async incrementRefundedAmountOnceRefundCreated({
+    refundVendorCredit,
+    trx,
+  }: IRefundVendorCreditCreatedPayload) {
+    await this.refundSyncCreditRefunded.incrementCreditRefundedAmount(
+      refundVendorCredit.vendorCreditId,
+      refundVendorCredit.amount,
+      trx,
+    );
+  }
 
-//   /**
-//    * Increment refunded vendor credit amount once refund transaction created.
-//    * @param {IRefundVendorCreditCreatedPayload} payload -
-//    */
-//   private incrementRefundedAmountOnceRefundCreated = async ({
-//     refundVendorCredit,
-//     vendorCredit,
-//     tenantId,
-//     trx,
-//   }: IRefundVendorCreditCreatedPayload) => {
-//     await this.refundSyncCreditRefunded.incrementCreditRefundedAmount(
-//       tenantId,
-//       refundVendorCredit.vendorCreditId,
-//       refundVendorCredit.amount,
-//       trx
-//     );
-//   };
-
-//   /**
-//    * Decrement refunded vendor credit amount once refund transaction deleted.
-//    * @param {IRefundVendorCreditDeletedPayload} payload -
-//    */
-//   private decrementRefundedAmountOnceRefundDeleted = async ({
-//     trx,
-//     oldRefundCredit,
-//     tenantId,
-//   }: IRefundVendorCreditDeletedPayload) => {
-//     await this.refundSyncCreditRefunded.decrementCreditNoteRefundAmount(
-//       tenantId,
-//       oldRefundCredit.vendorCreditId,
-//       oldRefundCredit.amount,
-//       trx
-//     );
-//   };
-// }
+  /**
+   * Decrement refunded vendor credit amount once refund transaction deleted.
+   */
+  @OnEvent(events.vendorCredit.onRefundDeleted)
+  async decrementRefundedAmountOnceRefundDeleted({
+    oldRefundCredit,
+    trx,
+  }: IRefundVendorCreditDeletedPayload) {
+    await this.refundSyncCreditRefunded.decrementCreditNoteRefundAmount(
+      oldRefundCredit.vendorCreditId,
+      oldRefundCredit.amount,
+      trx,
+    );
+  }
+}

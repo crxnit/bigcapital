@@ -31,6 +31,8 @@ import { VendorCreditsExportable } from './commands/VendorCreditsExportable';
 import { VendorCreditsImportable } from './commands/VendorCreditsImportable';
 import { BulkDeleteVendorCreditsService } from './BulkDeleteVendorCredits.service';
 import { ValidateBulkDeleteVendorCreditsService } from './ValidateBulkDeleteVendorCredits.service';
+import { RefundSyncVendorCreditBalanceSubscriber } from './subscribers/RefundSyncVendorCreditBalanceSubscriber';
+import { VendorCreditsRefundModule } from '../VendorCreditsRefund/VendorCreditsRefund.module';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { ValidateBulkDeleteVendorCreditsService } from './ValidateBulkDeleteVend
     AccountsModule,
     DynamicListModule,
     InventoryCostModule,
+    VendorCreditsRefundModule,
   ],
   providers: [
     CreateVendorCreditService,
@@ -67,6 +70,7 @@ import { ValidateBulkDeleteVendorCreditsService } from './ValidateBulkDeleteVend
     VendorCreditsImportable,
     BulkDeleteVendorCreditsService,
     ValidateBulkDeleteVendorCreditsService,
+    RefundSyncVendorCreditBalanceSubscriber,
   ],
   exports: [
     CreateVendorCreditService,
