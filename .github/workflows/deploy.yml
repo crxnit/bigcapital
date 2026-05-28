@@ -20,13 +20,6 @@ permissions:
   contents: read
   packages: write
 
-# Serialize deploys per environment so two pushes in quick succession don't
-# fight over the same VPS. Don't cancel in-progress runs — interrupting a
-# half-done docker compose pull leaves things in a worse state than waiting.
-concurrency:
-  group: deploy-${{ github.event.inputs.environment || 'sandbox' }}
-  cancel-in-progress: false
-
 env:
   REGISTRY: ghcr.io
   OWNER: crxnit
@@ -90,11 +83,65 @@ jobs:
           ignore-unfixed: true
           trivyignores: .trivyignore
 
-  deploy:
-    name: Deploy to ${{ github.event.inputs.environment || 'sandbox' }}
+  deploy-sandbox:
+    name: Deploy to sandbox
     needs: build-and-scan
+    # On push to develop: always runs (sandbox auto-deploy).
+    # On manual dispatch with environment=sandbox: runs.
+    # On manual dispatch with environment=uat: skipped (deploy-uat runs directly).
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'sandbox')
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'sandbox' }}
+    environment: sandbox
+    # Job-level concurrency: a push run now exercises both deploy jobs, so
+    # the lock has to be per-env to avoid blocking unrelated parallel manual
+    # dispatches. Don't cancel in-progress — interrupting a half-done
+    # `docker compose pull` leaves the VPS in a worse state than waiting.
+    concurrency:
+      group: deploy-sandbox
+      cancel-in-progress: false
+    steps:
+      - id: sha
+        name: Compute short SHA
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Trigger remote deploy
+        run: |
+          ssh -p "${{ secrets.VPS_PORT }}" \
+              -i ~/.ssh/deploy_key \
+              -o IdentitiesOnly=yes \
+              -o IdentityAgent=none \
+              "${{ secrets.VPS_HOST }}" \
+              "${{ steps.sha.outputs.short }} ${{ steps.sha.outputs.short }}"
+
+  deploy-uat:
+    name: Deploy to uat
+    needs: [build-and-scan, deploy-sandbox]
+    # On push to develop: runs only after sandbox finishes successfully —
+    # sandbox's `/api/health` smoke gate is therefore the UAT safety net.
+    # On manual dispatch with environment=uat: runs without requiring
+    # sandbox; deploy-sandbox is `skipped`, so `if: always()` is needed for
+    # downstream evaluation past a skipped upstream.
+    if: |
+      always() &&
+      needs.build-and-scan.result == 'success' &&
+      (
+        (github.event_name == 'push' && needs.deploy-sandbox.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'uat')
+      )
+    runs-on: ubuntu-latest
+    environment: uat
+    concurrency:
+      group: deploy-uat
+      cancel-in-progress: false
     steps:
       - id: sha
         name: Compute short SHA

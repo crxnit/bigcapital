@@ -129,13 +129,13 @@ Production and UAT run via Docker (`docker-compose.prod.yml`). Traefik handles T
 
 `git push origin develop` → `.github/workflows/deploy.yml` builds linux/arm64 images for `server` + `webapp` → pushes to `ghcr.io/crxnit/bigcapital-{server,webapp}:sha-<short>` → Trivy HIGH/CRITICAL gate → SSH into VPS → `deploy.sh` pulls, runs tenant migration, brings up server+webapp with `/api/health` smoke gate.
 
-- **Sandbox** auto-deploys on push to `develop`. **Docs-only pushes don't deploy** — `deploy.yml` has `paths-ignore: docs/**, **/*.md, archive/**`, so a push touching only Markdown (incl. `.claude/CLAUDE.md`) triggers no run. Mix code + docs in one push to deploy both.
-- **UAT** triggers manually: `gh workflow run deploy.yml -f environment=uat`. If `gh workflow run` can't resolve by name, dispatch by ID: `gh api -X POST repos/crxnit/bigcapital/actions/workflows/275652569/dispatches --input - <<<'{"ref":"develop","inputs":{"environment":"uat"}}'`.
+- **Sandbox + UAT both auto-deploy on push to `develop`, in sequence**: sandbox first; UAT only if sandbox's `/api/health` smoke gate (and every earlier step) passes. Sandbox remains the safety net — a regression that fails sandbox's smoke step skips UAT entirely. **Docs-only pushes don't deploy** — `deploy.yml` has `paths-ignore: docs/**, **/*.md, archive/**`, so a push touching only Markdown (incl. `.claude/CLAUDE.md`) triggers no run. Mix code + docs in one push to deploy both.
+- **Manual single-env dispatch** is still available for redeploys without a new commit (e.g. after a `.env` change): `gh workflow run deploy.yml -f environment={sandbox|uat}`. If `gh workflow run` can't resolve by name, dispatch by ID: `gh api -X POST repos/crxnit/bigcapital/actions/workflows/275652569/dispatches --input - <<<'{"ref":"develop","inputs":{"environment":"uat"}}'`.
 - **Legacy tarball compose files** (`docker-compose.prod.yml`, `docker/sandbox-bc/docker-compose.yml`) remain as rollback paths.
 
 ### Solo-dev workflow — no PR ceremony
 
-Single-developer fork. Commit and push directly to `develop`; the push triggers sandbox auto-deploy and acts as the safety net before UAT. Don't open a PR or cut a feature branch unless explicitly asked (e.g. risky multi-commit refactor wanting a checkpoint). UAT still requires explicit sign-off / manual dispatch.
+Single-developer fork. Commit and push directly to `develop`; the push rides sandbox → UAT in sequence automatically. If a commit needs more human review before staging, hold off on pushing — once it's on develop it lands on UAT as soon as sandbox passes its smoke gate. Don't open a PR or cut a feature branch unless explicitly asked (e.g. risky multi-commit refactor wanting a checkpoint).
 
 ## Always-relevant deploy notes
 
