@@ -7,6 +7,7 @@ import {
 } from '@/components';
 import { useTransactionsByVendorsPdf } from '@/hooks/query';
 import { useVendorsTransactionsContext } from '../../VendorsTransactionsProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function VendorTransactionsPdfDialogContent() {
   const { httpQuery } = useVendorsTransactionsContext();
@@ -26,7 +27,7 @@ export default function VendorTransactionsPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'invoice.pdf'}
+          download={buildReportPdfFilename('vendor-transactions', httpQuery)}
           minimal={true}
           outlined={true}
         >

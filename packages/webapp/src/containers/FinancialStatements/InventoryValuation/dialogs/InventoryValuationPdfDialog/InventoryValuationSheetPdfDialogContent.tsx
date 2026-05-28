@@ -7,6 +7,7 @@ import {
 import { useInventoryValuationPdf } from '@/hooks/query';
 import { AnchorButton } from '@blueprintjs/core';
 import { useInventoryValuationContext } from '../../InventoryValuationProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function InventoryValuationPdfDialogContent() {
   const { httpQuery } = useInventoryValuationContext();
@@ -26,7 +27,10 @@ export default function InventoryValuationPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'inventory-valuation-summary.pdf'}
+          download={buildReportPdfFilename(
+            'inventory-valuation-summary',
+            httpQuery,
+          )}
           minimal={true}
           outlined={true}
         >

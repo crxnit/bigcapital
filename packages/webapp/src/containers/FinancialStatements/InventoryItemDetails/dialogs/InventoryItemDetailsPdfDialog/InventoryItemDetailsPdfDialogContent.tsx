@@ -7,6 +7,7 @@ import {
 import { useInventoryItemDetailsPdf } from '@/hooks/query';
 import { AnchorButton } from '@blueprintjs/core';
 import { useInventoryItemDetailsContext } from '../../InventoryItemDetailsProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function InventoryItemDetailsPdfDialogContent() {
   const { httpQuery } = useInventoryItemDetailsContext();
@@ -26,7 +27,7 @@ export default function InventoryItemDetailsPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'inventory-item-details.pdf'}
+          download={buildReportPdfFilename('inventory-item-details', httpQuery)}
           minimal={true}
           outlined={true}
         >

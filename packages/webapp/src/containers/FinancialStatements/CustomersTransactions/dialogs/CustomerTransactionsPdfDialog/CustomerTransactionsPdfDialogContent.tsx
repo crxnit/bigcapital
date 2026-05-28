@@ -7,6 +7,7 @@ import {
 import { AnchorButton } from '@blueprintjs/core';
 import { useCustomersTransactionsPdfExport } from '@/hooks/query';
 import { useCustomersTransactionsContext } from '../../CustomersTransactionsProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function CashflowSheetPdfDialogContent() {
   const { httpQuery } = useCustomersTransactionsContext();
@@ -26,7 +27,7 @@ export default function CashflowSheetPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'customer-transactions.pdf'}
+          download={buildReportPdfFilename('customer-transactions', httpQuery)}
           minimal={true}
           outlined={true}
         >

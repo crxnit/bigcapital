@@ -7,6 +7,7 @@ import {
 } from '@/components';
 import { usePurchasesByItemsPdfExport } from '@/hooks/query';
 import { usePurchaseByItemsContext } from '../../PurchasesByItemsProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function PurchasesByItemsPdfDialogContent() {
   const { httpQuery } = usePurchaseByItemsContext();
@@ -26,7 +27,7 @@ export default function PurchasesByItemsPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'invoice.pdf'}
+          download={buildReportPdfFilename('purchases-by-items', httpQuery)}
           minimal={true}
           outlined={true}
         >

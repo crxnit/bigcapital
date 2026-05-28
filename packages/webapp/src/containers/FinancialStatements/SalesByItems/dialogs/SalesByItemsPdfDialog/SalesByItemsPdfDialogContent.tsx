@@ -7,6 +7,7 @@ import {
 import { useSalesByItemsPdfExport } from '@/hooks/query';
 import { AnchorButton } from '@blueprintjs/core';
 import { useSalesByItemsContext } from '../../SalesByItemProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function SalesByItemsPdfDialogContent() {
   const { httpQuery } = useSalesByItemsContext();
@@ -26,7 +27,7 @@ export default function SalesByItemsPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'sales_by_items.pdf'}
+          download={buildReportPdfFilename('sales-by-items', httpQuery)}
           minimal={true}
           outlined={true}
         >

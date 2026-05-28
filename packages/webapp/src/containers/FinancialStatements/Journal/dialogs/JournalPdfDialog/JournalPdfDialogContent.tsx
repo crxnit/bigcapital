@@ -7,6 +7,7 @@ import {
 import { useJournalSheetPdf } from '@/hooks/query';
 import { AnchorButton } from '@blueprintjs/core';
 import { useJournalSheetContext } from '../../JournalProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function JournalSheetPdfDialogContent() {
   const { httpQuery } = useJournalSheetContext();
@@ -26,7 +27,7 @@ export default function JournalSheetPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'journal.pdf'}
+          download={buildReportPdfFilename('journal', httpQuery)}
           minimal={true}
           outlined={true}
         >

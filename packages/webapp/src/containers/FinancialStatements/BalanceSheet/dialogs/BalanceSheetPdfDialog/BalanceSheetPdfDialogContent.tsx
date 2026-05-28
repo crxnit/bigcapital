@@ -7,6 +7,7 @@ import {
 import { useBalanceSheetPdf } from '@/hooks/query';
 import { AnchorButton } from '@blueprintjs/core';
 import { useBalanceSheetContext } from '../../BalanceSheetProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function BalanceSheetPdfDialogContent() {
   const { httpQuery } = useBalanceSheetContext();
@@ -28,8 +29,7 @@ export default function BalanceSheetPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'invoice.pdf'}
-
+          download={buildReportPdfFilename('balance-sheet', httpQuery)}
           disabled={!isLoaded}
           small
           minimal

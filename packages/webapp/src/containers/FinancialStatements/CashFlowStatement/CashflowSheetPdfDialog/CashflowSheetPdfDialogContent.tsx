@@ -7,6 +7,7 @@ import {
 import { AnchorButton } from '@blueprintjs/core';
 import { useCashflowSheetPdf } from '@/hooks/query';
 import { useCashFlowStatementContext } from '../CashFlowStatementProvider';
+import { buildReportPdfFilename } from '../../common';
 
 export default function CashflowSheetPdfDialogContent() {
   const { httpQuery } = useCashFlowStatementContext();
@@ -26,7 +27,7 @@ export default function CashflowSheetPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'invoice.pdf'}
+          download={buildReportPdfFilename('cash-flow-statement', httpQuery)}
           minimal={true}
           outlined={true}
         >

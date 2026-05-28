@@ -7,6 +7,7 @@ import {
 import { AnchorButton } from '@blueprintjs/core';
 import { useTrialBalanceSheetPdf } from '@/hooks/query';
 import { useTrialBalanceSheetContext } from '../../TrialBalanceProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function TrialBalanceSheetPdfDialogContent() {
   const { httpQuery } = useTrialBalanceSheetContext();
@@ -26,7 +27,7 @@ export default function TrialBalanceSheetPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'trial_balance_sheet.pdf'}
+          download={buildReportPdfFilename('trial-balance-sheet', httpQuery)}
           minimal={true}
           outlined={true}
         >

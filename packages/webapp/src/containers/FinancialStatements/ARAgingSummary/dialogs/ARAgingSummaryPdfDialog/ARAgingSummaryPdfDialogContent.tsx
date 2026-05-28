@@ -7,6 +7,7 @@ import {
 import { useARAgingSummaryPdf } from '@/hooks/query';
 import { AnchorButton } from '@blueprintjs/core';
 import { useARAgingSummaryContext } from '../../ARAgingSummaryProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function ARAgingSummaryPdfDialogContent() {
   const { httpQuery } = useARAgingSummaryContext();
@@ -26,7 +27,7 @@ export default function ARAgingSummaryPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'AR_aging_summary.pdf'}
+          download={buildReportPdfFilename('ar-aging-summary', httpQuery)}
           minimal={true}
           outlined={true}
         >

@@ -7,6 +7,7 @@ import {
 import { AnchorButton } from '@blueprintjs/core';
 import { useCustomerBalanceSummaryPdf } from '@/hooks/query';
 import { useCustomersBalanceSummaryContext } from '../CustomersBalanceSummaryProvider';
+import { buildReportPdfFilename } from '../../common';
 
 export default function CustomerBalanceSummaryPdfDialogContent() {
   const { httpQuery } = useCustomersBalanceSummaryContext();
@@ -26,7 +27,10 @@ export default function CustomerBalanceSummaryPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'customer-balance-summary.pdf'}
+          download={buildReportPdfFilename(
+            'customer-balance-summary',
+            httpQuery,
+          )}
           minimal={true}
           outlined={true}
         >

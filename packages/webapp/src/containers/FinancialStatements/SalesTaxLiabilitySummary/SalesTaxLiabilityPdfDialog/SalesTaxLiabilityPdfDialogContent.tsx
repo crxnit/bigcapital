@@ -7,6 +7,7 @@ import {
 import { AnchorButton } from '@blueprintjs/core';
 import { useSalesTaxLiabilitySummaryPdf } from '@/hooks/query';
 import { useSalesTaxLiabilitySummaryContext } from '../SalesTaxLiabilitySummaryBoot';
+import { buildReportPdfFilename } from '../../common';
 
 export default function SalesTaxLiabilityPdfDialogContent() {
   const { query } = useSalesTaxLiabilitySummaryContext();
@@ -26,7 +27,10 @@ export default function SalesTaxLiabilityPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'sales-tax-liability-summary.pdf'}
+          download={buildReportPdfFilename(
+            'sales-tax-liability-summary',
+            query,
+          )}
           minimal={true}
           outlined={true}
         >

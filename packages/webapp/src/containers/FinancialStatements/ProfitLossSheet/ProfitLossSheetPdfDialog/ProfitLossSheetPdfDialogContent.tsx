@@ -7,6 +7,7 @@ import {
 import { AnchorButton } from '@blueprintjs/core';
 import { useProfitLossSheetPdf } from '@/hooks/query';
 import { useProfitLossSheetContext } from '../ProfitLossProvider';
+import { buildReportPdfFilename } from '../../common';
 
 export default function ProfitLossSheetPdfDialogContent() {
   const { httpQuery } = useProfitLossSheetContext();
@@ -26,7 +27,7 @@ export default function ProfitLossSheetPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'profit_loss_sheet.pdf'}
+          download={buildReportPdfFilename('profit-loss-sheet', httpQuery)}
           minimal={true}
           outlined={true}
         >

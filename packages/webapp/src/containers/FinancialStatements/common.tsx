@@ -1,5 +1,6 @@
 // @ts-nocheck
 import * as R from 'ramda';
+import moment from 'moment';
 import { displayColumnsByOptions } from './constants';
 import { transfromToSnakeCase, flatten } from '@/utils';
 
@@ -46,4 +47,28 @@ export const transformFilterFormToQuery = (form) => {
     transformAccountsFilter,
     transformDisplayColumnsType,
   )(form);
+};
+
+/**
+ * Build a descriptive download filename for a report PDF from the same snake_case
+ * httpQuery the dialogs already hold. Supports both range (from_date/to_date) and
+ * as-of (as_date) reports, optional basis, and a generation timestamp to keep
+ * re-downloads from colliding.
+ */
+export const buildReportPdfFilename = (reportSlug, httpQuery = {}) => {
+  const parts = [reportSlug];
+  const { from_date, to_date, as_date, basis, accounting_method } = httpQuery;
+
+  if (from_date && to_date) {
+    parts.push(from_date, 'to', to_date);
+  } else if (as_date) {
+    parts.push('as-of', as_date);
+  }
+
+  const basisValue = basis || accounting_method;
+  if (basisValue) parts.push(basisValue);
+
+  parts.push(moment().format('YYYY-MM-DD-HHmm'));
+
+  return `${parts.join('_')}.pdf`;
 };

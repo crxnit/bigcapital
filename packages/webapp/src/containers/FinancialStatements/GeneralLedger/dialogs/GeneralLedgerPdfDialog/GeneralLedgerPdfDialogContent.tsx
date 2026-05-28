@@ -7,6 +7,7 @@ import {
 import { AnchorButton } from '@blueprintjs/core';
 import { useGeneralLedgerPdf } from '@/hooks/query';
 import { useGeneralLedgerContext } from '../../GeneralLedgerProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function GeneralLedgerPdfDialogContent() {
   const { httpQuery } = useGeneralLedgerContext();
@@ -26,7 +27,7 @@ export default function GeneralLedgerPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'general-ledger.pdf'}
+          download={buildReportPdfFilename('general-ledger', httpQuery)}
           minimal={true}
           outlined={true}
         >

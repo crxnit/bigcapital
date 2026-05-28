@@ -7,6 +7,7 @@ import {
 import { useVendorBalanceSummaryPdfExport } from '@/hooks/query';
 import { AnchorButton } from '@blueprintjs/core';
 import { useVendorsBalanceSummaryContext } from '../../VendorsBalanceSummaryProvider';
+import { buildReportPdfFilename } from '../../../common';
 
 export default function VendorTransactionsPdfDialogContent() {
   const { httpQuery } = useVendorsBalanceSummaryContext();
@@ -26,7 +27,7 @@ export default function VendorTransactionsPdfDialogContent() {
 
         <AnchorButton
           href={pdfUrl}
-          download={'invoice.pdf'}
+          download={buildReportPdfFilename('vendor-balance-summary', httpQuery)}
           minimal={true}
           outlined={true}
         >
