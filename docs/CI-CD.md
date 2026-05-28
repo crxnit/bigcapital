@@ -28,11 +28,11 @@ Total wall-clock: 8–10 min (arm64 QEMU builds dominate).
 
 ## Triggers
 
-- **Sandbox**: push to `develop` (`paths-ignore: docs/**, **/*.md, archive/**`).
-- **UAT**: `gh workflow run deploy.yml -f environment=uat` (manual `workflow_dispatch`).
+- **Push to `develop`**: deploys **sandbox then UAT in sequence**. `deploy-uat` job has `needs: [build-and-scan, deploy-sandbox]` and is gated on `deploy-sandbox.result == 'success'` for push events — sandbox's `/api/health` smoke gate is therefore the UAT safety net. `paths-ignore: docs/**, **/*.md, archive/**` still applies, so docs-only pushes deploy nothing.
+- **Manual single-env dispatch**: `gh workflow run deploy.yml -f environment={sandbox|uat}` re-deploys one env without a new commit (e.g. after a `.env` change). The non-target deploy job is skipped via `if:` clause; the UAT job uses `if: always()` to evaluate downstream of a skipped sandbox upstream.
 - **Production**: not yet wired (see `docs/FUTURE-ENHANCEMENTS.md`).
 
-Concurrency: serialized per environment. A second push during an in-flight deploy queues — no cancel-in-progress, so we never interrupt a half-done `docker compose pull`.
+Concurrency: job-level per environment (`deploy-sandbox` / `deploy-uat` groups). A push run now exercises both jobs but each env's queue is independent — a parallel manual dispatch on one env doesn't block a push run on the other. No cancel-in-progress on either, so we never interrupt a half-done `docker compose pull`.
 
 ## Secrets
 
