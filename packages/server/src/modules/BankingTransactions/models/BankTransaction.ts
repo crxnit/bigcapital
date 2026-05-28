@@ -154,6 +154,9 @@ export class BankTransaction extends BaseModel {
     const {
       MatchedBankTransaction,
     } = require('../../BankingMatching/models/MatchedBankTransaction');
+    const {
+      UncategorizedBankTransaction,
+    } = require('./UncategorizedBankTransaction');
 
     return {
       /**
@@ -207,6 +210,21 @@ export class BankTransaction extends BaseModel {
         join: {
           from: 'cashflow_transactions.creditAccountId',
           to: 'accounts.id',
+        },
+      },
+
+      /**
+       * Source uncategorized bank transaction (populated when this cashflow
+       * row was produced by the categorize flow). Used to recover the
+       * original deposit/withdrawal direction for OtherIncome/OtherExpense
+       * refunds.
+       */
+      uncategorizedTransaction: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: UncategorizedBankTransaction,
+        join: {
+          from: 'cashflow_transactions.uncategorizedTransactionId',
+          to: 'uncategorized_cashflow_transactions.id',
         },
       },
 

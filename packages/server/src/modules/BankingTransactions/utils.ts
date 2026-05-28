@@ -69,6 +69,11 @@ export const transformCategorizeTransToCashflow = (
     transactionNumber: categorizeDTO.transactionNumber,
     transactionType: categorizeDTO.transactionType,
     branchId: categorizeDTO?.branchId,
+    // Back-reference so the GL writer can recover the original deposit/
+    // withdrawal direction for bidirectional refund types (OtherIncome /
+    // OtherExpense), where typeMeta.direction is fixed and would otherwise
+    // post the wrong-direction journal.
+    uncategorizedTransactionId: uncategorizeTransaction.id,
     publish: true,
   };
 };

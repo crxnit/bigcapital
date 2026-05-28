@@ -11,7 +11,9 @@ export class BankTransactionGLEntriesService {
     private readonly ledgerStorage: LedgerStorageService,
 
     @Inject(BankTransaction.name)
-    private readonly bankTransactionModel: TenantModelProxy<typeof BankTransaction>,
+    private readonly bankTransactionModel: TenantModelProxy<
+      typeof BankTransaction
+    >,
   ) {}
 
   /**
@@ -28,7 +30,8 @@ export class BankTransactionGLEntriesService {
       .query(trx)
       .findById(cashflowTransactionId)
       .withGraphFetched('cashflowAccount')
-      .withGraphFetched('creditAccount');
+      .withGraphFetched('creditAccount')
+      .withGraphFetched('uncategorizedTransaction');
 
     // Retrieves the cashflow transaction ledger.
     const ledger = new BankTransactionGL(transaction).getCashflowLedger();
