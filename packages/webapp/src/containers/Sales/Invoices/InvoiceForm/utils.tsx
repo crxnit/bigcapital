@@ -127,6 +127,12 @@ export function transformToEditForm(invoice) {
 
   return {
     ...transformToForm(invoice, defaultInvoice),
+    // `transformToForm` drops null fields, so an invoice whose `discount_type`
+    // was never set (e.g. created with no discount) hydrates with no type.
+    // Default it to a fixed amount so the dropdown shows a concrete unit and a
+    // typed discount gets persisted instead of round-tripping as null — which
+    // the server reads as a percentage (the $111.53 → 111.53% → $497.56 bug).
+    discount_type: invoice.discount_type || 'amount',
     inclusive_exclusive_tax: invoice.is_inclusive_tax
       ? TaxType.Inclusive
       : TaxType.Exclusive,

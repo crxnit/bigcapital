@@ -177,9 +177,14 @@ export class SaleInvoice extends TenantBaseModel {
    * @returns {number}
    */
   get discountAmount() {
-    return this.discountType === DiscountType.Amount
-      ? this.discount
-      : this.subtotal * (this.discount / 100);
+    // Compute a percentage only when the type is EXPLICITLY percentage.
+    // A null/undefined `discountType` (e.g. an invoice that never had a
+    // discount, then edited to add a fixed-dollar one) must be treated as a
+    // fixed amount — otherwise the bare number is read as a percent of the
+    // subtotal (e.g. $111.53 → 111.53% → $497.56). Mirrors `discountPercentage`.
+    return this.discountType === DiscountType.Percentage
+      ? this.subtotal * (this.discount / 100)
+      : this.discount;
   }
 
   /**

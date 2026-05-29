@@ -141,9 +141,11 @@ export class CreditNote extends TenantBaseModel {
    * @returns {number}
    */
   get discountAmount() {
-    return this.discountType === DiscountType.Amount
-      ? this.discount
-      : this.subtotal * (this.discount / 100);
+    // Percentage only when EXPLICITLY percentage; a null/undefined type is a
+    // fixed amount (see SaleInvoice.discountAmount for the $497.56 footgun).
+    return this.discountType === DiscountType.Percentage
+      ? this.subtotal * (this.discount / 100)
+      : this.discount;
   }
 
   /**
