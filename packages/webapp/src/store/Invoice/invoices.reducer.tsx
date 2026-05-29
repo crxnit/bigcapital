@@ -10,6 +10,10 @@ export const defaultTableQuery = {
   pageIndex: 0,
   filterRoles: [],
   viewSlug: null,
+  // Default the invoices list to newest-first by invoice date.
+  // `transformTableStateToQuery` maps this to `column_sort_by`/`sort_order`,
+  // the same server-side sort path a column-header click uses.
+  sortBy: [{ id: 'invoice_date', desc: true }],
 };
 
 const initialState = {

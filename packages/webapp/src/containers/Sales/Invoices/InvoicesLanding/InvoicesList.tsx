@@ -10,7 +10,6 @@ import InvoicesDataTable from './InvoicesDataTable';
 import InvoicesActionsBar from './InvoicesActionsBar';
 
 import { withInvoices } from './withInvoices';
-import { withInvoiceActions } from './withInvoiceActions';
 import { withAlertActions } from '@/containers/Alert/withAlertActions';
 
 import { transformTableStateToQuery, compose } from '@/utils';
@@ -22,17 +21,12 @@ function InvoicesList({
   // #withInvoice
   invoicesTableState,
   invoicesTableStateChanged,
-
-  // #withInvoicesActions
-  resetInvoicesTableState,
 }) {
-  // Resets the invoices table state once the page unmount.
-  React.useEffect(
-    () => () => {
-      resetInvoicesTableState();
-    },
-    [resetInvoicesTableState],
-  );
+  // The invoices table state (sort, page, filters) is intentionally NOT reset
+  // on unmount, so editing an invoice from the row popup and navigating back
+  // returns to the same sort/position. A full page reload still falls back to
+  // the default (newest-first by invoice date) since the state isn't persisted
+  // to storage.
 
   return (
     <InvoicesListProvider
@@ -53,6 +47,5 @@ export default compose(
     invoicesTableState,
     invoicesTableStateChanged,
   })),
-  withInvoiceActions,
   withAlertActions,
 )(InvoicesList);

@@ -156,6 +156,7 @@ function InvoicesDataTable({
         sticky={true}
         pagination={true}
         initialPageSize={invoicesTableState.pageSize}
+        initialSortBy={invoicesTableState.sortBy || []}
         manualPagination={true}
         pagesCount={pagination.pagesCount}
         autoResetSortBy={false}
@@ -176,7 +177,7 @@ function InvoicesDataTable({
           onViewDetails: handleViewDetailInvoice,
           onPrint: handlePrintInvoice,
           onConvert: handleConvertToCreitNote,
-          onSendMail: handleSendMailInvoice
+          onSendMail: handleSendMailInvoice,
         }}
       />
     </DashboardContentTable>
