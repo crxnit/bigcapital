@@ -253,3 +253,31 @@ All four other financial reports accept a `basis` query parameter and silently i
 - **Sales Tax Liability Summary** (`SalesTaxLiabilitySummaryRepository.ts`) — accepts `basis` but ignores it. Cash-basis tax liability should recognize tax only on actual cash receipts; correct fix requires the same projection plus tax-line proration. Probably the most accounting-policy-sensitive of the four.
 
 Same diagnostic recipe applies to each: grep `basis` in the report module, then look at the repository's data-fetch query for the absence of `whereNotIn` on accrual-only `referenceType`s and the absence of a projection union.
+
+## Documents — discounts, totals, list ordering (2026-05-29)
+
+### Fixed-dollar discount read as a percentage when `discount_type` was null
+
+Editing an invoice (#114) to add a `$111.53` discount stored it but showed the discount as `$497.56` and a total of `-$51.44`. Root cause: `discountAmount` getters on all six document models (`SaleInvoice`, `Bill`, `CreditNote`, `SaleReceipt`, `VendorCredit`, `SaleEstimate`) computed a fixed amount **only** when `discountType === DiscountType.Amount` and fell through to `subtotal * discount / 100` for everything else — including a `NULL`/`undefined` type. The invoice was created with no discount (`discount_type` NULL); the webapp edit form strips null fields on hydrate and never sent `discount_type`, so a bare `111.53` was read as `111.53%` of the `$446.12` subtotal (`497.56 × 100 / 446.12 = 111.53` confirms it). Fix (commit `193e615d2`): inverted the getter to compute a percentage **only** when the type is explicitly `DiscountType.Percentage`; null/undefined/amount all behave as a fixed amount (mirrors the `discountPercentage` getter). Also defaulted `discount_type` to `'amount'` on invoice edit-form hydration. `SaleEstimate.dto`/`Bill.dto` already defaulted `discountType = Amount`; `SaleInvoice.dto` did not. Computed getter, so display corrects on read; rows whose GL discount leg was physically written wrong need one Edit→Save to rewrite the ledger.
+
+### Subtotal inflated 10× on edit (`"2500" + 0 === "25000"`)
+
+Opening a whole-dollar invoice for edit showed Subtotal/Total/Due at 10× (e.g. `$2,500` → `$25,000`) while the line-item Total stayed correct. `getEntriesTotal` used `sumBy(entries, 'amount')`; the always-present trailing empty line (added by `ensureEntriesHaveEmptyLine` **after** the numeric recompute) carries `amount: ''`, so lodash concatenated: `2500 + '' === "2500"`. A string total was harmless flowing straight into `formattedAmount` (coerces), so the bug sat dormant until the direct-allocations feature added `itemsTotal + categoriesTotal` to `useInvoiceSubtotal` — `"2500" + 0 === "25000"`. Only bit whole-dollar invoices (`"334.59" + 0 === "334.590"` ≈ unchanged), which is why it looked intermittent. Fix (commit `0e40703a3`): `getEntriesTotal` sums `toSafeNumber(entry.amount)`, always returning a number. Fixes all six forms (Invoice/Bill/Estimate/CreditNote/Receipt/VendorCredit) that share the helper. Display-only — the server recomputes `balance` from `quantity × rate` numerically, so no data was corrupted.
+
+### Invoices list: no default sort + sort lost after editing
+
+The invoices list had no default sort and reset its entire table state on unmount, so opening an invoice from the row popup's Edit (routes to `/invoices/:id/edit`) wiped the sort, and returning landed unsorted. Fix (commit `e569bfc13`): `defaultTableQuery.sortBy = [{ id: 'invoice_date', desc: true }]` (mapped to `column_sort_by`/`sort_order`, the same server path a header click uses); `InvoicesDataTable` passes `initialSortBy={invoicesTableState.sortBy}`; removed the `resetInvoicesTableState()` unmount effect so sort/page/filters survive the edit round-trip (SPA nav keeps Redux state; full reload still falls back to the default).
+
+### Bank account transactions list — load jank + register ordering
+
+The account transactions list "didn't load properly" on large accounts (scroll down/up + click a header to get a coherent list). It combines infinite scroll (pages of 50, served **newest-first** `date desc, created_at desc`), client-side react-table sorting, and a react-virtualized `WindowScroller`. The default client sort was **ascending**, fighting the server order: each older page pulled in by the scroll got re-sorted to the **top**, jumping the list. First shipped a newest-first default (`3608cf125`), then the user clarified the register should read **oldest → newest** (top → bottom). A client-only ascending flip would re-introduce the jank (and the bottom-anchored scroll observer could never reach older pages), so the final fix (commit `77be587aa`) is coordinated server + client:
+
+- **Server paginates `date asc, created_at asc`** so page 1 = oldest and newer pages append at the bottom on scroll.
+- **Running balance walked oldest → newest**: opening balance = balance **before** the page's oldest row = net of the `pageSize × (page − 1)` older rows (zero on page 1); then apply-this-row's-amount-then-capture so each row still shows the balance **after** its transaction. Validated against real data (account 1633): oldest row = its own amount, newest row = the account total.
+- **Client `initialSortBy` back to ascending**, matching the server so the initial sort is a no-op.
+
+**Still-open**: a possible separate react-virtualized `WindowScroller` initial-measurement issue ("rows don't render until you scroll once") was flagged but not fixed — it would need a change to the shared `TableVirtualizedRows` component and UAT verification. Pick up only if the symptom persists after the ordering fix.
+
+### Prior-session error loop (diagnosis only)
+
+The "perpetual loop of errors" the user reported from the previous session was a harness/API glitch — a `400 ... thinking or redacted_thinking blocks ... cannot be modified` baked into the conversation history, so every retry replayed the same rejected request. Cleared by restarting; nothing wrong in the repo. A secondary contributor was ~135 cascade-cancellation errors from batching `awk`/`ugrep`/`wc` Bash calls against a wrong path (`InvoiceForm/utils.ts` — the file is `utils.tsx`); one wrong-path failure cancels the whole parallel batch.
