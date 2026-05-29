@@ -62,12 +62,14 @@ export class GetBankAccountTransactionsRepository {
    * @param {ICashflowAccountTransactionsQuery} query -
    */
   async initCashflowAccountTransactions() {
+    // Oldest-first so the register reads top (oldest) → bottom (newest) and the
+    // infinite-scroll loads progressively newer pages as the user scrolls down.
     const { results, pagination } = await this.accountTransactionModel()
       .query()
       .where('account_id', this.query.accountId)
       .orderBy([
-        { column: 'date', order: 'desc' },
-        { column: 'created_at', order: 'desc' },
+        { column: 'date', order: 'asc' },
+        { column: 'created_at', order: 'asc' },
       ])
       .pagination(this.query.page - 1, this.query.pageSize);
 
@@ -83,16 +85,27 @@ export class GetBankAccountTransactionsRepository {
    * @return {Promise<number>}
    */
   async initCashflowAccountOpeningBalance(): Promise<void> {
-    // Retrieve the opening balance of credit and debit balances.
+    // Pages are now ordered oldest-first and the running balance is walked
+    // oldest → newest, so the opening balance is the balance BEFORE this page's
+    // first (oldest) row — i.e. the net of every transaction older than it,
+    // which is exactly the `pageSize * (page - 1)` oldest rows preceding this
+    // page. Page 1 has nothing before it, so its opening balance is zero.
+    const priorTransactionsCount =
+      this.pagination.pageSize * (this.pagination.page - 1);
+
+    if (priorTransactionsCount <= 0) {
+      this.openingBalance = 0;
+      return;
+    }
+
     const openingBalancesSubquery = this.accountTransactionModel()
       .query()
       .where('account_id', this.query.accountId)
       .orderBy([
-        { column: 'date', order: 'desc' },
-        { column: 'created_at', order: 'desc' },
+        { column: 'date', order: 'asc' },
+        { column: 'created_at', order: 'asc' },
       ])
-      .limit(this.pagination.total)
-      .offset(this.pagination.pageSize * (this.pagination.page - 1));
+      .limit(priorTransactionsCount);
 
     // Sumation of credit and debit balance.
     const openingBalances = await this.accountTransactionModel()

@@ -129,13 +129,11 @@ function AccountTransactionsDataTable({
       noInitialFetch={true}
       columns={columns}
       data={cashflowTransactions}
-      // Newest-first by default, matching the server's `date desc, created_at
-      // desc` page order. With ascending client sort, each older page loaded by
-      // the infinite scroll got re-sorted to the TOP of the already-rendered
-      // rows — the list appeared to "not load" until the user scrolled and
-      // clicked a header to force a clean re-sort. Descending keeps newly
-      // loaded (older) pages appended below, so the list stays stable.
-      initialSortBy={[{ id: 'date', desc: true }]}
+      // Oldest-first (a bank-register reading order): top = oldest, bottom =
+      // newest. Matches the server's now-ascending page order, so the initial
+      // sort is a no-op and newly loaded (newer) pages from the infinite scroll
+      // append cleanly at the bottom instead of re-sorting to the top.
+      initialSortBy={[{ id: 'date', desc: false }]}
       sticky={true}
       loading={isCashFlowTransactionsLoading}
       headerLoading={isCashFlowTransactionsLoading}
