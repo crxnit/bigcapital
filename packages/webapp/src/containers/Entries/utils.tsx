@@ -49,9 +49,17 @@ export function updateItemsEntriesTotal(rows) {
 
 /**
  * Retrieve total of the given items entries.
+ *
+ * Coerce each `amount` to a number before summing. The always-present
+ * trailing empty line carries `amount: ''` (a string), and lodash `sumBy`
+ * would then concatenate (`2500 + '' === "2500"`). A string total stays
+ * harmless when passed straight to `formattedAmount` (it coerces), but any
+ * caller that does further arithmetic on it — e.g. the fork's
+ * `useInvoiceSubtotal` doing `itemsTotal + categoriesTotal` — turns
+ * `"2500" + 0` into `"25000"`, a 10x inflation on whole-dollar invoices.
  */
 export function getEntriesTotal(entries) {
-  return sumBy(entries, 'amount');
+  return sumBy(entries, (entry) => toSafeNumber(entry.amount));
 }
 
 /**
@@ -286,9 +294,9 @@ export const useComposeRowsOnRemoveTableRow = () => {
 
 /**
  * Retrieves the aggregate tax rates from the given item entries.
- * @param {string} currencyCode - 
- * @param {any} taxRates - 
- * @param {any} entries - 
+ * @param {string} currencyCode -
+ * @param {any} taxRates -
+ * @param {any} entries -
  */
 export const aggregateItemEntriesTaxRates = R.curry(
   (currencyCode, taxRates, entries) => {
