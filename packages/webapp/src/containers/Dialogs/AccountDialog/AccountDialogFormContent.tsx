@@ -23,12 +23,17 @@ import {
   ACCOUNT_TYPE,
   BANK_ACCOUNT_SUBTYPE,
 } from '@/constants/accountTypes';
+import { useAutofocus } from '@/hooks';
+import { useAccountDialogContext } from './AccountDialogProvider';
+import { parentAccountShouldUpdate } from './utils';
+import { compose } from '@/utils';
 
 // Account sub-types used to group the cashflow-accounts cards into sections.
-// Checking/Savings apply to bank accounts; Clearing applies to bank or
-// other-current-asset accounts (e.g. Square / Stripe settlement accounts) and
-// surfaces them on the cashflow page. `other`/unset bank accounts fall under
-// the "Bank Accounts" section.
+// Checking/Savings/Other apply to bank accounts only; Clearing applies to bank
+// OR other-current-asset accounts (e.g. Square / Stripe settlement accounts),
+// which is the only subtype that surfaces an other-current-asset account on the
+// cashflow page. `other`/unset bank accounts fall under the "Bank Accounts"
+// section.
 const ACCOUNT_SUBTYPES = [
   {
     key: BANK_ACCOUNT_SUBTYPE.CHECKING,
@@ -48,15 +53,9 @@ const ACCOUNT_SUBTYPES = [
   {
     key: BANK_ACCOUNT_SUBTYPE.OTHER,
     label: 'Other',
-    forTypes: [ACCOUNT_TYPE.BANK, ACCOUNT_TYPE.OTHER_CURRENT_ASSET],
+    forTypes: [ACCOUNT_TYPE.BANK],
   },
 ];
-
-import { useAutofocus } from '@/hooks';
-import { useAccountDialogContext } from './AccountDialogProvider';
-
-import { parentAccountShouldUpdate } from './utils';
-import { compose } from '@/utils';
 
 /**
  * Account form dialogs fields.

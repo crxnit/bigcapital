@@ -2,6 +2,7 @@
 import * as Yup from 'yup';
 import intl from 'react-intl-universal';
 import { DATATYPES_LENGTH } from '@/constants/dataTypes';
+import { BANK_ACCOUNT_SUBTYPE } from '@/constants/accountTypes';
 
 const Schema = Yup.object().shape({
   name: Yup.string()
@@ -13,7 +14,11 @@ const Schema = Yup.object().shape({
   account_type: Yup.string().required().label(intl.get('account_type')),
   description: Yup.string().min(3).max(DATATYPES_LENGTH.TEXT).nullable().trim(),
   parent_account_id: Yup.number().nullable(),
-  bank_account_subtype: Yup.string().nullable(),
+  // Empty string is the no-subtype sentinel (form default + reset on type
+  // change); allow it and null alongside the known subtype keys.
+  bank_account_subtype: Yup.string()
+    .nullable()
+    .oneOf([...Object.values(BANK_ACCOUNT_SUBTYPE), '', null]),
 });
 
 export const CreateAccountFormSchema = Schema;
