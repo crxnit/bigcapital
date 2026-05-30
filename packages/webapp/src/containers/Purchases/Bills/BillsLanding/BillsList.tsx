@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DashboardPageContent } from '@/components';
 
 import '@/style/pages/Bills/List.scss';
@@ -10,7 +10,6 @@ import BillsActionsBar from './BillsActionsBar';
 import BillsTable from './BillsTable';
 
 import { withBills } from './withBills';
-import { withBillsActions } from './withBillsActions';
 
 import { transformTableStateToQuery, compose } from '@/utils';
 
@@ -21,17 +20,11 @@ function BillsList({
   // #withBills
   billsTableState,
   billsTableStateChanged,
-
-  // #withBillsActions
-  resetBillsTableState,
 }) {
-  // Resets the accounts table state once the page unmount.
-  useEffect(
-    () => () => {
-      resetBillsTableState();
-    },
-    [resetBillsTableState],
-  );
+  // The bills table state (sort, page, filters) is intentionally NOT reset on
+  // unmount, so editing a bill and navigating back returns to the same
+  // sort/position. The chosen sort is persisted across reloads; other state
+  // falls back to the default (oldest-first by bill date).
 
   return (
     <BillsListProvider
@@ -52,5 +45,4 @@ export default compose(
     billsTableState,
     billsTableStateChanged,
   })),
-  withBillsActions,
 )(BillsList);

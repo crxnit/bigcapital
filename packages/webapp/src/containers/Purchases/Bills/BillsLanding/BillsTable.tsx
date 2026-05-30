@@ -138,6 +138,8 @@ function BillsDataTable({
         sticky={true}
         pagination={true}
         initialPageSize={billsTableState.pageSize}
+        initialSortBy={billsTableState.sortBy || []}
+        autoResetSortBy={false}
         pagesCount={pagination.pagesCount}
         TableLoadingRenderer={TableSkeletonRows}
         TableHeaderSkeletonRenderer={TableSkeletonHeader}

@@ -24,9 +24,9 @@ function InvoicesList({
 }) {
   // The invoices table state (sort, page, filters) is intentionally NOT reset
   // on unmount, so editing an invoice from the row popup and navigating back
-  // returns to the same sort/position. A full page reload still falls back to
-  // the default (newest-first by invoice date) since the state isn't persisted
-  // to storage.
+  // returns to the same sort/position. The chosen sort is persisted across
+  // reloads; other state falls back to the default (oldest-first by invoice
+  // date).
 
   return (
     <InvoicesListProvider
