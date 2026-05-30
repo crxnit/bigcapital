@@ -157,7 +157,7 @@ function QuickPaymentMadeFormFields({
         <FInputGroup name={'reference'} minimal={true} />
       </FFormGroup>
 
-      {/* --------- Statement --------- */}
+      {/* --------- Note --------- */}
       <FFormGroup name={'statement'} label={<T id={'statement'} />}>
         <FTextArea name={'statement'} growVertically={true} fill={true} />
       </FFormGroup>

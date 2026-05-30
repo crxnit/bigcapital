@@ -162,7 +162,7 @@ function QuickPaymentReceiveFormFields({
         <FInputGroup name={'reference_no'} minimal={true} />
       </FFormGroup>
 
-      {/* --------- Statement --------- */}
+      {/* --------- Note --------- */}
       <FFormGroup
         name={'statement'}
         label={<T id={'statement'} />}

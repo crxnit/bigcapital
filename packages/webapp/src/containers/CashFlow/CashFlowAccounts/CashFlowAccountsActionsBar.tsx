@@ -1,4 +1,5 @@
 // @ts-nocheck
+import intl from 'react-intl-universal';
 import {
   Button,
   NavbarGroup,
@@ -36,17 +37,17 @@ import { compose } from '@/utils';
 /**
  * Sort options for the bank-account cards. `id` is the model field key the
  * server's dynamic-list sorter expects (see `Account.meta` fields), `desc`
- * the direction.
+ * the direction, `labelKey` the i18n key for the display label.
  */
 const CASHFLOW_ACCOUNTS_SORT_OPTIONS = [
-  { id: 'name', desc: false, label: 'Name (A–Z)' },
-  { id: 'name', desc: true, label: 'Name (Z–A)' },
-  { id: 'code', desc: false, label: 'Code (Ascending)' },
-  { id: 'code', desc: true, label: 'Code (Descending)' },
-  { id: 'balance', desc: true, label: 'Balance (High–Low)' },
-  { id: 'balance', desc: false, label: 'Balance (Low–High)' },
-  { id: 'created_at', desc: true, label: 'Newest First' },
-  { id: 'created_at', desc: false, label: 'Oldest First' },
+  { id: 'name', desc: false, labelKey: 'banking.accounts.sort.name_asc' },
+  { id: 'name', desc: true, labelKey: 'banking.accounts.sort.name_desc' },
+  { id: 'code', desc: false, labelKey: 'banking.accounts.sort.code_asc' },
+  { id: 'code', desc: true, labelKey: 'banking.accounts.sort.code_desc' },
+  { id: 'balance', desc: true, labelKey: 'banking.accounts.sort.balance_desc' },
+  { id: 'balance', desc: false, labelKey: 'banking.accounts.sort.balance_asc' },
+  { id: 'created_at', desc: true, labelKey: 'banking.accounts.sort.newest' },
+  { id: 'created_at', desc: false, labelKey: 'banking.accounts.sort.oldest' },
 ];
 
 const isSameSort = (option, sortBy) =>
@@ -118,7 +119,7 @@ function CashFlowAccountsActionsBar({
       {CASHFLOW_ACCOUNTS_SORT_OPTIONS.map((option) => (
         <MenuItem
           key={`${option.id}-${option.desc}`}
-          text={option.label}
+          text={intl.get(option.labelKey)}
           icon={isSameSort(option, sortBy) ? 'small-tick' : 'blank'}
           onClick={() => handleSortOptionClick(option)}
         />
@@ -160,7 +161,9 @@ function CashFlowAccountsActionsBar({
             className={Classes.MINIMAL}
             icon={<Icon icon="sort-down" iconSize={16} />}
             rightIcon={<Icon icon="caret-down-16" iconSize={16} />}
-            text={`Sort: ${activeSortOption.label}`}
+            text={`${intl.get('banking.accounts.sort.label')}: ${intl.get(
+              activeSortOption.labelKey,
+            )}`}
           />
         </Popover2>
         <NavbarDivider />
