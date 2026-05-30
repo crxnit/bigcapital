@@ -13,6 +13,15 @@ export function TextOverviewTooltipCell({ cell: { value } }) {
     preventOverflow: { boundariesElement: 'viewport', padding: 40 },
   };
 
+  // Blueprint's <Tooltip> wraps a <Popover>; a null/empty child makes the
+  // Popover render with no target and log "[Blueprint] <Popover> requires
+  // target prop or at least one child element." Cells like an invoice line's
+  // description are routinely blank, so render the bare value when empty and
+  // only wrap in a tooltip when there's content to show.
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
   return (
     <Tooltip
       content={value}
