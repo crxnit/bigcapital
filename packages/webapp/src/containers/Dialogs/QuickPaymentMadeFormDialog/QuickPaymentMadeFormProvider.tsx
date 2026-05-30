@@ -26,8 +26,12 @@ function QuickPaymentMadeFormProvider({ query, billId, dialogName, ...props }) {
     enabled: !!billId,
   });
 
-  // Handle fetch accounts data.
-  const { data: accounts, isLoading: isAccountsLoading } = useAccounts();
+  // Handle fetch accounts data. `page_size` must be large: FAccountsSuggestField
+  // filters in-memory, so a paginated default can hide the payment account
+  // (e.g. the credit card) past page 1.
+  const { data: accounts, isLoading: isAccountsLoading } = useAccounts({
+    page_size: 10000,
+  });
 
   // Create payment made mutations.
   const { mutateAsync: createPaymentMadeMutate } = useCreatePaymentMade();

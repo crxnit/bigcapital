@@ -145,6 +145,7 @@ function QuickPaymentMadeFormFields({
                 ACCOUNT_TYPE.CASH,
                 ACCOUNT_TYPE.BANK,
                 ACCOUNT_TYPE.OTHER_CURRENT_ASSET,
+                ACCOUNT_TYPE.CREDIT_CARD,
               ]}
             />
           </FFormGroup>
@@ -171,7 +172,7 @@ export const BranchRowDivider = styled.div`
   background: #ebf1f6;
   margin-bottom: 15px;
 
-  .bp4-dark &{
+  .bp4-dark & {
     background: rgba(255, 255, 255, 0.1);
   }
 `;
