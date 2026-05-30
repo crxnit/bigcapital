@@ -9,6 +9,9 @@ export const defaultTableQuery = {
   pageSize: 9999,
   pageIndex: 0,
   filterRoles: [],
+  // Default the bank-account cards to alphabetical (A–Z) order; the server
+  // otherwise falls back to `created_at desc`, which reads as random to users.
+  sortBy: [{ id: 'name', desc: false }],
 };
 
 const initialState = {
