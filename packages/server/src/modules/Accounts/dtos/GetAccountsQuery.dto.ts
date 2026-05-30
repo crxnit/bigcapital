@@ -1,9 +1,20 @@
-import { IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { parseBoolean } from '@/utils/parse-boolean';
 import { IAccountsStructureType } from '../Accounts.types';
-import { IFilterRole, ISortOrder } from '@/modules/DynamicListing/DynamicFilter/DynamicFilter.types';
+import {
+  IFilterRole,
+  ISortOrder,
+} from '@/modules/DynamicListing/DynamicFilter/DynamicFilter.types';
 import { ToNumber } from '@/common/decorators/Validators';
 
 export class GetAccountsQueryDto {
@@ -60,6 +71,12 @@ export class GetAccountsQueryDto {
     example: ISortOrder.DESC,
   })
   @IsOptional()
+  // The webapp sends lowercase `asc`/`desc` (transformTableStateToQuery);
+  // normalize to the uppercase ISortOrder enum before validation so the
+  // sort order isn't rejected with a 400.
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.toUpperCase() : value,
+  )
   @IsEnum(ISortOrder)
   sortOrder?: string;
 
@@ -114,4 +131,3 @@ export class GetAccountsQueryDto {
   @Min(1)
   pageSize?: number;
 }
-
