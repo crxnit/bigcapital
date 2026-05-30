@@ -147,7 +147,7 @@ Prod + UAT run via Docker (`docker-compose.prod.yml`). Traefik handles TLS, OAut
 
 `git push origin develop` → `.github/workflows/deploy.yml` builds linux/arm64 images for `server` + `webapp` → `ghcr.io/crxnit/bigcapital-{server,webapp}:sha-<short>` → Trivy HIGH/CRITICAL gate → SSH VPS → `deploy.sh` pulls, runs tenant migration, brings up server+webapp with `/api/health` smoke gate.
 
-- **Sandbox + UAT auto-deploy on push to `develop`, in sequence**: sandbox first; UAT only if sandbox's smoke gate (and every earlier step) passes. **Docs-only pushes don't deploy** — `paths-ignore: docs/**, **/*.md, archive/**` (incl. `.claude/CLAUDE.md`). Mix code + docs in one push to deploy both.
+- **Sandbox + UAT auto-deploy on push to `develop`, in sequence**: sandbox first; UAT only if sandbox's smoke gate (and every earlier step) passes. **Docs-only pushes don't deploy** — `paths-ignore: docs/**, **/*.md, archive/**` (incl. `.claude/CLAUDE.md`). Mix code + docs in one push to deploy both. **`.github/workflows/**`is NOT in`paths-ignore`\** — pushing a workflow change triggers a deploy that runs with the *new\* workflow definition, so a workflow edit is self-validating (used to verify the Node 24 actions bump).
 - **Manual single-env dispatch** (redeploy without new commit, e.g. after `.env` change): `gh workflow run deploy.yml -f environment={sandbox|uat}`. By ID if name fails: `gh api -X POST repos/crxnit/bigcapital/actions/workflows/275652569/dispatches --input - <<<'{"ref":"develop","inputs":{"environment":"uat"}}'`.
 - **Legacy tarball compose files** (`docker-compose.prod.yml`, `docker/sandbox-bc/docker-compose.yml`) remain as rollback paths.
 
