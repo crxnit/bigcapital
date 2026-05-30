@@ -6,22 +6,22 @@ on:
       - main
       - develop
     paths:
-      - '**.ts'
-      - '**.tsx'
-      - '**/tsconfig.json'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/e2e.yml'
+      - "**.ts"
+      - "**.tsx"
+      - "**/tsconfig.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/e2e.yml"
   pull_request:
     paths:
-      - '**.ts'
-      - '**.tsx'
-      - '**/tsconfig.json'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/e2e.yml'
+      - "**.ts"
+      - "**.tsx"
+      - "**/tsconfig.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/e2e.yml"
 
 defaults:
   run:
-    shell: 'bash'
+    shell: "bash"
 
 jobs:
   test_e2e:
@@ -48,13 +48,13 @@ jobs:
         options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 18.16.1
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v6
         with:
           version: 9
 
@@ -65,7 +65,7 @@ jobs:
         id: pnpm-cache
 
       - name: Setup pnpm cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -146,7 +146,7 @@ jobs:
         env:
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:4000
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report

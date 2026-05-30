@@ -6,15 +6,15 @@ on:
       - main
       - develop
     paths:
-      - 'packages/server/src/**/*.ts'
-      - 'packages/server/src/**/*.dto.ts'
-      - '!packages/server/src/**/*.spec.ts'
-      - '!packages/server/src/**/*.test.ts'
+      - "packages/server/src/**/*.ts"
+      - "packages/server/src/**/*.dto.ts"
+      - "!packages/server/src/**/*.spec.ts"
+      - "!packages/server/src/**/*.test.ts"
   workflow_dispatch:
 
 defaults:
   run:
-    shell: 'bash'
+    shell: "bash"
 
 env:
   # Database configuration
@@ -35,30 +35,30 @@ env:
   JWT_SECRET: test-jwt-secret-for-openapi-generation
   BASE_URL: http://localhost:3000
   # Feature flags
-  SIGNUP_DISABLED: 'false'
-  SIGNUP_EMAIL_CONFIRMATION: 'false'
+  SIGNUP_DISABLED: "false"
+  SIGNUP_EMAIL_CONFIRMATION: "false"
   API_RATE_LIMIT: 120,60,600
   # Optional services (empty for OpenAPI generation)
-  MAIL_HOST: ''
-  MAIL_PORT: ''
-  MAIL_USERNAME: ''
-  MAIL_PASSWORD: ''
-  MAIL_FROM_NAME: ''
-  MAIL_FROM_ADDRESS: ''
-  GOTENBERG_URL: ''
-  GOTENBERG_DOCS_URL: ''
-  PLAID_CLIENT_ID: ''
-  PLAID_SECRET: ''
-  LEMONSQUEEZY_API_KEY: ''
-  S3_ACCESS_KEY_ID: ''
-  S3_SECRET_ACCESS_KEY: ''
-  S3_BUCKET: ''
-  POSTHOG_API_KEY: ''
-  STRIPE_PAYMENT_SECRET_KEY: ''
-  OPEN_EXCHANGE_RATE_APP_ID: ''
-  BULLBOARD_ENABLED: 'false'
-  BULLBOARD_USERNAME: ''
-  BULLBOARD_PASSWORD: ''
+  MAIL_HOST: ""
+  MAIL_PORT: ""
+  MAIL_USERNAME: ""
+  MAIL_PASSWORD: ""
+  MAIL_FROM_NAME: ""
+  MAIL_FROM_ADDRESS: ""
+  GOTENBERG_URL: ""
+  GOTENBERG_DOCS_URL: ""
+  PLAID_CLIENT_ID: ""
+  PLAID_SECRET: ""
+  LEMONSQUEEZY_API_KEY: ""
+  S3_ACCESS_KEY_ID: ""
+  S3_SECRET_ACCESS_KEY: ""
+  S3_BUCKET: ""
+  POSTHOG_API_KEY: ""
+  STRIPE_PAYMENT_SECRET_KEY: ""
+  OPEN_EXCHANGE_RATE_APP_ID: ""
+  BULLBOARD_ENABLED: "false"
+  BULLBOARD_USERNAME: ""
+  BULLBOARD_PASSWORD: ""
 
 jobs:
   generate-openapi:
@@ -92,21 +92,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '18'
-          cache: 'pnpm'
+          node-version: "18"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -131,8 +131,8 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore(sdk): update OpenAPI spec and generated types'
-          title: 'chore(sdk): update OpenAPI spec and generated types'
+          commit-message: "chore(sdk): update OpenAPI spec and generated types"
+          title: "chore(sdk): update OpenAPI spec and generated types"
           body: |
             ## Summary
             Automated update of OpenAPI specification and generated TypeScript SDK types.
