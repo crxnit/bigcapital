@@ -18,6 +18,14 @@ const ACCOUNT_TYPE_PAIR_ICON = {
   [ACCOUNT_TYPE.BANK]: 'account-balance',
 };
 
+// Per-type accent colors for the top-right badge. Low-alpha tints read fine on
+// both the light and dark card backgrounds.
+const ACCOUNT_TYPE_BADGE_COLORS = {
+  [ACCOUNT_TYPE.CASH]: { fg: '#0f9960', bg: 'rgba(15, 153, 96, 0.13)' },
+  [ACCOUNT_TYPE.CREDIT_CARD]: { fg: '#7b61ff', bg: 'rgba(123, 97, 255, 0.15)' },
+  [ACCOUNT_TYPE.BANK]: { fg: '#2d72d2', bg: 'rgba(45, 114, 210, 0.13)' },
+};
+
 function BankAccountMetaLine({ title, value, className }) {
   return (
     <MetaLineWrap className={className}>
@@ -44,13 +52,14 @@ function BankAccountBalance({ amount, loading }) {
 
 function BankAccountTypeIcon({ type }) {
   const icon = ACCOUNT_TYPE_PAIR_ICON[type];
+  const colors = ACCOUNT_TYPE_BADGE_COLORS[type];
 
   if (!icon) {
-    return;
+    return null;
   }
   return (
-    <AccountIconWrap>
-      <Icon icon={icon} iconSize={18} />
+    <AccountIconWrap style={colors ? { background: colors.bg } : undefined}>
+      <Icon icon={icon} iconSize={16} color={colors?.fg} />
     </AccountIconWrap>
   );
 }
@@ -132,7 +141,7 @@ const BankAccountTitle = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0px;
-  padding-right: 24px;
+  padding-right: 40px;
 `;
 
 const BnakAccountCode = styled.div`
@@ -207,7 +216,13 @@ export const BankAccountsList = styled.div`
 
 const AccountIconWrap = styled.div`
   position: absolute;
-  top: 14px;
-  color: #abb3bb;
+  top: 12px;
   right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #abb3bb;
 `;
