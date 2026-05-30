@@ -146,12 +146,81 @@ function getUpdatedBeforeText(createdAt) {
 }
 
 /**
- * Cashflow accounts grid items.
+ * Section definitions for the cashflow-accounts cards. Each account matches at
+ * most one section; bank accounts split by `bank_account_subtype` with an
+ * unset/"other" catch-all under "Bank Accounts".
  */
-function CashflowAccountsGridItems({ accounts }) {
-  return accounts.map((account) => (
-    <CashflowBankAccountEnhanced account={account} />
-  ));
+const ACCOUNT_CARD_SECTIONS = [
+  {
+    key: 'cash',
+    title: 'Cash Accounts',
+    match: (a) => a.account_type === 'cash',
+  },
+  {
+    key: 'checking',
+    title: 'Checking Accounts',
+    match: (a) =>
+      a.account_type === 'bank' && a.bank_account_subtype === 'checking',
+  },
+  {
+    key: 'savings',
+    title: 'Savings Accounts',
+    match: (a) =>
+      a.account_type === 'bank' && a.bank_account_subtype === 'savings',
+  },
+  {
+    key: 'bank',
+    title: 'Bank Accounts',
+    match: (a) =>
+      a.account_type === 'bank' &&
+      a.bank_account_subtype !== 'checking' &&
+      a.bank_account_subtype !== 'savings',
+  },
+  {
+    key: 'credit-card',
+    title: 'Credit Card Accounts',
+    match: (a) => a.account_type === 'credit-card',
+  },
+];
+
+/**
+ * Buckets accounts into ordered, non-empty sections. Any account matching no
+ * section (unexpected type) is surfaced under "Other Accounts" rather than
+ * silently dropped.
+ */
+function groupAccountsIntoSections(accounts) {
+  const sections = ACCOUNT_CARD_SECTIONS.map((section) => ({
+    ...section,
+    accounts: accounts.filter(section.match),
+  }));
+  const matchedIds = new Set(
+    sections.flatMap((section) => section.accounts.map((a) => a.id)),
+  );
+  const leftover = accounts.filter((a) => !matchedIds.has(a.id));
+  if (leftover.length > 0) {
+    sections.push({
+      key: 'other',
+      title: 'Other Accounts',
+      accounts: leftover,
+    });
+  }
+  return sections.filter((section) => section.accounts.length > 0);
+}
+
+/**
+ * A single titled section of bank-account cards.
+ */
+function CashflowAccountsSection({ title, accounts }) {
+  return (
+    <CashflowAccountsSectionWrap>
+      <CashflowAccountsSectionTitle>{title}</CashflowAccountsSectionTitle>
+      <BankAccountsList>
+        {accounts.map((account) => (
+          <CashflowBankAccountEnhanced key={account.id} account={account} />
+        ))}
+      </BankAccountsList>
+    </CashflowAccountsSectionWrap>
+  );
 }
 
 /**
@@ -175,17 +244,35 @@ export default function CashflowAccountsGrid() {
   const { cashflowAccounts, isCashFlowAccountsLoading } =
     useCashFlowAccountsContext();
 
+  if (isCashFlowAccountsLoading) {
+    return (
+      <CashflowAccountsGridWrap>
+        <BankAccountsList>
+          <CashflowAccountsSkeleton />
+        </BankAccountsList>
+      </CashflowAccountsGridWrap>
+    );
+  }
+  if (isEmpty(cashflowAccounts)) {
+    return (
+      <CashflowAccountsGridWrap>
+        <BankAccountsList>
+          <CashflowAccountsEmptyState />
+        </BankAccountsList>
+      </CashflowAccountsGridWrap>
+    );
+  }
+  const sections = groupAccountsIntoSections(cashflowAccounts);
+
   return (
     <CashflowAccountsGridWrap>
-      <BankAccountsList>
-        {isCashFlowAccountsLoading ? (
-          <CashflowAccountsSkeleton />
-        ) : isEmpty(cashflowAccounts) ? (
-          <CashflowAccountsEmptyState />
-        ) : (
-          <CashflowAccountsGridItems accounts={cashflowAccounts} />
-        )}
-      </BankAccountsList>
+      {sections.map((section) => (
+        <CashflowAccountsSection
+          key={section.key}
+          title={section.title}
+          accounts={section.accounts}
+        />
+      ))}
     </CashflowAccountsGridWrap>
   );
 }
@@ -309,6 +396,22 @@ const CashflowAccountsGridWrap = styled.div`
   margin: 30px;
 `;
 
+const CashflowAccountsSectionWrap = styled.div`
+  &:not(:first-of-type) {
+    margin-top: 26px;
+  }
+`;
+
+const CashflowAccountsSectionTitle = styled.h3`
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-bank-account-code-text);
+  opacity: 0.85;
+`;
+
 const CashflowBankAccountWrap = styled.div``;
 
 const AccountsEmptyStateBase = styled.div`
@@ -318,7 +421,7 @@ const AccountsEmptyStateBase = styled.div`
 `;
 const AccountsEmptyStateTitle = styled.h1`
   --x-text-color: #626b76;
-  
+
   .bp4-dark & {
     --x-text-color: rgba(255, 255, 255, 0.6);
   }

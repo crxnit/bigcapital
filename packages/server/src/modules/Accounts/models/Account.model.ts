@@ -36,6 +36,7 @@ export class Account extends TenantBaseModel {
   public amount!: number;
   public plaidItemId!: string;
   public plaidAccountId!: string | null;
+  public bankAccountSubtype!: string | null;
   public isFeedsActive!: boolean;
   public isSyncingOwner!: boolean;
   public plaidItem!: PlaidItem;

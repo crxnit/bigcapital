@@ -31,6 +31,7 @@ const defaultInitialValues = {
   description: '',
   currency_code: '',
   subaccount: false,
+  bank_account_subtype: '',
 };
 
 /**

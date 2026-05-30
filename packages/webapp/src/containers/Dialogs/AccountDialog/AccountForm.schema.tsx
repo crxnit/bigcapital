@@ -10,11 +10,10 @@ const Schema = Yup.object().shape({
     .max(DATATYPES_LENGTH.STRING)
     .label(intl.get('account_name_')),
   code: Yup.string().nullable().min(3).max(6),
-  account_type: Yup.string()
-    .required()
-    .label(intl.get('account_type')),
+  account_type: Yup.string().required().label(intl.get('account_type')),
   description: Yup.string().min(3).max(DATATYPES_LENGTH.TEXT).nullable().trim(),
   parent_account_id: Yup.number().nullable(),
+  bank_account_subtype: Yup.string().nullable(),
 });
 
 export const CreateAccountFormSchema = Schema;

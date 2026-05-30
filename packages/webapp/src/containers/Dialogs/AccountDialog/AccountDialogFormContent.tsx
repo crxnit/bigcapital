@@ -13,11 +13,23 @@ import {
   FFormGroup,
   FInputGroup,
   FCheckbox,
+  FSelect,
   FTextArea,
 } from '@/components';
 import { withAccounts } from '@/containers/Accounts/withAccounts';
 
-import { FOREIGN_CURRENCY_ACCOUNTS } from '@/constants/accountTypes';
+import {
+  FOREIGN_CURRENCY_ACCOUNTS,
+  ACCOUNT_TYPE,
+} from '@/constants/accountTypes';
+
+// Sub-types for bank accounts, used to group the cashflow-accounts cards into
+// Checking / Savings sections. `other` (or unset) falls under "Bank Accounts".
+const BANK_ACCOUNT_SUBTYPES = [
+  { key: 'checking', label: 'Checking' },
+  { key: 'savings', label: 'Savings' },
+  { key: 'other', label: 'Other' },
+];
 
 import { useAutofocus } from '@/hooks';
 import { useAccountDialogContext } from './AccountDialogProvider';
@@ -56,6 +68,8 @@ function AccountFormDialogFields({
             onItemSelect={(accountType) => {
               setFieldValue('account_type', accountType.key);
               setFieldValue('currency_code', '');
+              // Sub-type only applies to bank accounts; clear it on type change.
+              setFieldValue('bank_account_subtype', '');
             }}
             disabled={fieldsDisabled.accountType}
             popoverProps={{ minimal: true }}
@@ -124,6 +138,28 @@ function AccountFormDialogFields({
             />
           </FFormGroup>
         )}
+
+        <If condition={values.account_type === ACCOUNT_TYPE.BANK}>
+          {/*------------ Bank account subtype -----------*/}
+          <FFormGroup
+            label={<T id={'bank_account_subtype'} />}
+            name={'bank_account_subtype'}
+            inline={true}
+            fastField={true}
+          >
+            <FSelect
+              name={'bank_account_subtype'}
+              items={BANK_ACCOUNT_SUBTYPES}
+              valueAccessor={'key'}
+              textAccessor={'label'}
+              labelAccessor={'key'}
+              placeholder={<T id={'bank_account_subtype.placeholder'} />}
+              popoverProps={{ minimal: true }}
+              fastField={true}
+              fill={true}
+            />
+          </FFormGroup>
+        </If>
 
         <If condition={FOREIGN_CURRENCY_ACCOUNTS.includes(values.account_type)}>
           {/*------------ Currency  -----------*/}

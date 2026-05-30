@@ -100,4 +100,14 @@ export class CreateAccountDTO {
     required: false,
   })
   plaidItemId?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'Bank account subtype (only meaningful for bank accounts)',
+    example: 'checking',
+    required: false,
+    enum: ['checking', 'savings', 'other'],
+  })
+  bankAccountSubtype?: string;
 }

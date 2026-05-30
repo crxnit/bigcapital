@@ -46,4 +46,14 @@ export class EditAccountDTO {
     example: 1,
   })
   parentAccountId?: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'Bank account subtype (only meaningful for bank accounts)',
+    example: 'checking',
+    required: false,
+    enum: ['checking', 'savings', 'other'],
+  })
+  bankAccountSubtype?: string;
 }
