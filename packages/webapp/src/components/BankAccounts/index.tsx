@@ -91,9 +91,9 @@ export function BankAccount({
         <BankAccountTitle className={clsx({ [Classes.SKELETON]: loading })}>
           {title}
         </BankAccountTitle>
-        <BnakAccountCode className={clsx({ [Classes.SKELETON]: loading })}>
+        <BankAccountCode className={clsx({ [Classes.SKELETON]: loading })}>
           {code}
-        </BnakAccountCode>
+        </BankAccountCode>
         {!loading && <BankAccountTypeIcon type={type} subtype={subtype} />}
       </BankAccountHeader>
 
@@ -145,7 +145,6 @@ const BankAccountTitle = styled.div`
   font-size: 15px;
   font-style: inherit;
   letter-spacing: -0.003em;
-  // color: rgb(23, 43, 77);
   white-space: nowrap;
   font-weight: 600;
   line-height: 1;
@@ -155,7 +154,7 @@ const BankAccountTitle = styled.div`
   padding-right: 40px;
 `;
 
-const BnakAccountCode = styled.div`
+const BankAccountCode = styled.div`
   font-size: 11px;
   margin-top: 4px;
   color: var(--color-bank-account-code-text);
@@ -174,7 +173,6 @@ const BankAccountBalanceAmount = styled.div`
   font-size: 16px;
   font-weight: 600;
   line-height: 1;
-  // color: #57657e;
 `;
 
 const BankAccountBalanceLabel = styled.div`
@@ -188,7 +186,6 @@ const BankAccountBalanceLabel = styled.div`
 const MetaLineWrap = styled.div`
   font-size: 11px;
   display: flex;
-  // color: #2f3c58;
 
   &:not(:first-of-type) {
     margin-top: 6px;
@@ -208,7 +205,6 @@ const MetaLineValue = styled.div`
   text-transform: none;
   width: 30px;
   min-width: 30px;
-  // color: rgb(23, 43, 77);
   height: 16px;
   text-align: center;
   font-size: 11px;

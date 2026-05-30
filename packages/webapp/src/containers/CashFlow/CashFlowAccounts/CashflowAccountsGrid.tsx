@@ -38,10 +38,10 @@ const CASHFLOW_SKELETON_N = 4;
 function CashflowAccountsSkeleton() {
   return [...Array(CASHFLOW_SKELETON_N)].map((e, i) => (
     <BankAccount
+      key={i}
       title={'XXXXX'}
       code={'XXXXX'}
       balance={'XXXXXX'}
-      cash={'cash'}
       loading={true}
     />
   ));
@@ -141,10 +141,6 @@ const CashflowBankAccountEnhanced = compose(
   withDrawerActions,
   withDialogActions,
 )(CashflowBankAccount);
-
-function getUpdatedBeforeText(createdAt) {
-  return '';
-}
 
 /**
  * Section definitions for the cashflow-accounts cards. Each account matches at
@@ -420,8 +416,6 @@ const CashflowAccountsSectionTitle = styled.h3`
   color: var(--color-bank-account-code-text);
   opacity: 0.85;
 `;
-
-const CashflowBankAccountWrap = styled.div``;
 
 const AccountsEmptyStateBase = styled.div`
   flex: 1;
