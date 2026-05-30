@@ -77,15 +77,15 @@ function CashFlowAccountsActionsBar({
   const handleRefreshBtnClick = () => {
     refresh();
   };
-  // Handle add bank account.
-  const handleAddBankAccount = () => {
+  // Handle add cash account.
+  const handleAddCashAccount = () => {
     openDialog(DialogsName.AccountForm, {
       action: AccountDialogAction.NewDefinedType,
       accountType: ACCOUNT_TYPE.CASH,
     });
   };
-  // Handle add cash account.
-  const handleAddCashAccount = () => {
+  // Handle add bank account.
+  const handleAddBankAccount = () => {
     openDialog(DialogsName.AccountForm, {
       action: AccountDialogAction.NewDefinedType,
       accountType: ACCOUNT_TYPE.BANK,
@@ -134,13 +134,13 @@ function CashFlowAccountsActionsBar({
             className={Classes.MINIMAL}
             icon={<Icon icon={'plus-24'} iconSize={20} />}
             text={<T id={'banking.label.add_cash_account'} />}
-            onClick={handleAddBankAccount}
+            onClick={handleAddCashAccount}
           />
           <Button
             className={Classes.MINIMAL}
             icon={<Icon icon={'plus-24'} iconSize={20} />}
             text={<T id={'banking.label.add_bank_account'} />}
-            onClick={handleAddCashAccount}
+            onClick={handleAddBankAccount}
           />
           <NavbarDivider />
         </Can>
