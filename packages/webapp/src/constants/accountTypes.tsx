@@ -23,6 +23,17 @@ export const ACCOUNT_TYPE = {
   OTHER_EXPENSE: 'other-expense',
 };
 
+// Bank-account subtype tags (`accounts.bank_account_subtype`). Single source of
+// truth for the cashflow-accounts card grouping, the type badge, and the
+// Account dialog's subtype dropdown. `clearing` may apply to a Bank OR an
+// Other-Current-Asset account (e.g. Square / Stripe settlement accounts).
+export const BANK_ACCOUNT_SUBTYPE = {
+  CHECKING: 'checking',
+  SAVINGS: 'savings',
+  CLEARING: 'clearing',
+  OTHER: 'other',
+};
+
 export const ACCOUNT_PARENT_TYPE = {
   CURRENT_ASSET: 'current-asset',
   FIXED_ASSET: 'fixed-asset',

@@ -5,12 +5,7 @@ import styled from 'styled-components';
 import clsx from 'classnames';
 import { Classes } from '@blueprintjs/core';
 import { Icon } from '@/components/Icon';
-
-const ACCOUNT_TYPE = {
-  CASH: 'cash',
-  BANK: 'bank',
-  CREDIT_CARD: 'credit-card',
-};
+import { ACCOUNT_TYPE, BANK_ACCOUNT_SUBTYPE } from '@/constants';
 
 const ACCOUNT_TYPE_PAIR_ICON = {
   [ACCOUNT_TYPE.CASH]: 'payments',
@@ -58,7 +53,7 @@ function BankAccountBalance({ amount, loading }) {
 }
 
 function BankAccountTypeIcon({ type, subtype }) {
-  const isClearing = subtype === 'clearing';
+  const isClearing = subtype === BANK_ACCOUNT_SUBTYPE.CLEARING;
   const icon = isClearing ? CLEARING_BADGE.icon : ACCOUNT_TYPE_PAIR_ICON[type];
   const colors = isClearing
     ? CLEARING_BADGE.colors

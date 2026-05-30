@@ -18,6 +18,7 @@ import {
   getAddMoneyInOptions,
   getAddMoneyOutOptions,
 } from '@/constants/cashflowOptions';
+import { ACCOUNT_TYPE, BANK_ACCOUNT_SUBTYPE } from '@/constants';
 
 import { BankAccountsList, BankAccount, If, Icon, T, Can } from '@/components';
 import { useCashFlowAccountsContext } from './CashFlowAccountsProvider';
@@ -151,40 +152,42 @@ const ACCOUNT_CARD_SECTIONS = [
   {
     key: 'cash',
     title: 'Cash Accounts',
-    match: (a) => a.account_type === 'cash',
+    match: (a) => a.account_type === ACCOUNT_TYPE.CASH,
   },
   {
     key: 'checking',
     title: 'Checking Accounts',
     match: (a) =>
-      a.account_type === 'bank' && a.bank_account_subtype === 'checking',
+      a.account_type === ACCOUNT_TYPE.BANK &&
+      a.bank_account_subtype === BANK_ACCOUNT_SUBTYPE.CHECKING,
   },
   {
     key: 'savings',
     title: 'Savings Accounts',
     match: (a) =>
-      a.account_type === 'bank' && a.bank_account_subtype === 'savings',
+      a.account_type === ACCOUNT_TYPE.BANK &&
+      a.bank_account_subtype === BANK_ACCOUNT_SUBTYPE.SAVINGS,
   },
   {
     key: 'bank',
     title: 'Bank Accounts',
     match: (a) =>
-      a.account_type === 'bank' &&
-      a.bank_account_subtype !== 'checking' &&
-      a.bank_account_subtype !== 'savings' &&
-      a.bank_account_subtype !== 'clearing',
+      a.account_type === ACCOUNT_TYPE.BANK &&
+      a.bank_account_subtype !== BANK_ACCOUNT_SUBTYPE.CHECKING &&
+      a.bank_account_subtype !== BANK_ACCOUNT_SUBTYPE.SAVINGS &&
+      a.bank_account_subtype !== BANK_ACCOUNT_SUBTYPE.CLEARING,
   },
   {
     key: 'clearing',
     title: 'Clearing Accounts',
     // Matches by subtype regardless of account type — a clearing account may be
     // Bank or Other Current Asset (e.g. Square / Stripe settlement accounts).
-    match: (a) => a.bank_account_subtype === 'clearing',
+    match: (a) => a.bank_account_subtype === BANK_ACCOUNT_SUBTYPE.CLEARING,
   },
   {
     key: 'credit-card',
     title: 'Credit Card Accounts',
-    match: (a) => a.account_type === 'credit-card',
+    match: (a) => a.account_type === ACCOUNT_TYPE.CREDIT_CARD,
   },
 ];
 

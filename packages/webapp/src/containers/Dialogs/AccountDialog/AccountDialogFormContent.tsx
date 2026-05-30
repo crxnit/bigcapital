@@ -21,6 +21,7 @@ import { withAccounts } from '@/containers/Accounts/withAccounts';
 import {
   FOREIGN_CURRENCY_ACCOUNTS,
   ACCOUNT_TYPE,
+  BANK_ACCOUNT_SUBTYPE,
 } from '@/constants/accountTypes';
 
 // Account sub-types used to group the cashflow-accounts cards into sections.
@@ -29,15 +30,23 @@ import {
 // surfaces them on the cashflow page. `other`/unset bank accounts fall under
 // the "Bank Accounts" section.
 const ACCOUNT_SUBTYPES = [
-  { key: 'checking', label: 'Checking', forTypes: [ACCOUNT_TYPE.BANK] },
-  { key: 'savings', label: 'Savings', forTypes: [ACCOUNT_TYPE.BANK] },
   {
-    key: 'clearing',
+    key: BANK_ACCOUNT_SUBTYPE.CHECKING,
+    label: 'Checking',
+    forTypes: [ACCOUNT_TYPE.BANK],
+  },
+  {
+    key: BANK_ACCOUNT_SUBTYPE.SAVINGS,
+    label: 'Savings',
+    forTypes: [ACCOUNT_TYPE.BANK],
+  },
+  {
+    key: BANK_ACCOUNT_SUBTYPE.CLEARING,
     label: 'Clearing',
     forTypes: [ACCOUNT_TYPE.BANK, ACCOUNT_TYPE.OTHER_CURRENT_ASSET],
   },
   {
-    key: 'other',
+    key: BANK_ACCOUNT_SUBTYPE.OTHER,
     label: 'Other',
     forTypes: [ACCOUNT_TYPE.BANK, ACCOUNT_TYPE.OTHER_CURRENT_ASSET],
   },
