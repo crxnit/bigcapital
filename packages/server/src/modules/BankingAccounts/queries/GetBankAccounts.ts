@@ -17,7 +17,7 @@ export class GetBankAccountsService {
 
     @Inject(Account.name)
     private readonly accountModel: TenantModelProxy<typeof Account>,
-  ) { }
+  ) {}
 
   /**
    * Retrieve the cash flow accounts.
@@ -32,9 +32,10 @@ export class GetBankAccountsService {
       ...filterDTO,
     };
     // Parsees accounts list filter DTO.
-    const filter = this.dynamicListService.parseStringifiedFilter<BankAccountsQueryDto>(
-      _filterDto,
-    );
+    const filter =
+      this.dynamicListService.parseStringifiedFilter<BankAccountsQueryDto>(
+        _filterDto,
+      );
 
     // Dynamic list service.
     const dynamicList = await this.dynamicListService.dynamicList(
@@ -47,11 +48,19 @@ export class GetBankAccountsService {
       .onBuild((builder) => {
         dynamicList.buildQuery()(builder);
 
-        builder.whereIn('account_type', [
-          ACCOUNT_TYPE.BANK,
-          ACCOUNT_TYPE.CASH,
-          ACCOUNT_TYPE.CREDIT_CARD,
-        ]);
+        // Cash / bank / credit-card accounts, plus any account explicitly
+        // tagged as a clearing account (typically Other Current Asset, e.g.
+        // Square / Stripe / DoorDash settlement accounts) so it can be managed
+        // alongside the bank accounts.
+        builder.where((subBuilder) => {
+          subBuilder
+            .whereIn('account_type', [
+              ACCOUNT_TYPE.BANK,
+              ACCOUNT_TYPE.CASH,
+              ACCOUNT_TYPE.CREDIT_CARD,
+            ])
+            .orWhere('bank_account_subtype', 'clearing');
+        });
         builder.modify('inactiveMode', filter.inactiveMode);
       });
     // Retrieves the transformed accounts.

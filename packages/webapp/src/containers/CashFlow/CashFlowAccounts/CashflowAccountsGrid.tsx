@@ -123,6 +123,7 @@ function CashflowBankAccount({
           code={account.code}
           balance={!isNull(account.amount) ? account.formatted_amount : '-'}
           type={account.account_type}
+          subtype={account.bank_account_subtype}
           updatedBeforeText={
             account.last_feeds_updated_from_now
               ? `Updated ${account.last_feeds_updated_from_now} ago`
@@ -174,7 +175,15 @@ const ACCOUNT_CARD_SECTIONS = [
     match: (a) =>
       a.account_type === 'bank' &&
       a.bank_account_subtype !== 'checking' &&
-      a.bank_account_subtype !== 'savings',
+      a.bank_account_subtype !== 'savings' &&
+      a.bank_account_subtype !== 'clearing',
+  },
+  {
+    key: 'clearing',
+    title: 'Clearing Accounts',
+    // Matches by subtype regardless of account type — a clearing account may be
+    // Bank or Other Current Asset (e.g. Square / Stripe settlement accounts).
+    match: (a) => a.bank_account_subtype === 'clearing',
   },
   {
     key: 'credit-card',

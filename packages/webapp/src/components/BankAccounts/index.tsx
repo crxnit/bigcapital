@@ -26,6 +26,13 @@ const ACCOUNT_TYPE_BADGE_COLORS = {
   [ACCOUNT_TYPE.BANK]: { fg: '#2d72d2', bg: 'rgba(45, 114, 210, 0.13)' },
 };
 
+// Clearing accounts get their own badge regardless of underlying account type
+// (they may be Bank or Other Current Asset).
+const CLEARING_BADGE = {
+  icon: 'swap-horiz',
+  colors: { fg: '#0c8599', bg: 'rgba(12, 133, 153, 0.13)' },
+};
+
 function BankAccountMetaLine({ title, value, className }) {
   return (
     <MetaLineWrap className={className}>
@@ -50,9 +57,12 @@ function BankAccountBalance({ amount, loading }) {
   );
 }
 
-function BankAccountTypeIcon({ type }) {
-  const icon = ACCOUNT_TYPE_PAIR_ICON[type];
-  const colors = ACCOUNT_TYPE_BADGE_COLORS[type];
+function BankAccountTypeIcon({ type, subtype }) {
+  const isClearing = subtype === 'clearing';
+  const icon = isClearing ? CLEARING_BADGE.icon : ACCOUNT_TYPE_PAIR_ICON[type];
+  const colors = isClearing
+    ? CLEARING_BADGE.colors
+    : ACCOUNT_TYPE_BADGE_COLORS[type];
 
   if (!icon) {
     return null;
@@ -68,6 +78,7 @@ export function BankAccount({
   title,
   code,
   type,
+  subtype,
   balance,
   loading = false,
   updatedBeforeText,
@@ -83,7 +94,7 @@ export function BankAccount({
         <BnakAccountCode className={clsx({ [Classes.SKELETON]: loading })}>
           {code}
         </BnakAccountCode>
-        {!loading && <BankAccountTypeIcon type={type} />}
+        {!loading && <BankAccountTypeIcon type={type} subtype={subtype} />}
       </BankAccountHeader>
 
       <BankAccountMeta>

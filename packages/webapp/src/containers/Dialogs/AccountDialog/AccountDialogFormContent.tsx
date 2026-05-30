@@ -23,12 +23,24 @@ import {
   ACCOUNT_TYPE,
 } from '@/constants/accountTypes';
 
-// Sub-types for bank accounts, used to group the cashflow-accounts cards into
-// Checking / Savings sections. `other` (or unset) falls under "Bank Accounts".
-const BANK_ACCOUNT_SUBTYPES = [
-  { key: 'checking', label: 'Checking' },
-  { key: 'savings', label: 'Savings' },
-  { key: 'other', label: 'Other' },
+// Account sub-types used to group the cashflow-accounts cards into sections.
+// Checking/Savings apply to bank accounts; Clearing applies to bank or
+// other-current-asset accounts (e.g. Square / Stripe settlement accounts) and
+// surfaces them on the cashflow page. `other`/unset bank accounts fall under
+// the "Bank Accounts" section.
+const ACCOUNT_SUBTYPES = [
+  { key: 'checking', label: 'Checking', forTypes: [ACCOUNT_TYPE.BANK] },
+  { key: 'savings', label: 'Savings', forTypes: [ACCOUNT_TYPE.BANK] },
+  {
+    key: 'clearing',
+    label: 'Clearing',
+    forTypes: [ACCOUNT_TYPE.BANK, ACCOUNT_TYPE.OTHER_CURRENT_ASSET],
+  },
+  {
+    key: 'other',
+    label: 'Other',
+    forTypes: [ACCOUNT_TYPE.BANK, ACCOUNT_TYPE.OTHER_CURRENT_ASSET],
+  },
 ];
 
 import { useAutofocus } from '@/hooks';
@@ -51,6 +63,11 @@ function AccountFormDialogFields({
   // Account form context.
   const { fieldsDisabled, accounts, accountsTypes, currencies } =
     useAccountDialogContext();
+
+  // Sub-type options available for the currently-selected account type.
+  const subtypeItems = ACCOUNT_SUBTYPES.filter((option) =>
+    option.forTypes.includes(values.account_type),
+  );
 
   return (
     <Form>
@@ -139,23 +156,21 @@ function AccountFormDialogFields({
           </FFormGroup>
         )}
 
-        <If condition={values.account_type === ACCOUNT_TYPE.BANK}>
-          {/*------------ Bank account subtype -----------*/}
+        <If condition={subtypeItems.length > 0}>
+          {/*------------ Account subtype -----------*/}
           <FFormGroup
             label={<T id={'bank_account_subtype'} />}
             name={'bank_account_subtype'}
             inline={true}
-            fastField={true}
           >
             <FSelect
               name={'bank_account_subtype'}
-              items={BANK_ACCOUNT_SUBTYPES}
+              items={subtypeItems}
               valueAccessor={'key'}
               textAccessor={'label'}
               labelAccessor={'key'}
               placeholder={<T id={'bank_account_subtype.placeholder'} />}
               popoverProps={{ minimal: true }}
-              fastField={true}
               fill={true}
             />
           </FFormGroup>
