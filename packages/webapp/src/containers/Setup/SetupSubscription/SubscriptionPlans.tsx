@@ -45,7 +45,13 @@ const SubscriptionPlanMapped = R.compose(
     getLemonCheckout({ variantId })
       .then((res) => {
         const checkoutUrl = res.data.data.attributes.url;
-        window.LemonSqueezy.Url.Open(checkoutUrl);
+        // Use the Lemon Squeezy overlay if present, else open the checkout URL
+        // directly (the script is no longer loaded globally).
+        if (window.LemonSqueezy?.Url?.Open) {
+          window.LemonSqueezy.Url.Open(checkoutUrl);
+        } else {
+          window.open(checkoutUrl, '_blank', 'noopener');
+        }
       })
       .catch(() => {
         AppToaster.show({

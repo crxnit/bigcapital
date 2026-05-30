@@ -25,9 +25,15 @@ function SubscriptionRoot({ openAlert, openDrawer }) {
     openAlert('resume-main-subscription');
   };
   const handleUpdatePaymentMethod = () => {
-    window.LemonSqueezy.Url.Open(
-      mainSubscription.lemonUrls?.updatePaymentMethod,
-    );
+    const url = mainSubscription.lemonUrls?.updatePaymentMethod;
+    if (!url) return;
+    // Use the Lemon Squeezy overlay if present, else open the URL directly
+    // (the script is no longer loaded globally).
+    if (window.LemonSqueezy?.Url?.Open) {
+      window.LemonSqueezy.Url.Open(url);
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
   };
   // Handle upgrade button click.
   const handleUpgradeBtnClick = () => {
@@ -120,8 +126,8 @@ function SubscriptionRoot({ openAlert, openDrawer }) {
               {mainSubscription.planPeriod === 'month'
                 ? 'mo'
                 : mainSubscription.planPeriod === 'year'
-                ? 'yearly'
-                : ''}
+                  ? 'yearly'
+                  : ''}
             </Text>
           )}
         </Group>

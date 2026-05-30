@@ -19,7 +19,9 @@ function SetupSubscription({
   }, [initSubscriptionPlans]);
 
   useEffect(() => {
-    window.LemonSqueezy.Setup({
+    // The Lemon Squeezy overlay script is no longer loaded globally (removed
+    // from index.html). Guard so this setup step doesn't crash if reached.
+    window.LemonSqueezy?.Setup?.({
       eventHandler: (event) => {
         // Do whatever you want with this event data
         if (event.event === 'Checkout.Success') {
