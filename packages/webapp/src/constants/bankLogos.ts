@@ -164,6 +164,12 @@ export const BANK_LOGO_LIBRARY: BankLogoLibraryItem[] = [
     color: '#d52b1e',
   },
   {
+    slug: 'sams-club',
+    label: "Sam's Club",
+    src: '/bank-logos/sams-club.svg',
+    color: '#0067a0',
+  },
+  {
     slug: 'mastercard',
     label: 'Mastercard',
     src: '/bank-logos/mastercard.svg',
