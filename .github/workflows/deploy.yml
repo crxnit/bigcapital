@@ -69,17 +69,18 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,scope=${{ matrix.service }},mode=max
 
-      # Trivy is currently warn-only (exit-code 0). The existing transitive deps
-      # (axios bundled by firebase-admin/plaid, @casl/ability@5.4.4, etc.) carry
-      # a long tail of HIGH/CRITICAL CVEs that need a dedicated dep-cleanup PR
-      # series before a strict gate is achievable. Findings still surface in the
-      # job log for visibility. Tighten to exit-code "1" after the cleanup lands.
-      - name: Trivy scan ${{ matrix.service }} (warn-only)
+      # Trivy is a BLOCKING gate (exit-code 1): any fixable HIGH/CRITICAL not in
+      # .trivyignore fails the build. The pre-existing server-image debt is an
+      # explicit, dated baseline in .trivyignore (see that file + docs/CI-CD.md);
+      # the devDep-leak cleanup + safe overrides cut findings 155 -> 105 and all
+      # but one CRITICAL before this flip. Webapp image is clean. New
+      # HIGH/CRITICAL findings now block deploys until fixed or justified.
+      - name: Trivy scan ${{ matrix.service }} (blocking)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.OWNER }}/bigcapital-${{ matrix.service }}:sha-${{ steps.sha.outputs.short }}
           severity: HIGH,CRITICAL
-          exit-code: "0"
+          exit-code: "1"
           ignore-unfixed: true
           trivyignores: .trivyignore
 

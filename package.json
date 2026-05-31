@@ -47,5 +47,14 @@
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
+  },
+  "pnpm": {
+    "overrides": {
+      "form-data@4": "4.0.4",
+      "fast-xml-parser@4": "4.5.5",
+      "cross-spawn@7": "7.0.6",
+      "fast-uri@3": "3.1.2",
+      "validator@13": "13.15.22"
+    }
   }
 }

@@ -10,7 +10,7 @@ git push origin develop
 .githooks/pre-push (local)        typecheck + server unit tests
    ↓
 .github/workflows/deploy.yml      matrix build (server + webapp) → GHCR
-   ↓                              Trivy HIGH/CRITICAL scan (warn-only, see below)
+   ↓                              Trivy HIGH/CRITICAL scan (blocking gate, see below)
 GHCR                              ghcr.io/crxnit/bigcapital-{server,webapp}:sha-<short>
    ↓                              + :latest mirror
 deploy job (environment: sandbox) ssh deploy@vps "<server-sha> <webapp-sha>"
@@ -132,23 +132,35 @@ UPDATE knex_migrations_lock SET is_locked = 0;
 
 (per `.claude/CLAUDE.md` gotcha). Then re-trigger the deploy.
 
-### Trivy CVE findings (currently warn-only)
+### Trivy CVE findings (BLOCKING gate as of 2026-05-31)
 
-The scan runs on every build (`severity: HIGH,CRITICAL`, `ignore-unfixed: true`) but `exit-code` is `0` — findings surface in the job log without blocking deploys. The webapp image is **clean (0 findings)**; all findings are in the **server** image.
+The scan runs on every build (`severity: HIGH,CRITICAL`, `ignore-unfixed: true`) with **`exit-code: '1'`** — any fixable HIGH/CRITICAL **not** in `.trivyignore` fails the build. The webapp image is **clean (0 findings)**; all findings are in the **server** image, captured as a dated baseline in `.trivyignore`. New findings now block deploys until fixed or justified+expiry-dated.
 
 **devDependency-leak cleanup — DONE 2026-05-31** (commit pending). The server prod image was shipping the full devDependency tree. Two root causes, both fixed:
 
 1. The Dockerfile's `pnpm add -D -w husky … pnpm install --prod … pnpm remove -w husky` dance — the trailing `pnpm remove` re-ran the installer in default (dev+prod) mode and re-hydrated EVERY devDependency. Replaced with: strip the root `prepare: husky install` script (so a clean `--prod` install doesn't fail on missing husky), then a single `pnpm install --prod --frozen-lockfile`.
 2. Build/test tooling miscategorized under `dependencies` (not `devDependencies`) in three manifests, so `--prod` correctly kept them: `vitest`/`vite-plugin-dts` (`shared/email-components`), `webpack`+6 loaders/plugins (`shared/pdf-templates`), and `tsup` (root — its sole prod dep; pulled `esbuild`). All moved to `devDependencies`.
 
-Result: server HIGH/CRITICAL **155 → 113** (CRITICAL 7 → 3), image **1.88 GB → 1.19 GB**. Removed the `vitest`/`esbuild` CRITICALs (test-tooling RCEs) entirely. Lockfile updated by hand-editing only the `importers:` dev/prod categorization (resolved package set verified byte-identical — no reserialization churn).
+Result: server HIGH/CRITICAL **155 → 113** (CRITICAL 7 → 3), image **1.88 GB → 1.19 GB**. Removed the `vitest`/`esbuild` CRITICALs (test-tooling RCEs) entirely. Lockfile updated by hand-editing only the `importers:` dev/prod categorization (resolved package set verified byte-identical — no reserialization churn). **Watch-out the clean `--prod` install exposed:** `mustache` was a devDependency but imported at runtime by `Mail.ts` — the old leaky install masked it; fixed by moving it to `dependencies` (commit `699c96c7e`). When pruning/recategorizing deps, load-test the prod image (`docker run --entrypoint node <img> packages/server/dist/cli.js --help` → 0 `MODULE_NOT_FOUND`).
 
-**Still TODO before tightening to `exit-code: '1'`** (the residual 113 / 53 distinct CVEs is genuine prod-dep debt):
+**Gate flip — DONE 2026-05-31.** Added scoped pnpm `overrides` (root `package.json`, `pkg@major` selectors) to clear the 2 same-major CRITICALs + 3 safe HIGHs:
 
-- 2 same-major CRITICALs fixable via pnpm `overrides`: `form-data` 4.0.0 → 4.0.4 (CVE-2025-7783), `fast-xml-parser` 4.2.5 → 4.5.4 (CVE-2026-25896). Note: adding `overrides` forces a `pnpm install`, which reserializes the whole lockfile (~32k cosmetic lines; resolved set unchanged) — do the override pass + gate-flip together so that churn lands once.
-- `@casl/ability` 5.4.4 → 6.x (CRITICAL CVE-2026-1774). **Major** — test permission-check sites carefully; or `.trivyignore` with expiry until done.
-- Bulk HIGH transitive debt (`axios`×5 via firebase-admin/plaid, `multer` 1→2, `tar` 6→7, `minimatch`×6, …) — mostly cross-major bumps that risk breaking the SDKs/NestJS pinning them. `.trivyignore` with expiry, or bump the owning SDKs.
-- Then flip `exit-code: "1"` in `deploy.yml`.
+- `form-data` → 4.0.4 (CVE-2025-7783, CRITICAL), `fast-xml-parser` → 4.5.5 (CVE-2026-25896, CRITICAL), `cross-spawn` → 7.0.6, `fast-uri` → 3.1.2, `validator` → 13.15.22.
+- Took findings **113 → 105**, CRITICAL **3 → 1** (only `@casl/ability` CVE-2026-1774 left — needs the v6 **major** bump).
+- Applying `overrides` reserializes the whole lockfile **~32k cosmetic lines** (resolved-set delta = only the 5 swaps + 1 transitive `es-set-tostringtag`) — unavoidable for any `pnpm install`; accepted as a one-time normalization.
+
+The residual **46 distinct CVEs** are an explicit, expiry-dated baseline in `.trivyignore` (cross-major transitive debt — `axios`×5, `multer` 1→2, `tar` 6→7, `minimatch`, `path-to-regexp`; `@casl` v6; build-only `pnpm`; `xlsx` off-npm; `lodash` no-fix; dead `cross-spawn` in `mathjs/examples`). All expire 2026-08-31 (quarterly review).
+
+**Validate the gate locally before pushing any image/dep change** (mirrors the CI step — must exit 0):
+
+```bash
+docker build -f packages/server/Dockerfile -t bc-server:test .
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/.trivyignore":/.trivyignore:ro \
+  aquasec/trivy:latest image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed \
+  --ignorefile /.trivyignore --exit-code 1 bc-server:test
+```
+
+**Remaining work to shrink the baseline** (each removes `.trivyignore` lines): `@casl` v6 major (+QA), `multer` 2.x, `tar` 7.x, bump firebase-admin/plaid to drop old `axios`, strip `pnpm` from the runtime layer (build-only), migrate `xlsx` off the frozen npm package.
 
 When triaging a fresh finding:
 

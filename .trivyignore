@@ -1,17 +1,104 @@
 # Trivy ignore allowlist for bigcapital-fork.
 #
-# Policy:
-#   1. Empty by default. The Trivy gate in .github/workflows/deploy.yml is
-#      HIGH/CRITICAL only; medium/low findings flow into the report but
-#      do not block deploys.
-#   2. Add a CVE id (one per line, comment above with the why + an expiry
-#      date) ONLY when:
-#        - the CVE is in a transitive dep we can't bump, AND
-#        - the affected code path is unreachable in our deployment, AND
-#        - upstream has acknowledged the issue with no patched version yet.
-#   3. Revisit every entry quarterly; remove the line once the dep is
-#      upgraded past the affected version.
+# The deploy gate (.github/workflows/deploy.yml) is HIGH/CRITICAL + ignore-unfixed,
+# exit-code 1 (blocks deploys). This file is the explicit, dated BASELINE of the
+# pre-existing server-image debt that the gate-flip (2026-05-31) ratcheted over:
+# every NEW HIGH/CRITICAL now blocks; the entries below are tracked, justified,
+# and expiry-dated for quarterly review. The webapp image is clean (0).
 #
-# Do NOT add entries to silence noise without root-cause analysis. The
-# server Dockerfile already strips npm from the runtime to remove the
-# noisiest source of HIGH CVEs.
+# Before the flip, a devDependency-leak cleanup cut findings 155 -> 105 and
+# removed all but one CRITICAL via Dockerfile + dep-categorization fixes and a
+# handful of safe same-major pnpm overrides (form-data, fast-xml-parser,
+# cross-spawn, fast-uri, validator). See docs/CI-CD.md.
+#
+# Policy for entries:
+#   - Add ONLY a fixable HIGH/CRITICAL that is (a) transitive/cross-major we
+#     can't safely bump without breaking a pinning SDK, or (b) unreachable in
+#     our runtime, or (c) build-time-only. Comment the why + an expiry date.
+#   - Revisit every entry at/*before* expiry; remove once the dep is bumped
+#     past the affected version. Shrinking this file is the goal.
+#   - A bare entry with no justification/expiry is a bug — root-cause first.
+#   - Re-scan recipe: docs/CI-CD.md ("Trivy CVE findings").
+
+# ── @casl/ability 5.4.4 — CRITICAL prototype pollution; fixed in 6.x (MAJOR).
+#    Authorization engine; the v6 bump rewrites Ability APIs and needs careful
+#    permission-check QA. Tracked for a dedicated bump. Expires: 2026-08-31
+CVE-2026-1774
+
+# ── axios — 5 versions bundled transitively by firebase-admin / plaid / other
+#    SDKs (0.21.x–1.7.x). Fixes require bumping those SDKs, not a direct dep.
+#    Forcing one axios version via overrides breaks the 0.x consumers.
+#    Expires: 2026-08-31
+CVE-2021-3749
+CVE-2024-39338
+CVE-2025-27152
+CVE-2025-58754
+CVE-2026-25639
+CVE-2026-42033
+CVE-2026-42035
+CVE-2026-42043
+CVE-2026-42264
+CVE-2026-44492
+CVE-2026-44494
+CVE-2026-44495
+
+# ── multer 1.4.5-lts.1 — direct dep; all fixes land in 2.0.0 (MAJOR, changes
+#    the NestJS file-upload integration). Tracked for a dedicated bump+QA.
+#    Expires: 2026-08-31
+CVE-2025-47935
+CVE-2025-47944
+CVE-2025-48997
+CVE-2025-7338
+CVE-2026-2359
+CVE-2026-3304
+CVE-2026-3520
+
+# ── tar 6.2.1 — transitive; fixes are in 7.x (MAJOR). Expires: 2026-08-31
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
+CVE-2026-26960
+CVE-2026-29786
+CVE-2026-31802
+
+# ── path-to-regexp — multiple versions across majors (transitive via express /
+#    router stack). No single safe override. Expires: 2026-08-31
+CVE-2024-45296
+CVE-2024-52798
+CVE-2026-4867
+CVE-2026-4926
+
+# ── minimatch — multiple versions across majors (transitive). Expires: 2026-08-31
+CVE-2026-26996
+CVE-2026-27903
+CVE-2026-27904
+
+# ── pnpm — build-time only: installed globally for `pnpm install --prod` in the
+#    Dockerfile, NOT used by the runtime (`node dist/main.js`). Follow-up: strip
+#    it from the runtime layer like npm already is. Expires: 2026-08-31
+CVE-2025-69262
+CVE-2025-69263
+
+# ── xlsx 0.18.5 — SheetJS no longer publishes to npm; the npm package is frozen
+#    pre-fix. Real fix = migrate to the vendor CDN package. Expires: 2026-08-31
+CVE-2023-30533
+CVE-2024-22363
+
+# ── lodash / lodash-es 4.17.21 — CVE-2026-4800 has no published npm fix on the
+#    4.x line yet; transitive. Expires: 2026-08-31
+CVE-2026-4800
+
+# ── cross-spawn — vendored DEAD copy at mathjs/examples/node_modules
+#    (cross-spawn@7.0.3, never executed at runtime). The real cross-spawn is
+#    overridden to 7.0.6 (clean). Expires: 2026-08-31
+CVE-2024-21538
+
+# ── Single transitive HIGHs — multi-version or low-reachability; bump in the
+#    follow-up override/SDK pass. Expires: 2026-08-31
+CVE-2025-64756
+CVE-2026-46625
+CVE-2025-65945
+CVE-2025-14874
+CVE-2026-33671
+CVE-2022-25883
+CVE-2026-33151
