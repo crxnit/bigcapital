@@ -145,6 +145,24 @@ export const BANK_LOGO_LIBRARY: BankLogoLibraryItem[] = [
     src: '/bank-logos/stripe.svg',
     color: '#635bff',
   },
+  {
+    slug: 'apple-card',
+    label: 'Apple Card',
+    src: '/bank-logos/apple-card.svg',
+    color: '#000000',
+  },
+  {
+    slug: 'amazon',
+    label: 'Amazon',
+    src: '/bank-logos/amazon.svg',
+    color: '#ff9900',
+  },
+  {
+    slug: 'synchrony',
+    label: 'Synchrony Bank',
+    src: '/bank-logos/synchrony.svg',
+    color: '#d52b1e',
+  },
 ];
 
 const BANK_LOGO_BY_SLUG: Record<string, BankLogoLibraryItem> =
