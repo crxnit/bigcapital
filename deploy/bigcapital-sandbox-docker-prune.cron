@@ -1,0 +1,5 @@
+# Install at /etc/cron.d/bigcapital-sandbox-docker-prune (mode 0644 root:root).
+# Monthly on the 1st at 04:30 UTC — after the 03:17 daily backup, before the
+# workday. stdout+stderr go to journald with the `bc-sandbox-docker-prune` tag.
+
+30 4 1 * * root /srv/portal/clients/sandbox-bc/docker-prune.sh 2>&1 | logger -t bc-sandbox-docker-prune

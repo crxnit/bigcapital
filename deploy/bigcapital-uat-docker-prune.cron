@@ -1,0 +1,7 @@
+# Install at /etc/cron.d/bigcapital-uat-docker-prune (mode 0644 root:root).
+# Monthly on the 1st at 04:50 UTC — offset 20 min from sandbox (avoids contention
+# if both envs share a daemon) and after the 03:47 daily backup. Path reflects
+# the on-host env dir (staging-bc, despite the workflow's "uat" internal name —
+# see docs/CI-CD.md). stdout+stderr go to journald with `bc-uat-docker-prune`.
+
+50 4 1 * * root /srv/portal/clients/staging-bc/docker-prune.sh 2>&1 | logger -t bc-uat-docker-prune

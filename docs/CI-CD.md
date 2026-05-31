@@ -190,7 +190,33 @@ sudo systemctl start docker
 
 Don't `prune --volumes` — that would delete the MariaDB and MinIO data.
 
-**Planned cleanup (2026-05-21):** schedule a monthly `docker system prune -af` on both VPS environments via cron, to keep cruft from accumulating. Not yet wired.
+#### Monthly housekeeping cron (wired 2026-05-31)
+
+`vps-deploy.sh` already runs a daemon-global `docker image prune -af` before every pull, so images are reclaimed on every deploy. The monthly cron covers the gaps that per-deploy pruning leaves: exited one-shot containers (`*-database-migration` / `*-createbuckets` accumulate on every `compose up`), dangling layers, and image buildup during a month with no deploys.
+
+The cron job is deliberately **scoped, not** a daemon-global `system prune -af` — it is safe on a shared daemon (the portal forward-auth stack + any co-tenant clients). It only removes the env's own exited containers (matched by `container_name` prefix) and bigcapital images older than 14 days that back no container; it never touches volumes, co-tenant images, or running services.
+
+- Script: `deploy/vps-docker-prune.sh` → install at `/srv/portal/clients/<env>/docker-prune.sh` (mode 0750, root:root).
+- Crons: `deploy/bigcapital-{sandbox,uat}-docker-prune.cron` → `/etc/cron.d/` (mode 0644, root:root). Monthly on the 1st at 04:30 UTC (sandbox) / 04:50 UTC (staging-bc), after the nightly backups.
+
+Install (run on each VPS, per env dir — `sandbox-bc` / `staging-bc`):
+
+```bash
+sudo install -m 0750 -o root -g root deploy/vps-docker-prune.sh /srv/portal/clients/sandbox-bc/docker-prune.sh
+sudo install -m 0644 -o root -g root deploy/bigcapital-sandbox-docker-prune.cron /etc/cron.d/bigcapital-sandbox-docker-prune
+# staging-bc:
+sudo install -m 0750 -o root -g root deploy/vps-docker-prune.sh /srv/portal/clients/staging-bc/docker-prune.sh
+sudo install -m 0644 -o root -g root deploy/bigcapital-uat-docker-prune.cron /etc/cron.d/bigcapital-uat-docker-prune
+```
+
+Verify a manual run (safe to invoke any time — it never stops running services):
+
+```bash
+sudo /srv/portal/clients/sandbox-bc/docker-prune.sh   # ends with `[docker-prune] OK at <ISO>`
+sudo journalctl -t bc-sandbox-docker-prune | tail -30  # after the cron has fired (or `bc-uat-docker-prune`)
+```
+
+The keep window is overridable: `KEEP_HOURS=720 sudo .../docker-prune.sh` to retain 30 days of rollback images.
 
 ## Backups
 
