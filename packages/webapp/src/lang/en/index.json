@@ -68,6 +68,7 @@
   "bank_account_logo.or_upload": "Or upload a custom image",
   "bank_account_logo.upload_title": "Drag a logo image here or click to select",
   "bank_account_logo.upload_error": "An error occurred while uploading the bank logo.",
+  "remove": "Remove",
   "parent_account": "Parent Account",
   "edit": "Edit",
   "submit": "Submit",
