@@ -66,6 +66,9 @@ export const BANK_LOGO_LIBRARY: BankLogoLibraryItem[] = [
     src: '/bank-logos/huntington.svg',
   },
   { slug: 'discover', label: 'Discover', src: '/bank-logos/discover.svg' },
+  { slug: 'mercury', label: 'Mercury', src: '/bank-logos/mercury.svg' },
+  { slug: 'square', label: 'Square', src: '/bank-logos/square.svg' },
+  { slug: 'stripe', label: 'Stripe', src: '/bank-logos/stripe.svg' },
 ];
 
 const BANK_LOGO_BY_SLUG: Record<string, BankLogoLibraryItem> =
