@@ -42,6 +42,30 @@ export const BANK_LOGO_LIBRARY: BankLogoLibraryItem[] = [
     label: 'Capital One',
     src: '/bank-logos/capital-one.svg',
   },
+  { slug: 'us-bank', label: 'U.S. Bank', src: '/bank-logos/us-bank.svg' },
+  { slug: 'pnc', label: 'PNC', src: '/bank-logos/pnc.svg' },
+  { slug: 'td-bank', label: 'TD Bank', src: '/bank-logos/td-bank.svg' },
+  { slug: 'truist', label: 'Truist', src: '/bank-logos/truist.svg' },
+  { slug: 'ally', label: 'Ally', src: '/bank-logos/ally.svg' },
+  {
+    slug: 'american-express',
+    label: 'American Express',
+    src: '/bank-logos/american-express.svg',
+  },
+  { slug: 'regions', label: 'Regions', src: '/bank-logos/regions.svg' },
+  {
+    slug: 'fifth-third',
+    label: 'Fifth Third Bank',
+    src: '/bank-logos/fifth-third.svg',
+  },
+  { slug: 'citizens', label: 'Citizens Bank', src: '/bank-logos/citizens.svg' },
+  { slug: 'key-bank', label: 'KeyBank', src: '/bank-logos/key-bank.svg' },
+  {
+    slug: 'huntington',
+    label: 'Huntington Bank',
+    src: '/bank-logos/huntington.svg',
+  },
+  { slug: 'discover', label: 'Discover', src: '/bank-logos/discover.svg' },
 ];
 
 const BANK_LOGO_BY_SLUG: Record<string, BankLogoLibraryItem> =
