@@ -134,13 +134,21 @@ UPDATE knex_migrations_lock SET is_locked = 0;
 
 ### Trivy CVE findings (currently warn-only)
 
-The scan runs on every build (`severity: HIGH,CRITICAL`, `ignore-unfixed: true`) but `exit-code` is `0` — findings surface in the job log without blocking deploys. The relaxation is deliberate because the inherited codebase has a long tail of fixable HIGH/CRITICAL CVEs in transitive deps (axios bundled by `firebase-admin` / `plaid`, `@casl/ability@5.4.4` prototype-pollution fixed only in 6.x, several `@babel/plugin-*` dev tools leaking into runtime). Fixing the lot requires a dedicated dep-cleanup PR series.
+The scan runs on every build (`severity: HIGH,CRITICAL`, `ignore-unfixed: true`) but `exit-code` is `0` — findings surface in the job log without blocking deploys. The webapp image is **clean (0 findings)**; all findings are in the **server** image.
 
-**TODO before tightening to `exit-code: '1'`**:
+**devDependency-leak cleanup — DONE 2026-05-31** (commit pending). The server prod image was shipping the full devDependency tree. Two root causes, both fixed:
 
-- Bump `@casl/ability` 5.x → 6.x (CRITICAL CVE-2026-1774, prototype pollution). Major version — test permission-check sites carefully.
-- Bump `axios` direct deps to >= 1.13.x. The bundled-axios CVEs in third-party SDKs (firebase-admin, plaid) need those SDKs updated.
-- Move `@babel/plugin-transform-modules-systemjs` and similar dev-time deps out of the production install.
+1. The Dockerfile's `pnpm add -D -w husky … pnpm install --prod … pnpm remove -w husky` dance — the trailing `pnpm remove` re-ran the installer in default (dev+prod) mode and re-hydrated EVERY devDependency. Replaced with: strip the root `prepare: husky install` script (so a clean `--prod` install doesn't fail on missing husky), then a single `pnpm install --prod --frozen-lockfile`.
+2. Build/test tooling miscategorized under `dependencies` (not `devDependencies`) in three manifests, so `--prod` correctly kept them: `vitest`/`vite-plugin-dts` (`shared/email-components`), `webpack`+6 loaders/plugins (`shared/pdf-templates`), and `tsup` (root — its sole prod dep; pulled `esbuild`). All moved to `devDependencies`.
+
+Result: server HIGH/CRITICAL **155 → 113** (CRITICAL 7 → 3), image **1.88 GB → 1.19 GB**. Removed the `vitest`/`esbuild` CRITICALs (test-tooling RCEs) entirely. Lockfile updated by hand-editing only the `importers:` dev/prod categorization (resolved package set verified byte-identical — no reserialization churn).
+
+**Still TODO before tightening to `exit-code: '1'`** (the residual 113 / 53 distinct CVEs is genuine prod-dep debt):
+
+- 2 same-major CRITICALs fixable via pnpm `overrides`: `form-data` 4.0.0 → 4.0.4 (CVE-2025-7783), `fast-xml-parser` 4.2.5 → 4.5.4 (CVE-2026-25896). Note: adding `overrides` forces a `pnpm install`, which reserializes the whole lockfile (~32k cosmetic lines; resolved set unchanged) — do the override pass + gate-flip together so that churn lands once.
+- `@casl/ability` 5.4.4 → 6.x (CRITICAL CVE-2026-1774). **Major** — test permission-check sites carefully; or `.trivyignore` with expiry until done.
+- Bulk HIGH transitive debt (`axios`×5 via firebase-admin/plaid, `multer` 1→2, `tar` 6→7, `minimatch`×6, …) — mostly cross-major bumps that risk breaking the SDKs/NestJS pinning them. `.trivyignore` with expiry, or bump the owning SDKs.
+- Then flip `exit-code: "1"` in `deploy.yml`.
 
 When triaging a fresh finding:
 

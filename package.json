@@ -37,7 +37,8 @@
     "lerna": "^8.1.2",
     "lint-staged": "^15.5.2",
     "pnpm": "^9.0.5",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "tsup": "^8.3.0"
   },
   "engines": {
     "node": "16.x || 17.x || 18.x"
@@ -46,8 +47,5 @@
     "hooks": {
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
-  },
-  "dependencies": {
-    "tsup": "^8.3.0"
   }
 }

@@ -58,15 +58,19 @@ COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=nodejs:nodejs packages/server/package.json ./packages/server/
 COPY --chown=nodejs:nodejs shared ./shared
 
-# Copy .husky directory (needed for husky install command)
-COPY --chown=nodejs:nodejs .husky ./.husky
+# Drop the root `prepare: husky install` lifecycle script before installing.
+# husky is a devDependency (absent from a --prod install), so leaving `prepare`
+# in place makes `pnpm install` fail with "husky: not found". The old workaround
+# (`pnpm add -D -w husky` … `pnpm remove -w husky`) re-hydrated the ENTIRE
+# devDependency tree into the runtime image — shipping vitest / @angular-devkit
+# / @babel build tooling, ~150 HIGH/CRITICAL Trivy findings with zero runtime
+# use. Removing the script lets a CLEAN prod-only install run instead. Deps are
+# untouched, so --frozen-lockfile stays valid; bcrypt's native postinstall
+# still runs (build-base/python3 are present until pruned below).
+RUN node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));if(p.scripts)delete p.scripts.prepare;fs.writeFileSync('package.json',JSON.stringify(p,null,2))"
 
-# Install only production dependencies
-# Install husky temporarily so prepare script can run, then remove it
-RUN pnpm add -D -w husky && \
-    pnpm install --prod --frozen-lockfile && \
-    pnpm remove -w husky && \
-    # Remove build dependencies to reduce image size
+# Install only production dependencies, then drop the native-build toolchain.
+RUN pnpm install --prod --frozen-lockfile && \
     apk del python3 build-base
 
 # Copy built application from builder stage
