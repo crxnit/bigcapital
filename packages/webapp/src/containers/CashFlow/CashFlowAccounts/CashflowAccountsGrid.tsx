@@ -160,7 +160,11 @@ const ACCOUNT_CARD_SECTIONS = [
   {
     key: 'cash',
     title: 'Cash Accounts',
-    match: (a) => a.account_type === ACCOUNT_TYPE.CASH,
+    // Exclude clearing — processor clearing accounts are typed `cash` but belong
+    // in the Clearing section, not here (mirrors the `bank` section below).
+    match: (a) =>
+      a.account_type === ACCOUNT_TYPE.CASH &&
+      a.bank_account_subtype !== BANK_ACCOUNT_SUBTYPE.CLEARING,
   },
   {
     key: 'checking',
@@ -207,12 +211,20 @@ const ACCOUNT_CARD_SECTIONS = [
 function groupAccountsIntoSections(accounts) {
   const sections = ACCOUNT_CARD_SECTIONS.map((section) => ({
     ...section,
-    accounts: accounts.filter(section.match),
+    accounts: [],
   }));
-  const matchedIds = new Set(
-    sections.flatMap((section) => section.accounts.map((a) => a.id)),
-  );
-  const leftover = accounts.filter((a) => !matchedIds.has(a.id));
+  const leftover = [];
+  // First matching section wins, so each account lands in exactly one section
+  // (e.g. a cash-typed clearing account appears only under Clearing, never both
+  // Cash and Clearing).
+  accounts.forEach((account) => {
+    const section = sections.find((s) => s.match(account));
+    if (section) {
+      section.accounts.push(account);
+    } else {
+      leftover.push(account);
+    }
+  });
   if (leftover.length > 0) {
     sections.push({
       key: 'other',
