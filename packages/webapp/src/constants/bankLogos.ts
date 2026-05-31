@@ -163,6 +163,18 @@ export const BANK_LOGO_LIBRARY: BankLogoLibraryItem[] = [
     src: '/bank-logos/synchrony.svg',
     color: '#d52b1e',
   },
+  {
+    slug: 'mastercard',
+    label: 'Mastercard',
+    src: '/bank-logos/mastercard.svg',
+    color: '#eb001b',
+  },
+  {
+    slug: 'visa',
+    label: 'Visa',
+    src: '/bank-logos/visa.svg',
+    color: '#1a1f71',
+  },
 ];
 
 const BANK_LOGO_BY_SLUG: Record<string, BankLogoLibraryItem> =
