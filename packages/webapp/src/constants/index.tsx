@@ -1,5 +1,6 @@
 // @ts-nocheck
 export * from './accountTypes';
+export * from './bankLogos';
 export * from './tableStyle';
 export * from './features';
 export * from './cellTypes';

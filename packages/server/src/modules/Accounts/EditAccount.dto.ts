@@ -56,4 +56,22 @@ export class EditAccountDTO {
     enum: ['checking', 'savings', 'other'],
   })
   bankAccountSubtype?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'Bundled bank-logo library slug shown on the account card',
+    example: 'chase',
+    required: false,
+  })
+  bankAccountLogoSlug?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'Attachment key of a custom uploaded bank logo',
+    example: '1717171717171',
+    required: false,
+  })
+  bankAccountLogoKey?: string;
 }

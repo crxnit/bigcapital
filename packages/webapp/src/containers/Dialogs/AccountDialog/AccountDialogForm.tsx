@@ -13,6 +13,7 @@ import {
   CreateAccountFormSchema,
 } from './AccountForm.schema';
 import { compose, transformToForm } from '@/utils';
+import { useUploadAttachments } from '@/hooks/query/attachments';
 import {
   transformApiErrors,
   transformAccountToForm,
@@ -32,6 +33,11 @@ const defaultInitialValues = {
   currency_code: '',
   subaccount: false,
   bank_account_subtype: '',
+  // Bank logo: a bundled library slug OR a custom uploaded attachment key.
+  // `_logo_file` is a transient staged upload, stripped before the request.
+  bank_account_logo_slug: '',
+  bank_account_logo_key: '',
+  _logo_file: null,
 };
 
 /**
@@ -52,14 +58,16 @@ function AccountFormDialogContent({
     dialogName,
   } = useAccountDialogContext();
 
+  // Uploads the custom bank-logo attachment (when one is staged).
+  const { mutateAsync: uploadAttachments } = useUploadAttachments({});
+
   // Form validation schema in create and edit mode.
   const validationSchema = isNewMode
     ? CreateAccountFormSchema
     : EditAccountFormSchema;
 
   // Callbacks handles form submit.
-  const handleFormSubmit = (values, { setSubmitting, setErrors }) => {
-    const form = transformFormToReq(values);
+  const handleFormSubmit = async (values, { setSubmitting, setErrors }) => {
     const toastAccountName = values.code
       ? `${values.code} - ${values.name}`
       : values.name;
@@ -93,6 +101,30 @@ function AccountFormDialogContent({
       setErrors({ ...errorsTransformed });
       setSubmitting(false);
     };
+
+    // Upload the custom bank logo first if a new file has been staged; the
+    // returned attachment key replaces any previous logo and clears the
+    // library slug (the two logo sources are mutually exclusive).
+    const _values = { ...values };
+    if (_values._logo_file) {
+      const formData = new FormData();
+      formData.append('file', _values._logo_file);
+      formData.append('internalKey', Date.now().toString());
+      try {
+        const uploaded = await uploadAttachments(formData);
+        _values.bank_account_logo_key = uploaded?.key;
+        _values.bank_account_logo_slug = '';
+      } catch {
+        AppToaster.show({
+          intent: Intent.DANGER,
+          message: intl.get('bank_account_logo.upload_error'),
+        });
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    const form = transformFormToReq(_values);
     if (payload.accountId) {
       editAccountMutate([payload.accountId, form])
         .then(handleSuccess)

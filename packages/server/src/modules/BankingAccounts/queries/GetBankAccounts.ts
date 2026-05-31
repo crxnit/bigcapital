@@ -8,12 +8,14 @@ import { TransformerInjectable } from '@/modules/Transformer/TransformerInjectab
 import { DynamicListService } from '@/modules/DynamicListing/DynamicList.service';
 import { BankAccountsQueryDto } from '../dtos/BankAccountsQuery.dto';
 import { IDynamicListFilter } from '@/modules/DynamicListing/DynamicFilter/DynamicFilter.types';
+import { GetAttachmentPresignedUrl } from '@/modules/Attachments/GetAttachmentPresignedUrl';
 
 @Injectable()
 export class GetBankAccountsService {
   constructor(
     private readonly dynamicListService: DynamicListService,
     private readonly transformer: TransformerInjectable,
+    private readonly getPresignedUrlService: GetAttachmentPresignedUrl,
 
     @Inject(Account.name)
     private readonly accountModel: TenantModelProxy<typeof Account>,
@@ -67,6 +69,20 @@ export class GetBankAccountsService {
     const transformed = await this.transformer.transform(
       accounts,
       new CashflowAccountTransformer(),
+    );
+
+    // Resolve a presigned/proxied URL for any account whose logo is a custom
+    // uploaded image. Library logos carry a `bankAccountLogoSlug` and are
+    // resolved to a static asset client-side, so they need no URL here.
+    await Promise.all(
+      transformed.map(async (account) => {
+        if (account.bankAccountLogoKey) {
+          account.bankAccountLogoUri =
+            await this.getPresignedUrlService.getPresignedUrl(
+              account.bankAccountLogoKey,
+            );
+        }
+      }),
     );
 
     return transformed;

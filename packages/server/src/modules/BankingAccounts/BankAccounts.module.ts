@@ -18,6 +18,7 @@ import { DynamicListModule } from '../DynamicListing/DynamicList.module';
 import { GetBankAccountSummary } from './queries/GetBankAccountSummary';
 import { MutateBaseCurrencyAccountsSubscriber } from '../Accounts/susbcribers/MutateBaseCurrencyAccounts.subscriber';
 import { MutateBaseCurrencyAccounts } from '../Accounts/MutateBaseCurrencyAccounts';
+import { AttachmentsModule } from '../Attachments/Attachment.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { MutateBaseCurrencyAccounts } from '../Accounts/MutateBaseCurrencyAccoun
     BankingTransactionsModule,
     BankingMatchingModule,
     DynamicListModule,
+    AttachmentsModule,
   ],
   providers: [
     DisconnectBankAccountService,

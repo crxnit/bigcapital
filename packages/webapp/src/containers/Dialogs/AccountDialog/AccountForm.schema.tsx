@@ -19,6 +19,11 @@ const Schema = Yup.object().shape({
   bank_account_subtype: Yup.string()
     .nullable()
     .oneOf([...Object.values(BANK_ACCOUNT_SUBTYPE), '', null]),
+  // Bank logo: either a bundled library slug or a custom uploaded attachment
+  // key. Both optional; `_logo_file` is a transient staged upload stripped
+  // before the request.
+  bank_account_logo_slug: Yup.string().nullable(),
+  bank_account_logo_key: Yup.string().nullable(),
 });
 
 export const CreateAccountFormSchema = Schema;

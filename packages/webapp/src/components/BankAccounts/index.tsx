@@ -74,6 +74,7 @@ export function BankAccount({
   code,
   type,
   subtype,
+  logoSrc,
   balance,
   loading = false,
   updatedBeforeText,
@@ -83,12 +84,17 @@ export function BankAccount({
   return (
     <BankAccountWrap {...restProps}>
       <BankAccountHeader>
-        <BankAccountTitle className={clsx({ [Classes.SKELETON]: loading })}>
-          {title}
-        </BankAccountTitle>
-        <BankAccountCode className={clsx({ [Classes.SKELETON]: loading })}>
-          {code}
-        </BankAccountCode>
+        <BankAccountHeaderMain>
+          {!loading && logoSrc && <BankAccountLogo src={logoSrc} alt="" />}
+          <BankAccountHeaderText>
+            <BankAccountTitle className={clsx({ [Classes.SKELETON]: loading })}>
+              {title}
+            </BankAccountTitle>
+            <BankAccountCode className={clsx({ [Classes.SKELETON]: loading })}>
+              {code}
+            </BankAccountCode>
+          </BankAccountHeaderText>
+        </BankAccountHeaderMain>
         {!loading && <BankAccountTypeIcon type={type} subtype={subtype} />}
       </BankAccountHeader>
 
@@ -136,6 +142,30 @@ const BankAccountHeader = styled.div`
   position: relative;
 `;
 
+// Logo (when set) sits to the left of the title/code; the type badge stays
+// absolutely positioned top-right, so reserve room for it on the right.
+const BankAccountHeaderMain = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 40px;
+  min-width: 0;
+`;
+
+const BankAccountHeaderText = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const BankAccountLogo = styled.img`
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: contain;
+  background: var(--color-bank-account-card-tag-background);
+`;
+
 const BankAccountTitle = styled.div`
   font-size: 15px;
   font-style: inherit;
@@ -146,7 +176,6 @@ const BankAccountTitle = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0px;
-  padding-right: 40px;
 `;
 
 const BankAccountCode = styled.div`

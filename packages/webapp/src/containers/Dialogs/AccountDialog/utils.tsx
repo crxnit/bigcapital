@@ -134,7 +134,9 @@ export const parentAccountShouldUpdate = (newProps, oldProps) => {
  */
 export const transformFormToReq = (form) => {
   return R.compose(
-    R.omit(['subaccount']),
+    // `_logo_file` is a transient staged upload handled before the request;
+    // never send it (or it'd serialize as an empty/`[object File]` value).
+    R.omit(['subaccount', '_logo_file']),
     R.when(
       R.propSatisfies(R.equals(R.__, false), 'subaccount'),
       R.assoc(['parent_account_id'], ''),

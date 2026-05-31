@@ -18,7 +18,11 @@ import {
   getAddMoneyInOptions,
   getAddMoneyOutOptions,
 } from '@/constants/cashflowOptions';
-import { ACCOUNT_TYPE, BANK_ACCOUNT_SUBTYPE } from '@/constants';
+import {
+  ACCOUNT_TYPE,
+  BANK_ACCOUNT_SUBTYPE,
+  resolveBankAccountLogoSrc,
+} from '@/constants';
 
 import { BankAccountsList, BankAccount, If, Icon, T, Can } from '@/components';
 import { useCashFlowAccountsContext } from './CashFlowAccountsProvider';
@@ -125,6 +129,10 @@ function CashflowBankAccount({
           balance={!isNull(account.amount) ? account.formatted_amount : '-'}
           type={account.account_type}
           subtype={account.bank_account_subtype}
+          logoSrc={resolveBankAccountLogoSrc(
+            account.bank_account_logo_slug,
+            account.bank_account_logo_uri,
+          )}
           updatedBeforeText={
             account.last_feeds_updated_from_now
               ? `Updated ${account.last_feeds_updated_from_now} ago`
