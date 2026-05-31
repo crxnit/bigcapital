@@ -25,6 +25,7 @@ import {
   BANK_ACCOUNT_SUBTYPE,
 } from '@/constants/accountTypes';
 import { BANK_LOGO_LIBRARY } from '@/constants/bankLogos';
+import { BankLogoMark } from '@/components/BankAccounts';
 import { CompanyLogoUpload } from '@/containers/ElementCustomize/components/CompanyLogoUpload';
 import { useAutofocus } from '@/hooks';
 import { useAccountDialogContext } from './AccountDialogProvider';
@@ -258,18 +259,13 @@ function AccountFormDialogFields({
                   marginTop: 8,
                 }}
               >
-                <img
-                  src={selectedLibraryLogo.src}
-                  alt={selectedLibraryLogo.label}
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 6,
-                    objectFit: 'contain',
-                    padding: 4,
-                    background: '#ffffff',
-                    border: '1px solid rgba(17, 20, 24, 0.15)',
+                <BankLogoMark
+                  logo={{
+                    kind: 'library',
+                    src: selectedLibraryLogo.src,
+                    color: selectedLibraryLogo.color,
                   }}
+                  size={36}
                 />
                 <Button
                   minimal

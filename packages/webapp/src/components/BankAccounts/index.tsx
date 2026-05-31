@@ -69,12 +69,39 @@ function BankAccountTypeIcon({ type, subtype }) {
   );
 }
 
+/**
+ * Renders a bank logo on a fixed white tile. Library marks are monochrome SVGs
+ * (`fill="currentColor"`) painted their brand color via a CSS mask; custom
+ * uploads are real images shown as-is. `logo` is the object from
+ * `resolveBankAccountLogo()` ({ kind, src, color }).
+ */
+export function BankLogoMark({ logo, size = 34 }) {
+  if (!logo?.src) {
+    return null;
+  }
+  return (
+    <LogoTile style={{ width: size, height: size }}>
+      {logo.kind === 'library' && logo.color ? (
+        <LogoInk
+          style={{
+            backgroundColor: logo.color,
+            WebkitMaskImage: `url("${logo.src}")`,
+            maskImage: `url("${logo.src}")`,
+          }}
+        />
+      ) : (
+        <LogoImg src={logo.src} alt="" />
+      )}
+    </LogoTile>
+  );
+}
+
 export function BankAccount({
   title,
   code,
   type,
   subtype,
-  logoSrc,
+  logo,
   balance,
   loading = false,
   updatedBeforeText,
@@ -85,7 +112,7 @@ export function BankAccount({
     <BankAccountWrap {...restProps}>
       <BankAccountHeader>
         <BankAccountHeaderMain>
-          {!loading && logoSrc && <BankAccountLogo src={logoSrc} alt="" />}
+          {!loading && <BankLogoMark logo={logo} />}
           <BankAccountHeaderText>
             <BankAccountTitle className={clsx({ [Classes.SKELETON]: loading })}>
               {title}
@@ -157,18 +184,40 @@ const BankAccountHeaderText = styled.div`
   min-width: 0;
 `;
 
-// Fixed light tile (not the theme tag background): the library marks are
-// monochrome SVGs using fill="currentColor", which render black when loaded via
-// <img>, so they need a light backdrop to stay visible in dark mode too.
-const BankAccountLogo = styled.img`
-  width: 34px;
-  height: 34px;
+// Fixed white tile so brand marks (incl. dark ones like Square) stay legible on
+// both light and dark cards.
+const LogoTile = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  box-sizing: border-box;
   border-radius: 6px;
-  object-fit: contain;
   padding: 4px;
   background: #ffffff;
-  border: 1px solid var(--color-bank-account-card-border);
+  border: 1px solid
+    var(--color-bank-account-card-border, rgba(17, 20, 24, 0.15));
+`;
+
+// Library mark: the SVG is a CSS mask, painted the brand color via background.
+const LogoInk = styled.span`
+  display: block;
+  width: 100%;
+  height: 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+`;
+
+// Custom uploaded image: shown as-is (already colored).
+const LogoImg = styled.img`
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 `;
 
 const BankAccountTitle = styled.div`

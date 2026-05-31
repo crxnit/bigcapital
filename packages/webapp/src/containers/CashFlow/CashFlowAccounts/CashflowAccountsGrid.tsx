@@ -21,7 +21,7 @@ import {
 import {
   ACCOUNT_TYPE,
   BANK_ACCOUNT_SUBTYPE,
-  resolveBankAccountLogoSrc,
+  resolveBankAccountLogo,
 } from '@/constants';
 
 import { BankAccountsList, BankAccount, If, Icon, T, Can } from '@/components';
@@ -129,7 +129,7 @@ function CashflowBankAccount({
           balance={!isNull(account.amount) ? account.formatted_amount : '-'}
           type={account.account_type}
           subtype={account.bank_account_subtype}
-          logoSrc={resolveBankAccountLogoSrc(
+          logo={resolveBankAccountLogo(
             account.bank_account_logo_slug,
             account.bank_account_logo_uri,
           )}
