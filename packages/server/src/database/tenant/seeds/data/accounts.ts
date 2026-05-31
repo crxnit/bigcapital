@@ -47,7 +47,8 @@ export const PrepardExpenses = {
 export const StripeClearingAccount = {
   name: 'Stripe Clearing',
   slug: 'stripe-clearing',
-  account_type: 'other-current-asset',
+  account_type: 'cash',
+  bank_account_subtype: 'clearing',
   parent_account_id: null,
   description: '',
   code: '100020',
