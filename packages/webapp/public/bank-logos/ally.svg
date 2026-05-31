@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Ally">
-  <rect width="64" height="64" rx="12" fill="#6B1E74"/>
-  <text x="32" y="41" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">Ally</text>
-</svg>
+<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4.065 8.057c2.2 0 3.985 1.782 3.985 3.985v3.815H5.762V12.04a1.7 1.7 0 1 0-1.699 1.698h1.699l-2.117 2.264a3.984 3.984 0 0 1 .42-7.945m5.047-2.842h2.384v10.637H9.112zm3.547 0h2.382v10.637h-2.382zm11.261 2.95-3.991 10.62h-2.484l1.219-2.968-2.934-7.651h2.497l1.625 4.75 1.563-4.75z"/></svg>

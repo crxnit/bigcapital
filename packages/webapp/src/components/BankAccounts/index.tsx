@@ -157,13 +157,18 @@ const BankAccountHeaderText = styled.div`
   min-width: 0;
 `;
 
+// Fixed light tile (not the theme tag background): the library marks are
+// monochrome SVGs using fill="currentColor", which render black when loaded via
+// <img>, so they need a light backdrop to stay visible in dark mode too.
 const BankAccountLogo = styled.img`
   width: 34px;
   height: 34px;
   flex-shrink: 0;
   border-radius: 6px;
   object-fit: contain;
-  background: var(--color-bank-account-card-tag-background);
+  padding: 4px;
+  background: #ffffff;
+  border: 1px solid var(--color-bank-account-card-border);
 `;
 
 const BankAccountTitle = styled.div`

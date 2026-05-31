@@ -266,6 +266,9 @@ function AccountFormDialogFields({
                     height: 36,
                     borderRadius: 6,
                     objectFit: 'contain',
+                    padding: 4,
+                    background: '#ffffff',
+                    border: '1px solid rgba(17, 20, 24, 0.15)',
                   }}
                 />
                 <Button

@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Bank">
-  <rect width="64" height="64" rx="12" fill="#2d72d2"/>
-  <path fill="#ffffff" d="M32 14 50 24v3H14v-3L32 14Zm-13 17h4v14h-4V31Zm9 0h4v14h-4V31Zm9 0h4v14h-4V31ZM16 47h32v4H16v-4Z"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24"><path d="M4 10v7h3v-7zm6 0v7h3v-7zM2 22h19v-3H2zm14-12v7h3v-7zM11.5 1 2 6v2h19V6z"/></svg>
