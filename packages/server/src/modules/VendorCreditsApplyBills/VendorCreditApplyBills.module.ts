@@ -7,6 +7,7 @@ import { GetAppliedBillsToVendorCreditService } from './queries/GetAppliedBillsT
 import { GetVendorCreditToApplyBills } from './queries/GetVendorCreditToApplyBills.service';
 import { VendorCreditApplyBillsApplicationService } from './VendorCreditApplyBillsApplication.service';
 import { VendorCreditApplyBillsController } from './VendorCreditApplyBills.controller';
+import { VendorCreditApplyBillsSyncSubscriber } from './subscribers/VendorCreditApplyBillsSyncSubscriber';
 import { BillsModule } from '../Bills/Bills.module';
 import { BillPaymentsModule } from '../BillPayments/BillPayments.module';
 import { VendorCreditDTOTransformService } from '../VendorCredit/commands/VendorCreditDTOTransform.service';
@@ -22,7 +23,7 @@ import { VendorCreditsModule } from '../VendorCredit/VendorCredits.module';
     ItemsModule,
     BranchesModule,
     WarehousesModule,
-    VendorCreditsModule
+    VendorCreditsModule,
   ],
   providers: [
     ApplyVendorCreditSyncBillsService,
@@ -32,7 +33,8 @@ import { VendorCreditsModule } from '../VendorCredit/VendorCredits.module';
     GetAppliedBillsToVendorCreditService,
     GetVendorCreditToApplyBills,
     VendorCreditApplyBillsApplicationService,
+    VendorCreditApplyBillsSyncSubscriber,
   ],
   controllers: [VendorCreditApplyBillsController],
 })
-export class VendorCreditApplyBillsModule { }
+export class VendorCreditApplyBillsModule {}
