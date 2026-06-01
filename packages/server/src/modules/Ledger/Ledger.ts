@@ -18,7 +18,7 @@ export class Ledger implements ILedger {
   }
 
   /**
-   * Filters the ledegr entries.
+   * Filters the ledger entries.
    * @param callback
    * @returns {ILedger}
    */
@@ -229,7 +229,9 @@ export class Ledger implements ILedger {
    * @param   {IAccountTransaction[]} entries
    * @returns {ILedgerEntry[]}
    */
-  static mappingTransactions(entries: ModelObject<AccountTransaction>[]): ILedgerEntry[] {
+  static mappingTransactions(
+    entries: ModelObject<AccountTransaction>[],
+  ): ILedgerEntry[] {
     return entries.map(this.mapTransaction);
   }
 

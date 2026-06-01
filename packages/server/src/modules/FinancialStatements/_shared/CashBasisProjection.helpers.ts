@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as moment from 'moment';
 
 export type SyntheticRow = {

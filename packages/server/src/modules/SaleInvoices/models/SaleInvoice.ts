@@ -83,7 +83,7 @@ export class SaleInvoice extends TenantBaseModel {
    *
    */
   get pluralName() {
-    return 'asdfsdf';
+    return 'Sale Invoices';
   }
 
   /**

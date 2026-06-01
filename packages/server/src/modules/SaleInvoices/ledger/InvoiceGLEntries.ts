@@ -9,7 +9,7 @@ import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 @Injectable()
 export class SaleInvoiceGLEntries {
   constructor(
-    private readonly ledegrRepository: LedgerStorageService,
+    private readonly ledgerStorage: LedgerStorageService,
     private readonly accountRepository: AccountRepository,
 
     @Inject(SaleInvoice.name)
@@ -58,7 +58,7 @@ export class SaleInvoiceGLEntries {
     const ledger = invoiceGL.getInvoiceLedger();
 
     // Commits the ledger entries to the storage as UOW.
-    await this.ledegrRepository.commit(ledger, trx);
+    await this.ledgerStorage.commit(ledger, trx);
   };
 
   /**
@@ -86,7 +86,7 @@ export class SaleInvoiceGLEntries {
     saleInvoiceId: number,
     trx?: Knex.Transaction,
   ) => {
-    await this.ledegrRepository.deleteByReference(
+    await this.ledgerStorage.deleteByReference(
       saleInvoiceId,
       'SaleInvoice',
       trx,

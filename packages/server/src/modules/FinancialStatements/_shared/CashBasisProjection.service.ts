@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Inject, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import { PaymentReceived } from '@/modules/PaymentReceived/models/PaymentReceived';

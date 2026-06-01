@@ -6,7 +6,7 @@ import { TenancyContext } from '../Tenancy/TenancyContext.service';
 import { TenancyDatabaseModule } from '../Tenancy/TenancyDB/TenancyDB.module';
 import { TransformerInjectable } from '../Transformer/TransformerInjectable.service';
 import { ApproveSaleEstimateService } from './commands/ApproveSaleEstimate.service';
-import { ConvertSaleEstimate } from './commands/ConvetSaleEstimate.service';
+import { ConvertSaleEstimate } from './commands/ConvertSaleEstimate.service';
 import { CreateSaleEstimate } from './commands/CreateSaleEstimate.service';
 import { DeliverSaleEstimateService } from './commands/DeliverSaleEstimate.service';
 import { EditSaleEstimate } from './commands/EditSaleEstimate.service';
