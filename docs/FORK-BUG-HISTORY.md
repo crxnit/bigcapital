@@ -200,6 +200,20 @@ Generalizes: NestJS-migration commented-out subscribers (`// @Service()` / `// @
 
 `New Payment Made` form's AccountsSelect filter and `BillPaymentValidators.getPaymentAccountOrThrowError` both allowlisted only `BANK` / `CASH` / `OTHER_CURRENT_ASSET` as payment-account types. Paying a vendor bill on a credit card is a legitimate journal — `DR AP / CR Credit Card Liability` is the AP-to-CC liability transfer — but the user couldn't select the CC account from the dropdown, and even if a request bypassed the UI the server validator would reject it. The GL writer is account-agnostic (always credits `paymentAccountId`), so adding `CREDIT_CARD` to both allowlists was sufficient — no GL changes. Commit `5525a688a`.
 
+## Currency / exchange rates
+
+### Latest-exchange-rate auto-fetch: 404 (wrong URL) hiding a 500 (wrong tenant resolution + no provider key)
+
+**Found in UAT** (2026-06-01, §2 FX). Opening a foreign-currency document (e.g. a credit note for a GBP customer) fired a failing `GET …/exchange_rates/latest?from_currency=GBP` in the console. Peeling it back surfaced **three stacked defects** in the `withExRateItemEntriesPriceRecalc` → `useLatestExchangeRate` → `/latest` path, none of which had ever run end-to-end because the outermost one masked the rest.
+
+1. **BUG-003 — 404, wrong URL (pre-existing since 2024-01-28, commit `174022629`).** The webapp hook (`hooks/query/exchangeRates.tsx`) called `/api/exchange_rates/latest` (underscore), but the NestJS route is `@Controller('exchange-rates')` → `/api/exchange-rates/latest` (hyphen, matching `sale-invoices`/`credit-notes`). The `SerializeInterceptor` camelCases body/query but **not the URL path**, so the path must match exactly. Fix: one char, underscore → hyphen. Convention check: webapp resource paths are hyphenated everywhere (`/credit-notes/state`, `/sale-estimates/state`); the exchange-rate hook was the lone outlier.
+
+2. **BUG-004 — 500, wrong tenant resolution.** With the URL fixed, the endpoint 500'd: `ERROR [ExceptionsHandler] undefined passed as a property in argument #0 for 'where' operation` from Objection. The controller read `req.tenantId` via a bespoke `RequestWithTenantId` interface that **nothing in the app populates** — tenant context lives in **CLS** (`verifyPayload` in `Jwt.strategy` sets `clsService.set('tenantId', …)` per request; model proxies read it there). So `TenantMetadata.query().findOne({ tenantId: undefined })` threw. It surfaced as 500 (not the ServiceError filter's 400) because the `TypeError`/Objection error isn't a `ServiceError`. Fix: resolve `tenantId` from `ClsService.get('tenantId')` in the service; drop the `tenantId` param threaded through controller→application→service; add a null-organization guard that throws `ServiceError` (→ 400) instead of dereferencing null. **Rule**: never invent `req.tenantId` — read tenant id from `ClsService`, the same source the model proxies use.
+
+3. **Operational + graceful degrade.** Even fully fixed, the endpoint calls the external **OpenExchangeRates** API with `OPEN_EXCHANGE_RATE_APP_ID`, which is **blank on staging** (a non-USD base like GBP also needs their paid plan). Rather than return a 400 "API key required" that still spams the console, the service now **graceful-degrades to `exchangeRate: 1` when the key is blank**, so the form silently falls back to manual rate entry. Wiring an actual key (paid plan) to enable real auto-rates is a deferred operational task.
+
+Net: auto-rate population is not enabled on staging (no provider key, by design), but the document forms no longer throw — manual rate entry works, which is all the FX UAT (§2) needs.
+
 ## Ledger / GL emission
 
 ### Trial Balance off by clean dollar amounts — silent partial commits in `LedgerEntriesStorage.saveEntries`
