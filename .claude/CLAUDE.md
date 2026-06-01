@@ -44,7 +44,7 @@ One-line index — **full detail (tables, commits, GL direction, traps) in `docs
 - **Invoice & Bill list default sort + per-user persistence** — both oldest-first; `createListSortPersistConfig`.
 - **"Bill(s)" → "Purchase Invoice(s)" relabel** — `lang/en/index.json` values only; keys/routes/models unchanged.
 - **Removed global Lemon Squeezy script** — dropped from `index.html`; call sites guard `window.LemonSqueezy?.`.
-- **Block GL postings to parent accounts** — server guard at the single GL chokepoint `LedgerEntriesStorageService.saveEntries()`; an account with children can't be posted to (all paths). `ERRORS.POSTING_TO_PARENT_ACCOUNT_NOT_ALLOWED`. Webapp companion: parents hidden from account pickers via `hideParentAccounts` (default `true`) in `usePreprocessingAccounts`; opt out with `hideParentAccounts={false}` (Account-dialog parent field, GL report filter).
+- **Block GL postings to parent accounts** — server guard at the single GL chokepoint `LedgerEntriesStorageService.saveEntries()`; an account with children can't be posted to (all paths). `ERRORS.POSTING_TO_PARENT_ACCOUNT_NOT_ALLOWED`. Webapp companion: parents hidden from account pickers via `hideParentAccounts` (default `true`) in `usePreprocessingAccounts`; opt out with `hideParentAccounts={false}` (Account-dialog parent field, GL report filter). Cashflow-accounts cards (+ MoneyIn/MoneyOut dropdowns + AccountTransactions sidebar) exclude parents server-side in `GetBankAccountsService` (`whereNotIn('id', parentAccountIds)`).
 
 ## Active gotchas (rules to follow)
 

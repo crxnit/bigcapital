@@ -44,6 +44,20 @@ export class GetBankAccountsService {
       this.accountModel(),
       filter as IDynamicListFilter,
     );
+    // Ids of parent accounts — any account referenced as another account's
+    // `parent_account_id`. Parent accounts are grouping/subtotal headers; they
+    // can't be posted to (enforced in `LedgerEntriesStorageService`), so they
+    // don't belong among the bank/cash account cards or the deposit/withdraw
+    // account dropdowns this query feeds. A plain numeric array keeps the
+    // exclusion clear of the snake-case identifier mapper traps.
+    const parentAccountRows = await this.accountModel()
+      .query()
+      .whereNotNull('parent_account_id')
+      .distinct('parent_account_id');
+    const parentAccountIds = parentAccountRows
+      .map((row) => row.parentAccountId)
+      .filter((id): id is number => id !== null && id !== undefined);
+
     // Retrieve accounts model based on the given query.
     const accounts = await this.accountModel()
       .query()
@@ -63,6 +77,10 @@ export class GetBankAccountsService {
             ])
             .orWhere('bank_account_subtype', 'clearing');
         });
+        // Exclude parent (grouping) accounts.
+        if (parentAccountIds.length > 0) {
+          builder.whereNotIn('id', parentAccountIds);
+        }
         builder.modify('inactiveMode', filter.inactiveMode);
       });
     // Retrieves the transformed accounts.
