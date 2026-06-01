@@ -60,6 +60,7 @@ function AccountsSelectRoot({
   filterByTypes,
   filterByNormal,
   filterByRootTypes,
+  hideParentAccounts,
 
   ...restProps
 }) {
@@ -69,6 +70,7 @@ function AccountsSelectRoot({
     filterByTypes,
     filterByNormal,
     filterByRootTypes,
+    hideParentAccounts,
   });
   // Maybe inject new item props to select component.
   const maybeCreateNewItemRenderer = allowCreate ? createNewItemRenderer : null;

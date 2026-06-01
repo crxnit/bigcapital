@@ -101,6 +101,7 @@ interface AccountsSuggestFieldOwnProps {
   filterByTypes?: string[];
   filterByNormal?: string;
   filterByRootTypes?: string[];
+  hideParentAccounts?: boolean;
   allowCreate?: boolean;
 }
 
@@ -140,6 +141,7 @@ function withAccountsSuggestFieldLogic<C extends ComponentType<any>>(
     filterByTypes = [],
     filterByNormal,
     filterByRootTypes = [],
+    hideParentAccounts,
 
     allowCreate,
 
@@ -152,6 +154,7 @@ function withAccountsSuggestFieldLogic<C extends ComponentType<any>>(
       filterByTypes,
       filterByNormal: filterByNormal ? [filterByNormal] : [],
       filterByRootTypes,
+      hideParentAccounts,
     });
     const handleCreateItemSelect = useCallback(
       (item: Account | Partial<Account>) => {

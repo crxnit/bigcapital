@@ -202,6 +202,7 @@ function AccountFormDialogFields({
               shouldUpdate={parentAccountShouldUpdate}
               placeholder={<T id={'select_parent_account'} />}
               filterByTypes={values.account_type}
+              hideParentAccounts={false}
               buttonProps={{ disabled: !values.subaccount }}
               fastField={true}
               fill={true}

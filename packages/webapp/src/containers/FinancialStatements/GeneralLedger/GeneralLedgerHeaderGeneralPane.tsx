@@ -54,7 +54,11 @@ function GLHeaderGeneralPaneContent() {
             name={'accountsIds'}
             className={Classes.FILL}
           >
-            <AccountsMultiSelect name="accountsIds" items={accounts} />
+            <AccountsMultiSelect
+              name="accountsIds"
+              items={accounts}
+              hideParentAccounts={false}
+            />
           </FFormGroup>
         </Col>
       </Row>
