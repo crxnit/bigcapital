@@ -26,7 +26,7 @@ export class GenerateShareLink {
 
     @Inject(PaymentLink.name)
     private paymentLinkModel: typeof PaymentLink,
-  ) { }
+  ) {}
 
   /**
    * Generates private or public payment link for the given sale invoice.
@@ -58,7 +58,7 @@ export class GenerateShareLink {
         events.saleInvoice.onPublicLinkGenerating,
         { ...commonEventPayload, trx },
       );
-      const paymentLink = await this.paymentLinkModel.query().insert({
+      const paymentLink = await this.paymentLinkModel.query(trx).insert({
         linkId,
         publicity,
         resourceId: foundInvoice.id,
@@ -79,7 +79,7 @@ export class GenerateShareLink {
         new GeneratePaymentLinkTransformer(),
         {
           baseUrl: this.configService.get('app.baseUrl'),
-        }
+        },
       );
     });
   }

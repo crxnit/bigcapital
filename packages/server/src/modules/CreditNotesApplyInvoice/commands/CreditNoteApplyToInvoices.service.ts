@@ -85,7 +85,7 @@ export class CreditNoteApplyToInvoices {
       // Saves the credit note apply to invoice graph to the storage layer.
       const creditNoteAppliedInvoices =
         await this.creditNoteAppliedInvoiceModel()
-          .query()
+          .query(trx)
           .insertGraph(creditNoteAppliedModel.entries);
 
       // Triggers `onCreditNoteApplyToInvoiceCreated` event.

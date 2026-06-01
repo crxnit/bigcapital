@@ -68,7 +68,7 @@ export class DeleteWarehouseService {
       );
       // Deletes the given warehouse from the storage.
       await this.warehouseModel()
-        .query()
+        .query(trx)
         .findById(warehouseId)
         .deleteIfNoRelations({
           type: ERRORS.WAREHOUSE_HAS_ASSOCIATED_TRANSACTIONS,

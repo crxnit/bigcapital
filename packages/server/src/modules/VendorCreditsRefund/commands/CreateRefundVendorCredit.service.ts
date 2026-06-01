@@ -101,7 +101,7 @@ export class CreateRefundVendorCredit {
       );
       // Inserts refund vendor credit to the storage layer.
       const refundVendorCredit = await this.refundVendorCreditModel()
-        .query()
+        .query(trx)
         .insertAndFetch(refundCreditObj);
 
       // Triggers `onVendorCreditCreated` event.

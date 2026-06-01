@@ -77,10 +77,13 @@ export class CategorizeBankTransaction {
         oldUncategorizedTransactions,
         categorizeDTO,
       );
-      // Creates a new cashflow transaction.
+      // Creates a new cashflow transaction within the same UoW transaction so
+      // it rolls back with the categorize op rather than committing on its own.
       const cashflowTransaction =
         await this.createBankTransaction.newCashflowTransaction(
           cashflowTransactionDTO,
+          undefined,
+          trx,
         );
 
       // Updates the uncategorized transaction as categorized.
