@@ -23,7 +23,7 @@ export function useLatestExchangeRate(
     () =>
       apiRequest
         .http({
-          url: `/api/exchange_rates/latest`,
+          url: `/api/exchange-rates/latest`,
           method: 'get',
           params: {
             to_currency: toCurrency,
