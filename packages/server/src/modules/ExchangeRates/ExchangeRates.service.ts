@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import { ExchangeRate } from './lib/ExchangeRate';
 import { ExchangeRateServiceType } from './lib/types';
@@ -11,6 +11,8 @@ import {
 
 @Injectable()
 export class ExchangeRatesService {
+  private readonly logger = new Logger(ExchangeRatesService.name);
+
   constructor(private readonly clsService: ClsService) {}
 
   /**
@@ -40,24 +42,42 @@ export class ExchangeRatesService {
     const toCurrency =
       exchangeRateLatestDTO.toCurrency || organization.baseCurrency;
 
-    // Graceful degrade: when no external exchange-rate provider is configured
-    // (`OPEN_EXCHANGE_RATE_APP_ID` blank), skip the upstream call and return a
-    // no-op rate so the form falls back to manual entry without erroring.
+    const resolvedToCurrency = exchangeRateLatestDTO.toCurrency || toCurrency;
+
+    // Auto-rate is best-effort. Skip the upstream call entirely when no provider
+    // is configured (`OPEN_EXCHANGE_RATE_APP_ID` blank); otherwise attempt it but
+    // degrade to a no-op rate on ANY provider failure (invalid/rejected key,
+    // base-currency not allowed on the plan, network error). Either way the form
+    // falls back to manual rate entry instead of surfacing a console error.
     if (!process.env.OPEN_EXCHANGE_RATE_APP_ID) {
       return {
         baseCurrency: fromCurrency,
-        toCurrency: exchangeRateLatestDTO.toCurrency || toCurrency,
+        toCurrency: resolvedToCurrency,
         exchangeRate: 1,
       };
     }
 
-    const exchange = new ExchangeRate(ExchangeRateServiceType.OpenExchangeRate);
-    const exchangeRate = await exchange.latest(fromCurrency, toCurrency);
+    try {
+      const exchange = new ExchangeRate(
+        ExchangeRateServiceType.OpenExchangeRate,
+      );
+      const exchangeRate = await exchange.latest(fromCurrency, toCurrency);
 
-    return {
-      baseCurrency: fromCurrency,
-      toCurrency: exchangeRateLatestDTO.toCurrency || toCurrency,
-      exchangeRate,
-    };
+      return {
+        baseCurrency: fromCurrency,
+        toCurrency: resolvedToCurrency,
+        exchangeRate,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `Exchange-rate provider unavailable (${fromCurrency}->${toCurrency}); ` +
+          `falling back to rate 1. ${error?.message ?? error}`,
+      );
+      return {
+        baseCurrency: fromCurrency,
+        toCurrency: resolvedToCurrency,
+        exchangeRate: 1,
+      };
+    }
   }
 }
