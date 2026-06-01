@@ -3,14 +3,17 @@
  * the Account dialog's logo picker (alongside a custom-image upload).
  *
  * Assets live under `packages/webapp/public/bank-logos/<slug>.svg` and are served
- * from the site root at `/bank-logos/<slug>.svg`. To add a bank, drop an SVG (or
- * PNG) at that path and add one entry below — the `slug` is what gets persisted
- * on the account (`bank_account_logo_slug`).
+ * from the site root at `/bank-logos/<slug>.svg`. To add a bank, drop a
+ * monochrome SVG (single opaque path, `fill="currentColor"`) at that path and add
+ * one entry below — the `slug` is what gets persisted on the account
+ * (`bank_account_logo_slug`).
  *
- * The shipped assets are monochrome marks (single opaque path, `fill="currentColor"`).
- * They're rendered full-brand-color via a CSS mask (the SVG is the mask, `color`
- * is the paint), so each entry carries its official brand `color`. Multi-color
- * logos aren't supported by this approach — one color per mark.
+ * Library marks are rendered full-brand-color via a CSS mask (the SVG is the
+ * mask, `color` is the paint — see `BankLogoMark`), so each entry carries its
+ * official brand `color`. Because only the asset's alpha is used, the source
+ * MUST be a monochrome SVG: a multi-color SVG or a PNG would be flattened to a
+ * solid brand-color silhouette. (PNGs are only for the separate custom-upload
+ * path, which renders the image as-is.)
  */
 export interface BankLogoLibraryItem {
   /** Stable id persisted on the account. */

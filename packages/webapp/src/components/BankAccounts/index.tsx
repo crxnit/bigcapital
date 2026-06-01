@@ -73,9 +73,11 @@ function BankAccountTypeIcon({ type, subtype }) {
  * Renders a bank logo on a fixed white tile. Library marks are monochrome SVGs
  * (`fill="currentColor"`) painted their brand color via a CSS mask; custom
  * uploads are real images shown as-is. `logo` is the object from
- * `resolveBankAccountLogo()` ({ kind, src, color }).
+ * `resolveBankAccountLogo()` ({ kind, src, color }). `name` (the account title)
+ * is used as the custom-upload image's alt text; library marks are decorative
+ * (the title always renders beside them) so they get an empty alt.
  */
-export function BankLogoMark({ logo, size = 34 }) {
+export function BankLogoMark({ logo, name, size = 34 }) {
   if (!logo?.src) {
     return null;
   }
@@ -90,7 +92,7 @@ export function BankLogoMark({ logo, size = 34 }) {
           }}
         />
       ) : (
-        <LogoImg src={logo.src} alt="" />
+        <LogoImg src={logo.src} alt={name || ''} />
       )}
     </LogoTile>
   );
@@ -112,7 +114,7 @@ export function BankAccount({
     <BankAccountWrap {...restProps}>
       <BankAccountHeader>
         <BankAccountHeaderMain>
-          {!loading && <BankLogoMark logo={logo} />}
+          {!loading && <BankLogoMark logo={logo} name={title} />}
           <BankAccountHeaderText>
             <BankAccountTitle className={clsx({ [Classes.SKELETON]: loading })}>
               {title}
