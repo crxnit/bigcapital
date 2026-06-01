@@ -14,6 +14,15 @@ imbalance surfaces later in a report).
 
 ---
 
+## Findings log
+
+| ID             | Pri | Area           | Status                                  | Summary                                                                                                                                                                                                                                                                              |
+| -------------- | --- | -------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| REGRESSION-001 | P0  | §3 allocations | **Fixed** (`InvoiceGLEntries.ts:31`)    | Direct-account-allocation **sale invoice** posts AR debit, silently drops income credit leg (missing `categories` eager-load) → unbalanced. Found via §1 gate on `SaleInvoice 116`. Post-mortem in `docs/FORK-BUG-HISTORY.md`. **Data cleanup pending:** delete/re-save invoice 116. |
+| REGRESSION-002 | P0  | §3 allocations | **Fixed** (`CreditNoteGLEntries.ts:43`) | Same root cause for direct-account-allocation **credit notes** (reads `creditNoteModel.categories`, fetch omitted it). Fixed alongside 001; not separately reproduced.                                                                                                               |
+
+---
+
 ## DB connection cheat-sheet (verified 2026-06-01)
 
 MariaDB on Linux is **case-sensitive**; Knex runs with `knexSnakeCaseMappers({ upperCase: true })`,
@@ -21,8 +30,13 @@ so physical tables/columns are **UPPERCASE**.
 
 - **System DB** = `bigcapital_system` — holds `TENANTS`, `TENANTS_METADATA`, system users.
   - **Base currency** lives here: `TENANTS_METADATA.BASE_CURRENCY` (NOT in any tenant `SETTINGS` table).
-- **Tenant DB** = per-org, e.g. `bigcapital_<orgId>` (`SHOW DATABASES LIKE 'bigcapital%'`, pick the
-  non-`system` one) — holds `ACCOUNTS_TRANSACTIONS`, `CONTACTS`, documents, etc.
+- **Tenant DB** = per-org, named `bigcapital_tenant_<hash>` (`SHOW DATABASES LIKE 'bigcapital%'`, the
+  non-`system` ones) — holds `ACCOUNTS_TRANSACTIONS`, `CONTACTS`, documents, etc. Staging has multiple
+  orgs (verified 2026-06-01):
+  - **`bigcapital_tenant_35i5f1mo1phc5w`** — 1038 ledger rows (primary test org; holds "Test FX" GBP customer).
+  - `bigcapital_tenant_35i5f1mo1oztqd` — 4 ledger rows (secondary).
+  - Both passed the §1 gate clean. **Confirm which DB holds your test org before testing** (see below)
+    and run all §1/§2 SQL against that one.
 
 ```sql
 -- Base currency (system DB)

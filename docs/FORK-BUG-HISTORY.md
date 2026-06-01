@@ -210,6 +210,34 @@ The trial balance was off by $260 in Feb and $1,312.51 in March (cumulative). Dr
 
 **Diagnostic recipe for future GL audits** (kept in CLAUDE.md): trial-balance imbalance → group `ACCOUNTS_TRANSACTIONS` by `(REFERENCE_TYPE, REFERENCE_ID)` and `HAVING ABS(SUM(DEBIT)-SUM(CREDIT)) > 0.005` — names the offending transactions in seconds. Then per-invoice/expense, join `ITEMS_ENTRIES` (or relevant child table) to existing GL legs by `ITEM_ID + ACCOUNT_ID` to spot which line wasn't emitted. Generate INSERTs that mirror the existing GL pattern; wrap in `START TRANSACTION` and verify before `COMMIT`.
 
+### Direct-account-allocation invoices & credit notes posted AR/contra leg but silently dropped the income/allocation credit leg (missing `categories` eager-load)
+
+**Found in UAT** (2026-06-01, staging build `50d2a54bd`, §2/§3 of `docs/UAT-REGRESSION-PLAN.md`). A foreign-currency sale invoice created with the **direct-account allocations** feature (no items — one `sale_invoice_income_categories` row, £500 → "Catering Services Revenue") posted only its A/R debit ($445 local) and **no income credit leg at all** — unbalanced by the full allocation amount. The §1 GL gate (`HAVING ABS(SUM(DEBIT)-SUM(CREDIT)) > 0.005`) named `SaleInvoice 116` immediately; the global baseline had been clean (1038 rows), so the imbalance was introduced by the test.
+
+**Why it looked like the old `saveEntries` partial-commit but wasn't**: server logs at the GL row's `CREATED_AT` were **empty** — nothing threw. The allocation row had persisted correctly, and the income account was **not** a parent (so the new parent-posting guard `774461968` was not the cause). The leg was never _generated_, not swallowed.
+
+**Root cause**: the GL writers re-fetch the document inside the write step and build the income/allocation legs via `mapAllocationLedgerEntries(doc.categories, …)` (`InvoiceGL.ts:190`, `CreditNoteGL.ts:169`). But the fetch eager-loaded **`entries.item` only, never `categories`** — so `doc.categories` was `undefined`, `mapAllocationLedgerEntries` mapped over nothing, and zero income legs were emitted. No error: an empty map is silent. The A/R debit (built from `totalLocal`, unaffected) posted fine, UoW committed, green toast.
+
+**Scope** — checked all four allocation GL **writers** (`*GLEntries.ts`, the files that fetch the doc before posting), **2 of 4 were broken**:
+
+| Doc                                             | GL-writer fetch | `categories` loaded? |
+| ----------------------------------------------- | --------------- | -------------------- |
+| SaleInvoice (`InvoiceGLEntries.ts:31`)          | `entries.item`  | ❌ → **BROKEN**      |
+| CreditNote (`CreditNoteGLEntries.ts:43`)        | `entries.item`  | ❌ → **BROKEN**      |
+| Bill (`BillsGLEntries.ts:37–40`)                | …`categories`   | ✅ OK                |
+| VendorCredit (`VendorCreditGLEntries.ts:32–33`) | …`categories`   | ✅ OK                |
+
+Bill and VendorCredit were authored later/correctly; Invoice and CreditNote were missed. CreditNote was not separately reproduced but reads `this.creditNoteModel.categories` identically, so it had the same defect.
+
+**Fix**: add `categories` to the eager-load graph in both writers (one line each), matching Bill/VendorCredit. Covers create and edit (the `rewrites…GLEntries` path calls the same `write…GLEntries`):
+
+- `InvoiceGLEntries.ts:31` → `.withGraphFetched('[entries.item, categories]')`
+- `CreditNoteGLEntries.ts:43` → `.withGraphFetched('[entries.item, categories]')`
+
+**Rule for new allocation doc types**: when a GL writer reads `doc.categories`, its own document re-fetch MUST eager-load `categories` — the `GetXxx` query service loading it is irrelevant; the GL writer fetches independently. Grep test: any `mapAllocationLedgerEntries(this.x.categories` whose writer's `.withGraphFetched(...)` omits `categories` is broken.
+
+**Data cleanup**: the fix is not retroactive — invoice 116's dangling $445 A/R debit must be cleared by re-saving (triggers `rewritesInvoiceGLEntries`) or deleting the invoice, then re-running the §1 gate.
+
 ## Financial reports
 
 ### Profit & Loss "Cash Basis" toggle was a no-op

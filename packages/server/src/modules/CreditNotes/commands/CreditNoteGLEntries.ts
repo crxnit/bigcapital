@@ -40,7 +40,7 @@ export class CreditNoteGLEntries {
     // Retrieve the credit note with associated entries and items.
     const creditNoteWithItems = await CreditNote.query(trx)
       .findById(creditNoteId)
-      .withGraphFetched('entries.item');
+      .withGraphFetched('[entries.item, categories]');
 
     // Retreive the the `accounts receivable` account based on the given currency.
     const ARAccount =
