@@ -1,28 +1,16 @@
 // @ts-nocheck
 import React from 'react';
 import * as R from 'ramda';
-import intl from 'react-intl-universal';
 import { MenuItem } from '@blueprintjs/core';
 import { MenuItemNestedText, FSelect } from '@/components';
-import { accountPredicate } from './_components';
+import {
+  accountPredicate,
+  createNewItemRenderer,
+  createAccountFromQuery as createNewItemFromQuery,
+} from './_components';
 import { DialogsName } from '@/constants/dialogs';
 import { withDialogActions } from '@/containers/Dialog/withDialogActions';
 import { usePreprocessingAccounts } from './_hooks';
-
-// Create new account renderer.
-const createNewItemRenderer = (query, active, handleClick) => {
-  return (
-    <MenuItem
-      icon="add"
-      text={intl.get('list.create', { value: `"${query}"` })}
-      active={active}
-      onClick={handleClick}
-    />
-  );
-};
-
-// Create new item from the given query string.
-const createNewItemFromQuery = (name) => ({ name });
 
 /**
  * Default account item renderer.

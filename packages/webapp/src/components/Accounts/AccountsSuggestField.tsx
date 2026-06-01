@@ -1,65 +1,20 @@
 import React, { useCallback, ComponentType } from 'react';
 import intl from 'react-intl-universal';
 import { MenuItem } from '@blueprintjs/core';
-import { ItemRenderer, ItemPredicate } from '@blueprintjs/select';
+import { ItemRenderer } from '@blueprintjs/select';
 import { DialogsName } from '@/constants/dialogs';
 import { FSuggest, Suggest, FormattedMessage as T } from '@/components';
 import { withDialogActions } from '@/containers/Dialog/withDialogActions';
 import { usePreprocessingAccounts } from './_hooks';
+import {
+  Account,
+  accountPredicate,
+  createNewItemRenderer,
+  createAccountFromQuery as createNewItemFromQuery,
+} from './_components';
 
-// Account interface
-interface Account {
-  id: number;
-  name: string;
-  code: string;
-  account_level?: number;
-  account_type?: string;
-  account_parent_type?: string;
-  account_root_type?: string;
-  account_normal?: string;
-}
-
-// Types for renderers and predicates
+// Types for renderers
 type AccountItemRenderer = ItemRenderer<Account>;
-type AccountItemPredicate = ItemPredicate<Account>;
-
-// Create new account renderer.
-const createNewItemRenderer = (
-  query: string,
-  active: boolean,
-  handleClick: (event: React.MouseEvent<HTMLElement>) => void,
-): React.ReactElement => {
-  return (
-    <MenuItem
-      icon="add"
-      text={intl.get('list.create', { value: `"${query}"` })}
-      active={active}
-      onClick={handleClick}
-    />
-  );
-};
-
-// Create new item from the given query string.
-const createNewItemFromQuery = (name: string): Partial<Account> => {
-  return { name };
-};
-
-// Filters accounts items.
-const filterAccountsPredicater: AccountItemPredicate = (
-  query: string,
-  account: Account,
-  _index?: number,
-  exactMatch?: boolean,
-): boolean => {
-  const normalizedTitle = account.name.toLowerCase();
-  const normalizedQuery = query.toLowerCase();
-
-  if (exactMatch) {
-    return normalizedTitle === normalizedQuery;
-  } else {
-    return `${account.code} ${normalizedTitle}`.indexOf(normalizedQuery) >= 0;
-  }
-};
 
 // Account item renderer for Suggest (non-Formik)
 const accountItemRenderer: AccountItemRenderer = (
@@ -99,7 +54,7 @@ interface AccountsSuggestFieldOwnProps {
   defaultSelectText?: string;
   filterByParentTypes?: string[];
   filterByTypes?: string[];
-  filterByNormal?: string;
+  filterByNormal?: string[];
   filterByRootTypes?: string[];
   hideParentAccounts?: boolean;
   allowCreate?: boolean;
@@ -139,7 +94,7 @@ function withAccountsSuggestFieldLogic<C extends ComponentType<any>>(
 
     filterByParentTypes = [],
     filterByTypes = [],
-    filterByNormal,
+    filterByNormal = [],
     filterByRootTypes = [],
     hideParentAccounts,
 
@@ -152,7 +107,7 @@ function withAccountsSuggestFieldLogic<C extends ComponentType<any>>(
     const filteredAccounts = usePreprocessingAccounts(items, {
       filterByParentTypes,
       filterByTypes,
-      filterByNormal: filterByNormal ? [filterByNormal] : [],
+      filterByNormal,
       filterByRootTypes,
       hideParentAccounts,
     });
@@ -175,7 +130,7 @@ function withAccountsSuggestFieldLogic<C extends ComponentType<any>>(
     // Build the SuggestProps to pass to the component
     const processedSuggestProps = {
       items: filteredAccounts,
-      itemPredicate: filterAccountsPredicater,
+      itemPredicate: accountPredicate,
       onCreateItemSelect: handleCreateItemSelect,
       valueAccessor: 'id' as const,
       textAccessor: 'name' as const,

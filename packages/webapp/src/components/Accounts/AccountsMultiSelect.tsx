@@ -1,25 +1,15 @@
 import React from 'react';
-import { MenuItem } from '@blueprintjs/core';
-import intl from 'react-intl-universal';
 import { FMultiSelect } from '../Forms';
-import { accountPredicate } from './_components';
+import {
+  AccountSelect,
+  accountPredicate,
+  createNewItemRenderer,
+} from './_components';
 import { usePreprocessingAccounts } from './_hooks';
 import { DialogsName } from '@/constants/dialogs';
 import { useDialogActions } from '@/hooks/state/dashboard';
-import { SelectOptionProps } from '@blueprintjs-formik/select';
 
-interface Account {
-  id: number;
-  name: string;
-  code: string;
-  account_level: number;
-  account_type?: string;
-  account_parent_type?: string;
-  account_root_type?: string;
-  account_normal?: string;
-}
-
-export interface AccountSelect extends Partial<Account>, SelectOptionProps {}
+export type { AccountSelect } from './_components';
 
 type MultiSelectProps = React.ComponentProps<typeof FMultiSelect>;
 
@@ -33,23 +23,9 @@ interface AccountsMultiSelectProps extends Omit<MultiSelectProps, 'items'> {
   hideParentAccounts?: boolean;
 }
 
-// Create new account renderer.
-const createNewItemRenderer = (
-  query: string,
-  active: boolean,
-  handleClick: (event: React.MouseEvent<HTMLElement>) => void,
-): React.ReactElement => {
-  return (
-    <MenuItem
-      icon="add"
-      text={intl.get('list.create', { value: `"${query}"` })}
-      active={active}
-      onClick={handleClick}
-    />
-  );
-};
-
-// Create new item from the given query string.
+// Create new item from the given query string. The multi-select needs the full
+// Blueprint option shape (label/value/text), so it builds its own rather than
+// using the shared `createAccountFromQuery`.
 const createNewItemFromQuery = (query: string): AccountSelect => ({
   label: query,
   value: query,
