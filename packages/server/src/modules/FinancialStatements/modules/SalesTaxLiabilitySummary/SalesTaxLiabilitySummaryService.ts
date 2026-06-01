@@ -19,7 +19,7 @@ export class SalesTaxLiabilitySummaryService {
    * @returns
    */
   public async salesTaxLiability(query: SalesTaxLiabilitySummaryQuery) {
-    await this.repository.load();
+    await this.repository.load(query);
 
     // Retrieve the meta first to get date format.
     const meta = await this.salesTaxLiabilityMeta.meta(query);
@@ -30,7 +30,10 @@ export class SalesTaxLiabilitySummaryService {
     const taxLiabilitySummary = new SalesTaxLiabilitySummary(
       query,
       this.repository,
-      { baseCurrency: tenantMetadata.baseCurrency, dateFormat: meta.dateFormat },
+      {
+        baseCurrency: tenantMetadata.baseCurrency,
+        dateFormat: meta.dateFormat,
+      },
     );
 
     return {
