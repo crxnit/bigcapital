@@ -2,8 +2,6 @@ import { Injectable, Scope } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import stripe from 'stripe';
 
-const origin = 'https://cfdf-102-164-97-88.ngrok-free.app';
-
 @Injectable({ scope: Scope.DEFAULT })
 export class StripePaymentService {
   public stripe: stripe;
@@ -47,6 +45,7 @@ export class StripePaymentService {
    */
   public async createAccountLink(accountId: string) {
     try {
+      const origin = this.config.get('app.baseUrl');
       const accountLink = await this.stripe.accountLinks.create({
         account: accountId,
         return_url: `${origin}/return/${accountId}`,

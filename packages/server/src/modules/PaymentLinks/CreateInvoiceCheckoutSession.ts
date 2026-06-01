@@ -7,8 +7,6 @@ import { StripeInvoiceCheckoutSessionPOJO } from '../StripePayment/StripePayment
 import { ModelObject } from 'objection';
 import { ConfigService } from '@nestjs/config';
 
-const origin = 'http://localhost';
-
 @Injectable()
 export class CreateInvoiceCheckoutSession {
   constructor(
@@ -74,6 +72,8 @@ export class CreateInvoiceCheckoutSession {
     stripeAccountId?: string,
     metadata?: Record<string, any>,
   ) {
+    const origin = this.configService.get('app.baseUrl');
+
     return this.stripePaymentService.stripe.checkout.sessions.create(
       {
         payment_method_types: ['card'],

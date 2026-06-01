@@ -28,7 +28,7 @@ export class StripeWebhooksSubscriber {
 
     @Inject(TenantModel.name)
     private readonly tenantModel: typeof TenantModel,
-  ) { }
+  ) {}
 
   /**
    * Handles the checkout session completed webhook event.
@@ -39,8 +39,15 @@ export class StripeWebhooksSubscriber {
     event,
   }: StripeCheckoutSessionCompletedEventPayload) {
     const { metadata } = event.data.object;
+
+    // Guard required metadata — a session without these keys would otherwise
+    // parseInt to NaN and drive findOne({ id: NaN }) / a NaN invoice lookup.
+    if (!metadata?.tenantId || !metadata?.saleInvoiceId) return;
+
     const tenantId = parseInt(metadata.tenantId, 10);
     const saleInvoiceId = parseInt(metadata.saleInvoiceId, 10);
+
+    if (!Number.isFinite(tenantId) || !Number.isFinite(saleInvoiceId)) return;
 
     const tenant = await this.tenantModel
       .query()

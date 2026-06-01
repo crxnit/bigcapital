@@ -461,7 +461,11 @@ export class SaleInvoice extends TenantBaseModel {
        */
       maxInvoiceNo(query, prefix, number) {
         query
-          .select(raw(`REPLACE(INVOICE_NO, "${prefix}", "") AS INV_NUMBER`))
+          // Bind `prefix` as a value (??/? bindings) — never interpolate it
+          // into raw SQL; it comes from user-set invoice numbering settings.
+          .select(
+            raw('REPLACE(??, ?, "") AS INV_NUMBER', ['invoiceNo', prefix]),
+          )
           .havingRaw('CHAR_LENGTH(INV_NUMBER) = ??', [number.length])
           .orderBy('invNumber', 'DESC')
           .limit(1)

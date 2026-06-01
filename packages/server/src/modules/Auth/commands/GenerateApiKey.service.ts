@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { ApiKeyModel } from '../models/ApiKey.model';
 import { TenancyContext } from '@/modules/Tenancy/TenancyContext.service';
-import { AuthApiKeyPrefix } from '../Auth.constants';
+import { ServiceError } from '@/modules/Items/ServiceError';
+import { AuthApiKeyPrefix, ERRORS } from '../Auth.constants';
 
 @Injectable()
 export class GenerateApiKey {
@@ -10,7 +11,7 @@ export class GenerateApiKey {
     private readonly tenancyContext: TenancyContext,
     @Inject(ApiKeyModel.name)
     private readonly apiKeyModel: typeof ApiKeyModel,
-  ) { }
+  ) {}
 
   /**
    * Generates a new secure API key for the current tenant and system user.
@@ -43,11 +44,18 @@ export class GenerateApiKey {
    * @returns {Promise<{ id: number; revoked: boolean }>} The id of the revoked API key and a revoked flag.
    */
   async revoke(apiKeyId: number) {
-    // Set the revoked flag to true for the given API key
-    await ApiKeyModel.query()
+    // Scope the revoke to the current tenant so a tenant can't revoke another
+    // tenant's API key (IDOR). patch() returns the number of affected rows.
+    const tenant = await this.tenancyContext.getTenant();
+    const affected = await this.apiKeyModel
+      .query()
       .findById(apiKeyId)
+      .where('tenantId', tenant.id)
       .patch({ revokedAt: new Date() });
 
+    if (affected === 0) {
+      throw new ServiceError(ERRORS.API_KEY_NOT_FOUND);
+    }
     return { id: apiKeyId, revoked: true };
   }
 }
