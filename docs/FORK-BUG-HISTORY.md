@@ -252,6 +252,18 @@ Bill and VendorCredit were authored later/correctly; Invoice and CreditNote were
 
 **Data cleanup**: the fix is not retroactive — invoice 116's dangling $445 A/R debit must be cleared by re-saving (triggers `rewritesInvoiceGLEntries`) or deleting the invoice, then re-running the §1 gate.
 
+### Editing a published credit note didn't rewrite its GL — partial `upsertGraph` result fails the `isPublished` gate
+
+**Found in UAT** (2026-06-01, §3 allocations edit). Editing `CreditNote 1` (allocation amount £15→£20) updated the child row (`credit_note_income_categories.AMOUNT=20`) and the header (`CREDIT_NOTES.AMOUNT=20`), but the **GL stayed at the old £15** (13.35 local, not 17.80). The ledger remained internally balanced (diff 0), so the §1 gate did **not** catch it — the GL was simply stale relative to the document. Affects **all** edits of an already-published credit note (any amount/line change), not just allocation ones — surfaced here only because we were exercising the allocation edit path.
+
+**Root cause**: `EditCreditNote.service.ts` wrote with `upsertGraph({ id, ...creditNoteModel })` and emitted that **partial** return object directly as the `onEdited` payload's `creditNote`. `upsertGraph` returns only the fields present in the upsert payload; the DTO transform sets `openedAt` **only on first publish** (`!oldCreditNote?.openedAt`), so for an already-published note `openedAt` is absent from the result. The `onEdited` GL subscriber (`CreditNoteGLEntriesSubscriber.editVendorCreditGLEntriesOnceEdited`) gates on `if (!creditNote.isPublished) return;`, and `isPublished` is `!!this.openedAt` → falsy on the partial object → the revert+rewrite (`editVendorCreditGLEntries` = `revert` + `create`, the latter carrying the `categories` eager-load fix above) **silently never runs**. No error (a clean early-return), no imbalance — just a ledger that no longer matches the document.
+
+**Why CreditNote alone**: of the edit services that post GL, only CreditNote emitted the bare `upsertGraph` result while gating downstream on a publish timestamp. `EditSaleInvoice`/`EditBill`/`EditVendorCredit`/`EditSaleReceipt`/`EditSaleEstimate`/`EditExpense`/`EditPaymentReceived` use `upsertGraphAndFetch`; `EditManualJournal` uses `upsertGraph` but re-fetches via `findById().withGraphFetched(...)` before emitting; `EditBillPayment` uses `upsertGraph` but its GL subscriber has no publish gate. All fine.
+
+**Fix**: `upsertGraph` → `upsertGraphAndFetch` in `EditCreditNote` (re-fetches the full row incl. `openedAt`), mirroring `EditSaleInvoice`. **Rule**: an edit service that emits a model into a GL-rewrite event whose subscriber gates on a publish timestamp (`openedAt`/`deliveredAt`/`publishedAt`) MUST emit a fully-fetched row — `upsertGraphAndFetch`, or a separate `findById()` re-fetch (the ManualJournal pattern) — never the bare `upsertGraph` result.
+
+**Data cleanup**: not retroactive — credit notes edited before the fix have stale GL. Re-save each (triggers the now-working rewrite) to bring the ledger in line; CN 1 specifically must be re-saved to move its GL from 13.35 → 17.80.
+
 ## Financial reports
 
 ### Profit & Loss "Cash Basis" toggle was a no-op

@@ -121,9 +121,14 @@ export class EditCreditNoteService {
       } as ICreditNoteEditingPayload);
 
       // Saves the credit note graph to the storage.
+      // `upsertGraphAndFetch` (not `upsertGraph`) so the emitted `creditNote`
+      // carries the full row — incl. `openedAt`. The `onEdited` GL subscriber
+      // gates on `isPublished` (= `!!openedAt`); a partial upsertGraph result
+      // omits `openedAt` for already-published notes, making the gate falsy and
+      // silently skipping the GL rewrite (stale ledger). Mirrors EditSaleInvoice.
       const creditNote = await this.creditNoteModel()
         .query(trx)
-        .upsertGraph({
+        .upsertGraphAndFetch({
           id: creditNoteId,
           ...creditNoteModel,
         });
