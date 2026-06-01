@@ -32,15 +32,22 @@ export class ValidateBulkDeleteCustomersService {
           await this.deleteCustomerService.deleteCustomer(customerId, trx);
           deletableIds.push(customerId);
         } catch (error) {
-          if (
+          const isExpected =
             error instanceof ModelHasRelationsError ||
             (error instanceof ServiceError &&
-              error.errorType === 'CUSTOMER_HAS_TRANSACTIONS')
-          ) {
-            nonDeletableIds.push(customerId);
-          } else {
-            nonDeletableIds.push(customerId);
+              error.errorType === 'CUSTOMER_HAS_TRANSACTIONS');
+          if (!isExpected) {
+            // Unexpected error during the delete probe — still classify as
+            // non-deletable so the bulk check doesn't 500, but log it so real
+            // failures (DB/constraint/subscriber errors) aren't masked.
+            // eslint-disable-next-line no-console
+            console.error(
+              '[ValidateBulkDeleteCustomers] unexpected error',
+              customerId,
+              error,
+            );
           }
+          nonDeletableIds.push(customerId);
         }
       }
 
@@ -58,4 +65,3 @@ export class ValidateBulkDeleteCustomersService {
     }
   }
 }
-

@@ -38,11 +38,18 @@ export class ValidateBulkDeleteAccountsService {
           await this.deleteAccountService.deleteAccount(accountId, trx);
           deletableIds.push(accountId);
         } catch (error) {
-          if (error instanceof ModelHasRelationsError) {
-            nonDeletableIds.push(accountId);
-          } else {
-            nonDeletableIds.push(accountId);
+          if (!(error instanceof ModelHasRelationsError)) {
+            // Unexpected error during the delete probe — still classify as
+            // non-deletable so the bulk check doesn't 500, but log it so real
+            // failures (DB/constraint/subscriber errors) aren't masked.
+            // eslint-disable-next-line no-console
+            console.error(
+              '[ValidateBulkDeleteAccounts] unexpected error',
+              accountId,
+              error,
+            );
           }
+          nonDeletableIds.push(accountId);
         }
       }
 
@@ -60,4 +67,3 @@ export class ValidateBulkDeleteAccountsService {
     }
   }
 }
-

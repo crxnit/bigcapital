@@ -32,15 +32,22 @@ export class ValidateBulkDeleteVendorsService {
           await this.deleteVendorService.deleteVendor(vendorId, trx);
           deletableIds.push(vendorId);
         } catch (error) {
-          if (
+          const isExpected =
             error instanceof ModelHasRelationsError ||
             (error instanceof ServiceError &&
-              error.errorType === 'VENDOR_HAS_TRANSACTIONS')
-          ) {
-            nonDeletableIds.push(vendorId);
-          } else {
-            nonDeletableIds.push(vendorId);
+              error.errorType === 'VENDOR_HAS_TRANSACTIONS');
+          if (!isExpected) {
+            // Unexpected error during the delete probe — still classify as
+            // non-deletable so the bulk check doesn't 500, but log it so real
+            // failures (DB/constraint/subscriber errors) aren't masked.
+            // eslint-disable-next-line no-console
+            console.error(
+              '[ValidateBulkDeleteVendors] unexpected error',
+              vendorId,
+              error,
+            );
           }
+          nonDeletableIds.push(vendorId);
         }
       }
 
@@ -58,4 +65,3 @@ export class ValidateBulkDeleteVendorsService {
     }
   }
 }
-

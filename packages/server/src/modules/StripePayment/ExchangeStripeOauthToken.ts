@@ -25,7 +25,7 @@ export class ExchangeStripeOAuthTokenService {
    * Exchange stripe oauth authorization code to access token and user id.
    * @param {string} authorizationCode
    */
-  public async excahngeStripeOAuthToken(authorizationCode: string) {
+  public async exchangeStripeOAuthToken(authorizationCode: string) {
     const stripe = this.stripePaymentService.stripe;
 
     const response = await stripe.oauth.token({

@@ -17,6 +17,7 @@ export class PurgeUserAbilityCacheSubscriber {
   @OnEvent(events.tenantUser.onEdited)
   @OnEvent(events.tenantUser.onActivated)
   @OnEvent(events.tenantUser.onInactivated)
+  @OnEvent(events.tenantUser.onDeleted)
   purgeAuthorizedUserAbility({
     tenantUser,
   }:

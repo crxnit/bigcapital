@@ -2,13 +2,9 @@ import * as bcrypt from 'bcrypt';
 import { AuthApiKeyPrefix } from './Auth.constants';
 
 export const hashPassword = (password: string): Promise<string> =>
-  new Promise((resolve) => {
-    bcrypt.genSalt(10, (error, salt) => {
-      bcrypt.hash(password, salt, (err, hash: string) => {
-        resolve(hash);
-      });
-    });
-  });
+  // Promise form propagates bcrypt errors — the callback form swallowed them
+  // and resolved `undefined`, persisting a null/empty password hash.
+  bcrypt.hash(password, 10);
 
 /**
  * Extracts and validates an API key from the Authorization header

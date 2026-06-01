@@ -59,7 +59,7 @@ export class StripePaymentApplication {
    * @returns
    */
   public exchangeStripeOAuthToken(authorizationCode: string) {
-    return this.exchangeStripeOAuthTokenService.excahngeStripeOAuthToken(
+    return this.exchangeStripeOAuthTokenService.exchangeStripeOAuthToken(
       authorizationCode,
     );
   }

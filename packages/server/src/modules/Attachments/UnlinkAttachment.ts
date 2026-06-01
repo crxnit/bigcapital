@@ -47,10 +47,13 @@ export class UnlinkAttachment {
     const foundLinkModel = await LinkModel().query(trx).findById(modelId);
     validateLinkModelEntryExists(foundLinkModel);
 
-    const document = await this.documentModel().query(trx).findOne('key', filekey);
+    const document = await this.documentModel()
+      .query(trx)
+      .findOne('key', filekey);
 
     // Delete the document link.
-    await this.documentLinkModel().query(trx)
+    await this.documentLinkModel()
+      .query(trx)
       .where('modelRef', modelRef)
       .where('modelId', modelId)
       .where('documentId', document.id)
@@ -70,9 +73,9 @@ export class UnlinkAttachment {
     modelId: number,
     trx?: Knex.Transaction,
   ): Promise<void> {
-    await bluebird.each(filekeys, (fieldKey: string) => {
+    await bluebird.each(filekeys, async (fieldKey: string) => {
       try {
-        this.unlink(fieldKey, modelRef, modelId, trx);
+        await this.unlink(fieldKey, modelRef, modelId, trx);
       } catch {
         // Ignore catching exceptions on bulk action.
       }

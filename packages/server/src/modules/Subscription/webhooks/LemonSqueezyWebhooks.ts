@@ -47,8 +47,9 @@ export class LemonSqueezyWebhooks {
     }
     // Type guard to check if the object has a 'meta' property.
     if (webhookHasMeta(data)) {
-      // Non-blocking call to process the webhook event.
-      void this.processWebhookEvent(data);
+      // Await processing so a failure surfaces (Lemon retries on non-2xx)
+      // instead of becoming a silently-lost unhandled rejection.
+      await this.processWebhookEvent(data);
     } else {
       throw new Error('Data invalid');
     }
@@ -110,18 +111,14 @@ export class LemonSqueezyWebhooks {
           );
           // Cancel the given subscription of the organization.
         } else if (webhookEvent === 'subscription_cancelled') {
-          await this.subscriptionApp.cancelSubscription(
-            subscriptionSlug,
-          );
+          await this.subscriptionApp.cancelSubscription(subscriptionSlug);
         } else if (webhookEvent === 'subscription_plan_changed') {
           await this.subscriptionApp.markSubscriptionPlanChanged(
             plan.slug,
             subscriptionSlug,
           );
         } else if (webhookEvent === 'subscription_resumed') {
-          await this.subscriptionApp.resumeSubscription(
-            subscriptionSlug,
-          );
+          await this.subscriptionApp.resumeSubscription(subscriptionSlug);
         }
       } else if (webhookEvent.startsWith('order_')) {
         // Save orders; eventBody is a "Order"

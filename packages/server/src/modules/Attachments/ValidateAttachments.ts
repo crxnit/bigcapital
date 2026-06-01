@@ -17,7 +17,7 @@ export class ValidateAttachments {
    */
   async validate(key: string | string[]) {
     const keys = castArray(key);
-    const documents = await this.documentModel().query().whereIn('key', key);
+    const documents = await this.documentModel().query().whereIn('key', keys);
     const documentKeys = documents.map((document) => document.key);
 
     const notFoundKeys = difference(keys, documentKeys);
