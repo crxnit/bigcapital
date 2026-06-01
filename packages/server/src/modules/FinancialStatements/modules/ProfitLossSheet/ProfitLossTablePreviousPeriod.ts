@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { ITableColumn, ITableColumnAccessor } from '../../types/Table.types';
 import { ProfitLossSheetQuery } from './ProfitLossSheetQuery';
@@ -15,6 +14,14 @@ export const ProfitLossTablePreviousPeriod = <
   class extends R.pipe(FinancialTablePreviousPeriod)(Base) {
     query: ProfitLossSheetQuery;
 
+    // Provided at runtime by the `FinancialDateRanges` mixin composed into the
+    // concrete `ProfitLossSheet` class. Declared (type only, no runtime emit).
+    declare getPPDatePeriodDateRange: (
+      fromDate: IDateRange['fromDate'],
+      toDate: IDateRange['toDate'],
+      unit: string,
+    ) => IDateRange;
+
     // ----------------------------
     // # Columns
     // ----------------------------
@@ -25,6 +32,8 @@ export const ProfitLossTablePreviousPeriod = <
     protected getPreviousPeriodColumns = (
       dateRange?: IDateRange,
     ): ITableColumn[] => {
+      // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+      // value is always a mutable array.
       return R.pipe(
         // Previous period columns.
         R.append(this.getPreviousPeriodTotalColumn(dateRange)),
@@ -36,7 +45,7 @@ export const ProfitLossTablePreviousPeriod = <
           this.query.isPreviousPeriodPercentageActive,
           R.append(this.getPreviousPeriodPercentageColumn()),
         ),
-      )([]);
+      )([]) as ITableColumn[];
     };
 
     /**
@@ -63,6 +72,8 @@ export const ProfitLossTablePreviousPeriod = <
      * @returns {ITableColumn[]}
      */
     protected previousPeriodColumnAccessor = (): ITableColumnAccessor[] => {
+      // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+      // value is always a mutable array.
       return R.pipe(
         // Previous period columns.
         R.append(this.getPreviousPeriodTotalAccessor()),
@@ -74,7 +85,7 @@ export const ProfitLossTablePreviousPeriod = <
           this.query.isPreviousPeriodPercentageActive,
           R.append(this.getPreviousPeriodPercentageAccessor()),
         ),
-      )([]);
+      )([]) as ITableColumnAccessor[];
     };
 
     /**
@@ -85,6 +96,8 @@ export const ProfitLossTablePreviousPeriod = <
     protected previousPeriodHorizontalColumnAccessors = (
       index: number,
     ): ITableColumnAccessor[] => {
+      // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+      // value is always a mutable array.
       return R.pipe(
         // Previous period columns.
         R.append(this.getPreviousPeriodTotalHorizAccessor(index)),
@@ -96,6 +109,6 @@ export const ProfitLossTablePreviousPeriod = <
           this.query.isPreviousPeriodPercentageActive,
           R.append(this.getPreviousPeriodPercentageHorizAccessor(index)),
         ),
-      )([]);
+      )([]) as ITableColumnAccessor[];
     };
   };

@@ -6,6 +6,11 @@ import { FinancialDateRanges } from '../../common/FinancialDateRanges';
 import { IFinancialDatePeriodsUnit } from '../../types/Report.types';
 import { DISPLAY_COLUMNS_BY } from './constants';
 
+// The constructor merges the raw `IProfitLossSheetQuery` onto the instance
+// (`return merge(this, query)`), so instances also expose every query field
+// directly. Declaration-merge the interface so consumers see those fields.
+export interface ProfitLossSheetQuery extends IProfitLossSheetQuery {}
+
 export class ProfitLossSheetQuery extends R.compose(FinancialDateRanges)(
   class {},
 ) {

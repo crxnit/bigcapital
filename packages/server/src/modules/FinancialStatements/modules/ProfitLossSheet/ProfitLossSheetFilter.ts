@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { get } from 'lodash';
 import { ProfitLossSheetBase } from './ProfitLossSheetBase';
@@ -18,6 +17,26 @@ export const ProfitLossSheetFilter = <T extends GConstructor<FinancialSheet>>(
   class extends R.pipe(FinancialFilter, ProfitLossSheetBase)(Base) {
     query: ProfitLossSheetQuery;
     repository: ProfitLossSheetRepository;
+
+    // Methods provided at runtime by the `FinancialFilter`,
+    // `FinancialSheetStructure` and `FinancialSchema` mixins composed into the
+    // concrete `ProfitLossSheet` class. Declared (type only, no runtime emit)
+    // so they are visible to this mixin's methods.
+    declare isNodeType: {
+      (type: string): (node: IProfitLossSheetNode) => boolean;
+      (type: string, node: IProfitLossSheetNode): boolean;
+    };
+    declare isNodeNoneZero: (node: IProfitLossSheetNode) => boolean;
+    declare isNodeHasChildren: (node: IProfitLossSheetNode) => boolean;
+    declare getSchemaNodeById: (id: string | number) => any;
+    declare filterNodesDeep: (
+      nodes: IProfitLossSheetNode[],
+      callback: (node: IProfitLossSheetNode) => boolean,
+    ) => IProfitLossSheetNode[];
+    declare filterNodesDeep2: (
+      predicate: (node: IProfitLossSheetNode) => boolean,
+      nodes: IProfitLossSheetNode[],
+    ) => IProfitLossSheetNode[];
 
     // ----------------
     // # Account.

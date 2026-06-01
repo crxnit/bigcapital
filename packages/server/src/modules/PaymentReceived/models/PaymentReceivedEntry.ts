@@ -10,6 +10,9 @@ export class PaymentReceivedEntry extends BaseModel {
 
   invoice?: SaleInvoice;
 
+  // Transformer-applied formatted attribute.
+  declare paymentAmountFormatted?: string;
+
   /**
    * Table name
    */

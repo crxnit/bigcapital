@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { SaleReceipt } from '../models/SaleReceipt';
@@ -35,7 +34,7 @@ export class SaleReceiptInventoryTransactions {
       exchangeRate: saleReceipt.exchangeRate,
 
       date: saleReceipt.receiptDate,
-      direction: 'OUT',
+      direction: 'OUT' as const,
       entries: inventoryEntries,
       createdAt: saleReceipt.createdAt,
 

@@ -234,4 +234,40 @@ export class SaleInvoiceResponseDto {
     required: false,
   })
   updatedAt?: Date;
+
+  @ApiProperty({
+    description: 'The customer associated with the invoice',
+    required: false,
+  })
+  customer?: { displayName?: string } & Record<string, any>;
+
+  @ApiProperty({
+    description: 'The number of days the invoice is overdue',
+    required: false,
+  })
+  overdueDays?: number;
+
+  @ApiProperty({
+    description: 'The formatted invoice date',
+    required: false,
+  })
+  invoiceDateFormatted?: string;
+
+  @ApiProperty({
+    description: 'The formatted due date',
+    required: false,
+  })
+  dueDateFormatted?: string;
+
+  @ApiProperty({
+    description: 'The formatted due amount',
+    required: false,
+  })
+  dueAmountFormatted?: string;
+
+  @ApiProperty({
+    description: 'The formatted total amount',
+    required: false,
+  })
+  totalFormatted?: string;
 }

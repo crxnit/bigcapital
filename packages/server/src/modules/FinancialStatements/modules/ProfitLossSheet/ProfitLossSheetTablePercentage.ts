@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { ProfitLossSheetQuery } from './ProfitLossSheetQuery';
 import { I18nService } from 'nestjs-i18n';
@@ -56,7 +55,9 @@ export const ProfitLossSheetTablePercentage = <
             label: this.i18n.t('profit_loss_sheet.percentage_of_row'),
           }),
         ),
-      )([]);
+        // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+        // value is always a mutable array of (partial) table columns.
+      )([]) as ITableColumn[];
     };
 
     // ----------------------------------
@@ -96,7 +97,9 @@ export const ProfitLossSheetTablePercentage = <
             accessor: 'percentageRow.formattedAmount',
           }),
         ),
-      )([]);
+        // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+        // value is always a mutable array.
+      )([]) as ITableColumnAccessor[];
     };
 
     /**
@@ -136,6 +139,8 @@ export const ProfitLossSheetTablePercentage = <
             accessor: `horizontalTotals[${index}].percentageRow.formattedAmount`,
           }),
         ),
-      )([]);
+        // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+        // value is always a mutable array.
+      )([]) as ITableColumnAccessor[];
     };
   };

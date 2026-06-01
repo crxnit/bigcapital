@@ -31,7 +31,7 @@ export class LandedCostInventoryTransactions {
     const inventoryTransactions = allocateEntries.map((allocateEntry) => ({
       date: bill.billDate,
       itemId: allocateEntry.entry.itemId,
-      direction: 'IN',
+      direction: 'IN' as const,
       quantity: null,
       rate: allocateEntry.cost,
       transactionType: 'LandedCost',

@@ -3,7 +3,10 @@ import * as R from 'ramda';
 import * as moment from 'moment';
 import { ITableColumn, ITableColumnAccessor } from '../../types/Table.types';
 import { FinancialDatePeriods } from '../../common/FinancialDatePeriods';
-import { IDateRange } from '../CashFlow/Cashflow.types';
+import {
+  IDateRange,
+  ICashFlowDateRange,
+} from '../CashFlowStatement/Cashflow.types';
 import { GConstructor } from '@/common/types/Constructor';
 import { FinancialSheet } from '../../common/FinancialSheet';
 

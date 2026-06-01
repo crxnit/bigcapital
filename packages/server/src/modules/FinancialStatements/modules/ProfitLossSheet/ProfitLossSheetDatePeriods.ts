@@ -1,5 +1,5 @@
-// @ts-nocheck
 import * as R from 'ramda';
+import * as moment from 'moment';
 import { sumBy } from 'lodash';
 import {
   IProfitLossHorizontalDatePeriodNode,
@@ -13,6 +13,7 @@ import { FinancialSheet } from '../../common/FinancialSheet';
 import { GConstructor } from '@/common/types/Constructor';
 import { FinancialDatePeriods } from '../../common/FinancialDatePeriods';
 import { IDateRange } from '../../types/Report.types';
+import { IFinancialSheetTotalPeriod } from '../BalanceSheet/BalanceSheet.types';
 import { ProfitLossSheetRepository } from './ProfitLossSheetRepository';
 import { ProfitLossSheetQuery } from './ProfitLossSheetQuery';
 
@@ -24,6 +25,18 @@ export const ProfitLossSheetDatePeriods = <
   class extends R.pipe(FinancialDatePeriods)(Base) {
     query: ProfitLossSheetQuery;
     repository: ProfitLossSheetRepository;
+
+    // Methods provided at runtime by the `FinancialEvaluateEquation` mixin
+    // composed into the concrete `ProfitLossSheet` class. Declared (type only,
+    // no runtime emit) so they are visible to this mixin's methods.
+    declare getNodesTableForEvaluating: (
+      path: string,
+      nodes: IProfitLossSheetNode[],
+    ) => { [key: string | number]: number };
+    declare evaluateEquation: (
+      equation: string,
+      scope: { [key: string | number]: number },
+    ) => number;
 
     /**
      * Retrieves the date periods based on the report query.
@@ -45,20 +58,21 @@ export const ProfitLossSheetDatePeriods = <
      */
     protected getReportNodeDatePeriods = (
       node: IProfitLossSheetCommonNode,
-      callback: (
-        node: IProfitLossSheetCommonNode,
-        fromDate: Date,
-        toDate: Date,
-        index: number,
-      ) => any,
-    ) => {
+      // Accepts either a plain `(node, fromDate, toDate, index)` callback or a
+      // ramda-curried equivalent (whose `Curry<>` type is not assignable to the
+      // plain function signature).
+      callback: (...args: any[]) => any,
+    ): IProfitLossHorizontalDatePeriodNode[] => {
+      // `getNodeDatePeriods` is a fully-applied ramda-curried mixin method; its
+      // declared `Curry<>` type does not collapse to the result on full
+      // application, so assert the concrete period-array result type.
       return this.getNodeDatePeriods(
-        this.query.fromDate,
-        this.query.toDate,
+        this.query.fromDate as unknown as Date,
+        this.query.toDate as unknown as Date,
         this.query.displayColumnsBy,
         node,
         callback,
-      );
+      ) as unknown as IProfitLossHorizontalDatePeriodNode[];
     };
 
     // --------------------------
@@ -77,7 +91,7 @@ export const ProfitLossSheetDatePeriods = <
       toDate: Date,
     ) => {
       const periodTotal = this.repository.periodsAccountsLedger
-        .whereAccountId(node.id)
+        .whereAccountId(node.id as number)
         .whereFromDate(fromDate)
         .whereToDate(toDate)
         .getClosingBalance();

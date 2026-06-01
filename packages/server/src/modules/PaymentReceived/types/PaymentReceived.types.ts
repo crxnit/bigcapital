@@ -9,7 +9,6 @@ import {
 import { TenantJobPayload } from '@/interfaces/Tenant';
 import { EditPaymentReceivedDto } from '../dtos/PaymentReceived.dto';
 
-
 export interface IPaymentReceivedEntryDTO {
   id?: number;
   index?: number;
@@ -17,7 +16,6 @@ export interface IPaymentReceivedEntryDTO {
   invoiceId: number;
   paymentAmount: number;
 }
-
 
 export interface IPaymentReceivedCreateDTO {
   customerId: number;
@@ -158,6 +156,9 @@ export interface PaymentReceivedPdfTemplateAttributes {
   showCompanyLogo: boolean;
   companyLogo: string;
   companyName: string;
+
+  // Customer
+  customerName: string;
 
   // Customer Address
   showCustomerAddress: boolean;

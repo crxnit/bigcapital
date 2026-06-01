@@ -1,8 +1,25 @@
-// @ts-nocheck
 import { chain } from 'lodash';
 import { pick } from 'lodash';
-import { IItemEntryTransactionType } from '../TransactionItemEntry/ItemEntry.types';
 import { TInventoryTransactionDirection } from './types/InventoryCost.types';
+import { ItemEntry } from '../TransactionItemEntry/models/ItemEntry';
+
+export interface ITransformedInventoryTransaction {
+  itemId?: number;
+  quantity?: number | null;
+  rate: number;
+  transactionType: string;
+  transactionId: number;
+  direction: TInventoryTransactionDirection;
+  date: Date | string;
+  entryId?: number;
+  createdAt?: Date | string;
+  costAccountId?: number;
+  warehouseId?: number | null;
+  meta?: {
+    transactionNumber?: string;
+    description?: string;
+  };
+}
 
 /**
  * Grpups by transaction type and id the inventory transactions.
@@ -23,21 +40,21 @@ export function groupInventoryTransactionsByTypeId(
  */
 export function transformItemEntriesToInventory(transaction: {
   transactionId: number;
-  transactionType: IItemEntryTransactionType;
+  transactionType: string;
   transactionNumber?: string;
 
   exchangeRate?: number;
 
-  warehouseId: number | null;
+  warehouseId?: number | null;
 
   date: Date | string;
   direction: TInventoryTransactionDirection;
-  entries: IItemEntry[];
-  createdAt: Date;
-}): IInventoryTransaction[] {
+  entries: ItemEntry[];
+  createdAt: Date | string;
+}): ITransformedInventoryTransaction[] {
   const exchangeRate = transaction.exchangeRate || 1;
 
-  return transaction.entries.map((entry: IItemEntry) => ({
+  return transaction.entries.map((entry: ItemEntry) => ({
     ...pick(entry, ['itemId', 'quantity']),
     rate: entry.rate * exchangeRate,
     transactionType: transaction.transactionType,

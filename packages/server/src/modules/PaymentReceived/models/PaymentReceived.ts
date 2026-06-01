@@ -1,5 +1,6 @@
 import { Model } from 'objection';
 import { PaymentReceivedEntry } from './PaymentReceivedEntry';
+import type { Contact } from '@/modules/Contacts/models/Contact';
 import { Document } from '@/modules/ChromiumlyTenancy/models/Document';
 import { TenantBaseModel } from '@/modules/System/models/TenantBaseModel';
 import { ExportableModel } from '@/modules/Export/decorators/ExportableModel.decorator';
@@ -35,6 +36,13 @@ export class PaymentReceived extends TenantBaseModel {
 
   entries?: PaymentReceivedEntry[];
   public attachments!: Document[];
+
+  declare customer?: Contact;
+
+  // Transformer-applied formatted attributes.
+  declare formattedAmount?: string;
+  declare subtotalFormatted?: string;
+  declare formattedPaymentDate?: string;
 
   /**
    * Table name.

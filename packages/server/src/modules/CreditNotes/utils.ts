@@ -1,9 +1,28 @@
-// @ts-nocheck
-import { CreditNotePdfTemplateAttributes, ICreditNote } from '@/interfaces';
+import { Contact } from '@/modules/Contacts/models/Contact';
+import { CreditNotePdfTemplateAttributes } from './types/CreditNotes.types';
 import { contactAddressTextFormat } from '@/utils/address-text-format';
 
+interface ICreditNotePdfLine {
+  item?: { name?: string };
+  description?: string;
+  rateFormatted?: string;
+  quantityFormatted?: string;
+  totalFormatted?: string;
+}
+
+interface ICreditNotePdfInput {
+  formattedCreditNoteDate?: string;
+  creditNoteNumber?: string;
+  formattedAmount?: string;
+  formattedSubtotal?: string;
+  entries?: ICreditNotePdfLine[];
+  note?: string;
+  termsConditions?: string;
+  customer?: Contact;
+}
+
 export const transformCreditNoteToPdfTemplate = (
-  creditNote: ICreditNote
+  creditNote: ICreditNotePdfInput,
 ): Partial<CreditNotePdfTemplateAttributes> => {
   return {
     creditNoteDate: creditNote.formattedCreditNoteDate,

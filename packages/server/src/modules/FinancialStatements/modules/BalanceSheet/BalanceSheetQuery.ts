@@ -8,6 +8,10 @@ import {
 import { FinancialDateRanges } from '../../common/FinancialDateRanges';
 import { DISPLAY_COLUMNS_BY } from './constants';
 
+// The constructor returns `merge(this, query)`, so every `IBalanceSheetQuery`
+// field is also present at the top level of the instance at runtime.
+export interface BalanceSheetQuery extends IBalanceSheetQuery {}
+
 export class BalanceSheetQuery extends R.compose(FinancialDateRanges)(
   class {},
 ) {

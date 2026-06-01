@@ -1,7 +1,10 @@
-// @ts-nocheck
 import { OPERATION } from '@/libs/logic-evaluation/Parser';
 
 export class DynamicFilterQueryParser {
+  private tree: any;
+  private queries: any;
+  private query: any;
+
   constructor(tree, queries) {
     this.tree = tree;
     this.queries = queries;

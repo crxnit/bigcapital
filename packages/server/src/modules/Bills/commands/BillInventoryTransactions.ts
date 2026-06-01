@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Knex } from 'knex';
 import { Bill } from '../models/Bill';
 import { Inject, Injectable } from '@nestjs/common';
@@ -42,7 +41,7 @@ export class BillInventoryTransactions {
       exchangeRate: bill.exchangeRate,
 
       date: bill.billDate,
-      direction: 'IN',
+      direction: 'IN' as const,
       entries: inventoryEntries,
       createdAt: bill.createdAt,
 

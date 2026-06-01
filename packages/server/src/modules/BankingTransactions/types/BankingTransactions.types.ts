@@ -3,6 +3,7 @@ import { UncategorizedBankTransaction } from '../models/UncategorizedBankTransac
 import { BankTransaction } from '../models/BankTransaction';
 import { CreateBankTransactionDto } from '../dtos/CreateBankTransaction.dto';
 import { INumberFormatQuery } from '@/modules/FinancialStatements/types/Report.types';
+import { ISortOrder } from '@/modules/DynamicListing/DynamicFilter/DynamicFilter.types';
 
 export interface IPendingTransactionRemovingEventPayload {
   uncategorizedTransactionId: number;
@@ -54,7 +55,7 @@ export interface ICashflowNewCommandDTO extends ICashflowCommandDTO {
 export interface IBankAccountsFilter {
   inactiveMode: boolean;
   stringifiedFilterRoles?: string;
-  sortOrder: string;
+  sortOrder: ISortOrder;
   columnSortBy: string;
 }
 
@@ -138,6 +139,9 @@ export interface ICashflowAccountTransactionsQuery {
 }
 
 export interface ICashflowAccountTransaction {
+  id: number;
+  createdAt: Date | string;
+
   withdrawal: number;
   deposit: number;
   runningBalance: number;

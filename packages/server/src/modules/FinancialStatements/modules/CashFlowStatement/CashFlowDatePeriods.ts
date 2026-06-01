@@ -1,11 +1,12 @@
-// @ts-nocheck
 import * as R from 'ramda';
+import * as moment from 'moment';
 import { sumBy, mapValues, get } from 'lodash';
 import { ACCOUNT_ROOT_TYPE } from '@/constants/accounts';
 import {
   ICashFlowDatePeriod,
   ICashFlowStatementNetIncomeSection,
   ICashFlowStatementAccountSection,
+  ICashFlowStatementAccountMeta,
   ICashFlowStatementSection,
   ICashFlowSchemaTotalSection,
   ICashFlowStatementTotalSection,
@@ -29,6 +30,18 @@ export const CashFlowStatementDatePeriods = <
     query: ICashFlowStatementQuery;
     netIncomeLedger: Ledger;
 
+    // Members provided by sibling/base classes in the composed CashFlowStatement
+    // (CashflowStatementBase + CashFlowStatement). Declared here for type-checking
+    // only; their runtime values come from the final composed instance.
+    declare ledger: Ledger;
+    declare cashLedger: Ledger;
+    declare comparatorDateType: string;
+    declare getAccountsIdsByType: (accountType: string) => number[];
+    declare amountAdjustment: (
+      direction: 'mines' | 'plus',
+      amount: number,
+    ) => number;
+
     /**
      * Initialize date range set.
      */
@@ -36,7 +49,7 @@ export const CashFlowStatementDatePeriods = <
       this.dateRangeSet = dateRangeFromToCollection(
         this.query.fromDate,
         this.query.toDate,
-        this.comparatorDateType,
+        this.comparatorDateType as moment.unitOfTime.StartOf,
       );
     }
 
@@ -165,7 +178,7 @@ export const CashFlowStatementDatePeriods = <
      * @return {number}
      */
     public getAccountTotalDateRange = (
-      node: ICashFlowStatementAccountSection,
+      node: ICashFlowStatementAccountMeta,
       fromDate: Date,
       toDate: Date,
     ): number => {
@@ -175,7 +188,10 @@ export const CashFlowStatementDatePeriods = <
         .whereAccountId(node.id)
         .getClosingBalance();
 
-      return this.amountAdjustment(node.adjustmentType, closingBalance);
+      return this.amountAdjustment(
+        node.adjustmentType as 'mines' | 'plus',
+        closingBalance,
+      );
     };
 
     /**
@@ -186,7 +202,7 @@ export const CashFlowStatementDatePeriods = <
      * @return {ICashFlowDatePeriod}
      */
     public getAccountTotalDatePeriod = (
-      node: ICashFlowStatementAccountSection,
+      node: ICashFlowStatementAccountMeta,
       fromDate: Date,
       toDate: Date,
     ): ICashFlowDatePeriod => {
@@ -200,7 +216,7 @@ export const CashFlowStatementDatePeriods = <
      * @return {ICashFlowDatePeriod[]}
      */
     public getAccountDatePeriods = (
-      node: ICashFlowStatementAccountSection,
+      node: ICashFlowStatementAccountMeta,
     ): ICashFlowDatePeriod[] => {
       return this.getNodeDatePeriods(
         node,
@@ -214,8 +230,8 @@ export const CashFlowStatementDatePeriods = <
      * @return {ICashFlowStatementAccountSection}
      */
     public assocPeriodsToAccountNode = (
-      node: ICashFlowStatementAccountSection,
-    ): ICashFlowStatementAccountSection => {
+      node: ICashFlowStatementAccountMeta,
+    ): ICashFlowStatementAccountMeta => {
       const datePeriods = this.getAccountDatePeriods(node);
       return R.assoc('periods', datePeriods, node);
     };
@@ -256,7 +272,11 @@ export const CashFlowStatementDatePeriods = <
     public getAggregateNodeDatePeriods(node: ICashFlowStatementSection) {
       const getChildrenTotalPeriodMetaByIndex = R.curry(
         this.getChildrenTotalPeriodMetaByIndex.bind(this),
-      )(node);
+      )(node) as (
+        index: number,
+        fromDate: Date,
+        toDate: Date,
+      ) => ICashFlowDatePeriod;
 
       return this.dateRangeSet.map((dateRange, index) =>
         getChildrenTotalPeriodMetaByIndex(
@@ -304,7 +324,14 @@ export const CashFlowStatementDatePeriods = <
     ): ICashFlowDatePeriod[] => {
       return this.getNodeDatePeriods(node, (node, fromDate, toDate, index) => {
         const periodScope = this.sectionsMapToTotalPeriod(nodesTable, index);
-        const total = this.evaluateEquation(equation, periodScope);
+        const total = (
+          this as unknown as {
+            evaluateEquation: (
+              equation: string,
+              scope: { [key: string | number]: number },
+            ) => number;
+          }
+        ).evaluateEquation(equation, periodScope);
 
         return this.getDatePeriodTotalMeta(total, fromDate, toDate);
       });
@@ -337,8 +364,15 @@ export const CashFlowStatementDatePeriods = <
      * @param {}
      * @return {}
      */
-    public getNodeDatePeriods = (node, callback) => {
-      const curriedCallback = R.curry(callback)(node);
+    public getNodeDatePeriods = (
+      node: any,
+      callback: (...args: any[]) => ICashFlowDatePeriod,
+    ): ICashFlowDatePeriod[] => {
+      const curriedCallback = R.curry(callback)(node) as (
+        fromDate: Date,
+        toDate: Date,
+        index: number,
+      ) => ICashFlowDatePeriod;
 
       return this.dateRangeSet.map((dateRange, index) => {
         return curriedCallback(dateRange.fromDate, dateRange.toDate, index);
@@ -352,11 +386,15 @@ export const CashFlowStatementDatePeriods = <
      * @return {number}
      */
     public getBeginningCashAccountDateRange = (
-      node: ICashFlowStatementSection,
+      node: ICashFlowStatementAccountMeta,
       fromDate: Date,
       toDate: Date,
     ) => {
-      const cashToDate = this.beginningCashFrom(fromDate);
+      const cashToDate = (
+        this as unknown as {
+          beginningCashFrom: (fromDate: string | Date) => Date;
+        }
+      ).beginningCashFrom(fromDate);
 
       return this.cashLedger
         .whereToDate(cashToDate)
@@ -372,7 +410,7 @@ export const CashFlowStatementDatePeriods = <
      * @return {ICashFlowDatePeriod}
      */
     public getBeginningCashDatePeriod = (
-      node: ICashFlowStatementSection,
+      node: ICashFlowStatementAccountMeta,
       fromDate: Date,
       toDate: Date,
     ) => {
@@ -390,8 +428,8 @@ export const CashFlowStatementDatePeriods = <
      * @return {ICashFlowDatePeriod}
      */
     public getBeginningCashAccountPeriods = (
-      node: ICashFlowStatementSection,
-    ): ICashFlowDatePeriod => {
+      node: ICashFlowStatementAccountMeta,
+    ): ICashFlowDatePeriod[] => {
       return this.getNodeDatePeriods(node, this.getBeginningCashDatePeriod);
     };
 
@@ -413,8 +451,8 @@ export const CashFlowStatementDatePeriods = <
      * @return {ICashFlowStatementSection}
      */
     public assocCashAtBeginningAccountDatePeriods = (
-      node: ICashFlowStatementSection,
-    ): ICashFlowStatementSection => {
+      node: ICashFlowStatementAccountMeta,
+    ): ICashFlowStatementAccountMeta => {
       const datePeriods = this.getBeginningCashAccountPeriods(node);
       return R.assoc('periods', datePeriods, node);
     };

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import * as moment from 'moment';
 import { ITableColumn, ITableColumnAccessor } from '../../types/Table.types';
@@ -19,6 +18,16 @@ export const ProfitLossSheetTableDatePeriods = <
     ProfitLossTablePreviousPeriod,
     FinancialDatePeriods,
   )(Base) {
+    // Methods provided at runtime by the `ProfitLossTablePreviousYear` mixin
+    // composed into the concrete `ProfitLossSheetTable` class. Declared (type
+    // only, no runtime emit) so they are visible to this mixin's methods.
+    declare previousYearHorizontalColumnAccessors: (
+      index: number,
+    ) => ITableColumnAccessor[];
+    declare getPreviousYearDatePeriodColumnPlugin: (
+      dateRange: IDateRange,
+    ) => ITableColumn[];
+
     /**
      * Retrieves the date periods based on the report query.
      * @returns {IDateRange[]}
@@ -66,10 +75,19 @@ export const ProfitLossSheetTableDatePeriods = <
      * @returns {ITableColumnAccessor[]}
      */
     protected datePeriodsColumnsAccessors = (): ITableColumnAccessor[] => {
+      // The curried `datePeriodColumnsAccessor` is typed as a ramda `Curry`,
+      // which `R.addIndex(R.map)` does not accept structurally; cast it to the
+      // plain mapping function it is at runtime.
+      const mapIndexed = R.addIndex(R.map)(this.datePeriodColumnsAccessor) as (
+        list: IDateRange[],
+      ) => ITableColumnAccessor[][];
+
+      // `R.compose(R.flatten, …)` loses its element type through the ramda
+      // typings; the runtime value is a flat accessor array.
       return R.compose(
         R.flatten,
-        R.addIndex(R.map)(this.datePeriodColumnsAccessor),
-      )(this.datePeriods);
+        mapIndexed,
+      )(this.datePeriods) as ITableColumnAccessor[];
     };
 
     // --------------------------------
@@ -85,7 +103,7 @@ export const ProfitLossSheetTableDatePeriods = <
       const yearFormat = (range) => moment(range.toDate).format('YYYY');
       const dayFormat = (range) => moment(range.toDate).format('YYYY-MM-DD');
 
-      const conditions = [
+      const conditions: [string, (range: any) => string][] = [
         ['month', monthFormat],
         ['year', yearFormat],
         ['day', dayFormat],
@@ -93,10 +111,10 @@ export const ProfitLossSheetTableDatePeriods = <
         ['week', dayFormat],
       ];
       const conditionsPairs = R.map(
-        ([type, formatFn]) => [
-          R.always(this.query.isDisplayColumnsBy(type)),
-          formatFn,
-        ],
+        ([type, formatFn]): [
+          (...args: unknown[]) => boolean,
+          (range: any) => string,
+        ] => [R.always(this.query.isDisplayColumnsBy(type)), formatFn],
         conditions,
       );
       return R.compose(R.cond(conditionsPairs))(dateRange);

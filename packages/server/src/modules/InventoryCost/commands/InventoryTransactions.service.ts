@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Knex } from 'knex';
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -10,9 +9,13 @@ import { InventoryCostLotTracker } from '../models/InventoryCostLotTracker';
 import { InventoryTransaction } from '../models/InventoryTransaction';
 import { events } from '@/common/events/events';
 import { IInventoryTransactionsCreatedPayload } from '../types/InventoryCost.types';
-import { transformItemEntriesToInventory } from '../utils';
+import {
+  transformItemEntriesToInventory,
+  ITransformedInventoryTransaction,
+} from '../utils';
 import { IItemEntryTransactionType } from '../../TransactionItemEntry/ItemEntry.types';
 import { ItemEntry } from '../../TransactionItemEntry/models/ItemEntry';
+import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 
 @Injectable()
 export class InventoryTransactionsService {
@@ -43,13 +46,13 @@ export class InventoryTransactionsService {
    * @return {Promise<void>}
    */
   async recordInventoryTransactions(
-    transactions: ModelObject<InventoryTransaction>[],
+    transactions: ITransformedInventoryTransaction[],
     override: boolean = false,
     trx?: Knex.Transaction,
   ): Promise<void> {
     const bulkInsertOpers = [];
 
-    transactions.forEach((transaction: InventoryTransaction) => {
+    transactions.forEach((transaction: ITransformedInventoryTransaction) => {
       const oper = this.recordInventoryTransaction(transaction, override, trx);
       bulkInsertOpers.push(oper);
     });
@@ -74,7 +77,7 @@ export class InventoryTransactionsService {
    * @return {Promise<InventoryTransaction>}
    */
   async recordInventoryTransaction(
-    inventoryEntry: InventoryTransaction,
+    inventoryEntry: ITransformedInventoryTransaction,
     deleteOld: boolean = false,
     trx: Knex.Transaction,
   ): Promise<InventoryTransaction> {
@@ -103,7 +106,8 @@ export class InventoryTransactionsService {
   async recordInventoryTransactionsFromItemsEntries(
     transaction: {
       transactionId: number;
-      transactionType: IItemEntryTransactionType;
+      transactionType: string;
+      transactionNumber?: string;
       exchangeRate: number;
 
       date: Date | string;
@@ -175,8 +179,10 @@ export class InventoryTransactionsService {
   async recordInventoryCostLotTransaction(
     inventoryLotEntry: Partial<InventoryCostLotTracker>,
   ): Promise<InventoryCostLotTracker> {
-    return this.inventoryCostLotTracker.query().insert({
-      ...inventoryLotEntry,
-    });
+    return this.inventoryCostLotTracker()
+      .query()
+      .insert({
+        ...inventoryLotEntry,
+      });
   }
 }

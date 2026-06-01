@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import * as moment from 'moment';
 import { first, isEmpty } from 'lodash';
@@ -191,7 +190,9 @@ export class GetBankAccountTransactions extends FinancialSheet {
    * @param {} transactions
    * @returns {ICashflowAccountTransaction[]}
    */
-  private transactionsNode = (transactions): ICashflowAccountTransaction[] => {
+  private transactionsNode = (
+    transactions: any[],
+  ): ICashflowAccountTransaction[] => {
     return R.map(this.transactionTransformer)(transactions);
   };
 

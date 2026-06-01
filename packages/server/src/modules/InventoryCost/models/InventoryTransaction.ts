@@ -17,8 +17,8 @@ export class InventoryTransaction extends TenantBaseModel {
   costAccountId?: number;
   entryId!: number;
 
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 
   warehouseId?: number;
   meta?: InventoryTransactionMeta;

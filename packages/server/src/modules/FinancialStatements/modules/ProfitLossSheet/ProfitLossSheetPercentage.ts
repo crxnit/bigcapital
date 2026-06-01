@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { GConstructor } from '@/common/types/Constructor';
 import {
@@ -16,6 +15,20 @@ export const ProfitLossSheetPercentage = <
 ) =>
   class extends R.pipe(FinancialHorizTotals)(Base) {
     query: ProfitLossSheetQuery;
+
+    // Methods provided at runtime by the `ProfitLossSheetBase` and
+    // `FinancialSheetStructure` mixins composed into the concrete
+    // `ProfitLossSheet` class. Declared (type only, no runtime emit) so they are
+    // visible to this mixin's methods.
+    declare findNodeById: (
+      id: ProfitLossAggregateNodeId,
+      nodes: IProfitLossSheetNode[],
+    ) => IProfitLossSheetNode;
+    declare isNodeTotal: (node: IProfitLossSheetNode) => boolean;
+    declare mapNodesDeep: (
+      nodes: IProfitLossSheetNode[],
+      callback: (node: IProfitLossSheetNode) => IProfitLossSheetNode,
+    ) => IProfitLossSheetNode[];
 
     /**
      * Assoc column of percentage attribute to the given node.

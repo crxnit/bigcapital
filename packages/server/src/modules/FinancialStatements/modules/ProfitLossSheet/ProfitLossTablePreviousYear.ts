@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { ProfitLossSheetQuery } from './ProfitLossSheetQuery';
 import { GConstructor } from '@/common/types/Constructor';
@@ -26,6 +25,8 @@ export const ProfitLossTablePreviousYear = <
     protected getPreviousYearColumns = (
       dateRange?: IDateRange,
     ): ITableColumn[] => {
+      // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+      // value is always a mutable array.
       return R.pipe(
         // Previous year columns.
         R.append(this.getPreviousYearTotalColumn(dateRange)),
@@ -37,7 +38,7 @@ export const ProfitLossTablePreviousYear = <
           this.query.isPreviousYearPercentageActive,
           R.append(this.getPreviousYearPercentageColumn()),
         ),
-      )([]);
+      )([]) as ITableColumn[];
     };
 
     /**
@@ -74,6 +75,8 @@ export const ProfitLossTablePreviousYear = <
      * @returns {ITableColumnAccessor[]}
      */
     protected previousYearColumnAccessor = (): ITableColumnAccessor[] => {
+      // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+      // value is always a mutable array.
       return R.pipe(
         // Previous year columns.
         R.append(this.getPreviousYearTotalAccessor()),
@@ -85,7 +88,7 @@ export const ProfitLossTablePreviousYear = <
           this.query.isPreviousYearPercentageActive,
           R.append(this.getPreviousYearPercentageAccessor()),
         ),
-      )([]);
+      )([]) as ITableColumnAccessor[];
     };
 
     /**
@@ -96,6 +99,8 @@ export const ProfitLossTablePreviousYear = <
     protected previousYearHorizontalColumnAccessors = (
       index: number,
     ): ITableColumnAccessor[] => {
+      // `R.when` widens the pipe result to `readonly T[] | T[]`; the runtime
+      // value is always a mutable array.
       return R.pipe(
         // Previous year columns.
         R.append(this.getPreviousYearTotalHorizAccessor(index)),
@@ -107,6 +112,6 @@ export const ProfitLossTablePreviousYear = <
           this.query.isPreviousYearPercentageActive,
           R.append(this.getPreviousYearPercentageHorizAccessor(index)),
         ),
-      )([]);
+      )([]) as ITableColumnAccessor[];
     };
   };

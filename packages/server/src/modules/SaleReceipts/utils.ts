@@ -1,12 +1,29 @@
-// @ts-nocheck
-import {
-  ISaleReceipt,
-  ISaleReceiptBrandingTemplateAttributes,
-} from '@/interfaces';
+import { Contact } from '@/modules/Contacts/models/Contact';
+import { ISaleReceiptBrandingTemplateAttributes } from './types/SaleReceipts.types';
 import { contactAddressTextFormat } from '@/utils/address-text-format';
 
+interface ISaleReceiptBrandingLine {
+  item?: { name?: string };
+  description?: string;
+  rateFormatted?: string;
+  quantityFormatted?: string;
+  totalFormatted?: string;
+}
+
+interface ISaleReceiptBrandingInput {
+  totalFormatted?: string;
+  subtotalFormatted?: string;
+  entries?: ISaleReceiptBrandingLine[];
+  receiptNumber?: string;
+  formattedReceiptDate?: string;
+  adjustmentFormatted?: string;
+  discountAmountFormatted?: string;
+  discountPercentageFormatted?: string;
+  customer?: Contact;
+}
+
 export const transformReceiptToBrandingTemplateAttributes = (
-  saleReceipt: ISaleReceipt
+  saleReceipt: ISaleReceiptBrandingInput,
 ): Partial<ISaleReceiptBrandingTemplateAttributes> => {
   return {
     total: saleReceipt.totalFormatted,

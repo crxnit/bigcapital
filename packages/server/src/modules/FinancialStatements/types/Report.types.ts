@@ -93,9 +93,9 @@ interface FinancialDateMeta {
 }
 
 interface IFinancialSheetTotal {
-    amount: number;
-    formattedAmount: string;
-    currencyCode: string;
+  amount: number;
+  formattedAmount: string;
+  currencyCode: string;
 }
 
 interface IFinancialSheetPercentage {
@@ -121,6 +121,7 @@ export interface IFinancialNodeWithPreviousYear {
 }
 export interface IFinancialCommonNode {
   total: IFinancialSheetTotal;
+  children?: IFinancialCommonNode[];
 }
 export interface IFinancialCommonHorizDatePeriodNode {
   fromDate: FinancialDateMeta;

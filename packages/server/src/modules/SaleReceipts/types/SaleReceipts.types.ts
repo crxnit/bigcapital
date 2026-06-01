@@ -3,7 +3,10 @@ import { SaleReceipt } from '../models/SaleReceipt';
 import { CommonMailOptionsDTO } from '@/modules/MailNotification/MailNotification.types';
 import { CommonMailOptions } from '@/modules/MailNotification/MailNotification.types';
 import { TenantJobPayload } from '@/interfaces/Tenant';
-import { CreateSaleReceiptDto, EditSaleReceiptDto } from '../dtos/SaleReceipt.dto';
+import {
+  CreateSaleReceiptDto,
+  EditSaleReceiptDto,
+} from '../dtos/SaleReceipt.dto';
 
 export interface ISalesReceiptsFilter {
   filterQuery?: (query: any) => void;
@@ -134,11 +137,19 @@ export interface ISaleReceiptBrandingTemplateAttributes {
   showReceiptNumber: boolean;
   receiptNumberLabel: string;
   receiptNumebr: string;
+  receiptNumber: string;
 
   // Receipt Date
   receiptDate: string;
   showReceiptDate: boolean;
   receiptDateLabel: string;
+
+  // Adjustment
+  adjustment: string;
+
+  // Discount
+  discount: string;
+  discountLabel: string;
 }
 
 export interface ISaleReceiptState {

@@ -65,6 +65,9 @@ export class SaleInvoice extends TenantBaseModel {
   public attachments!: Document[];
   public writtenoffExpenseAccount!: Account;
   public paymentMethods!: TransactionPaymentServiceEntry[];
+
+  // Transformer-applied formatted attribute.
+  declare totalFormatted?: string;
   /**
    * Table name
    */

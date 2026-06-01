@@ -1,15 +1,45 @@
-// @ts-nocheck
 import { pickBy } from 'lodash';
-import { InvoicePdfTemplateAttributes, ISaleInvoice } from '@/interfaces';
+import { Contact } from '@/modules/Contacts/models/Contact';
+import { InvoicePdfTemplateAttributes } from './SaleInvoice.types';
 import { contactAddressTextFormat } from '@/utils/address-text-format';
+
+interface ISaleInvoicePdfLine {
+  item?: { name?: string };
+  description?: string;
+  rateFormatted?: string;
+  quantityFormatted?: string;
+  totalFormatted?: string;
+}
+
+interface ISaleInvoicePdfTax {
+  name?: string;
+  taxRateAmountFormatted?: string;
+}
+
+interface ISaleInvoicePdfInput {
+  dueDateFormatted?: string;
+  invoiceDateFormatted?: string;
+  invoiceNo?: string;
+  totalFormatted?: string;
+  subtotalFormatted?: string;
+  paymentAmountFormatted?: string;
+  dueAmountFormatted?: string;
+  termsConditions?: string;
+  invoiceMessage?: string;
+  entries?: ISaleInvoicePdfLine[];
+  taxes?: ISaleInvoicePdfTax[];
+  discountAmountFormatted?: string;
+  discountPercentageFormatted?: string;
+  customer?: { displayName?: string } & Record<string, any>;
+}
 
 export const mergePdfTemplateWithDefaultAttributes = (
   brandingTemplate?: Record<string, any>,
-  defaultAttributes: Record<string, any> = {}
+  defaultAttributes: Record<string, any> = {},
 ) => {
   const brandingAttributes = pickBy(
     brandingTemplate,
-    (val, key) => val !== null && Object.keys(defaultAttributes).includes(key)
+    (val, key) => val !== null && Object.keys(defaultAttributes).includes(key),
   );
   return {
     ...defaultAttributes,
@@ -18,7 +48,7 @@ export const mergePdfTemplateWithDefaultAttributes = (
 };
 
 export const transformInvoiceToPdfTemplate = (
-  invoice: ISaleInvoice
+  invoice: ISaleInvoicePdfInput,
 ): Partial<InvoicePdfTemplateAttributes> => {
   return {
     dueDate: invoice.dueDateFormatted,
@@ -48,6 +78,6 @@ export const transformInvoiceToPdfTemplate = (
     discountLabel: invoice.discountPercentageFormatted
       ? `Discount [${invoice.discountPercentageFormatted}]`
       : 'Discount',
-    customerAddress: contactAddressTextFormat(invoice.customer),
+    customerAddress: contactAddressTextFormat(invoice.customer as Contact),
   };
 };

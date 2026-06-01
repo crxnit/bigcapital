@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as moment from 'moment';
 import * as R from 'ramda';
 import { IFilterRole, IDynamicFilter } from './DynamicFilter.types';
@@ -8,6 +7,7 @@ import { DynamicFilterQueryParser } from './DynamicFilterQueryParser';
 import { COMPARATOR_TYPE, FIELD_TYPE } from './constants';
 import { BaseModel } from '@/models/Model';
 import { MetableModel } from '../types/DynamicList.types';
+import { IModelMetaRelationField } from '@/interfaces/Model';
 import { Knex } from 'knex';
 
 export abstract class DynamicFilterRoleAbstractor implements IDynamicFilter {
@@ -15,7 +15,7 @@ export abstract class DynamicFilterRoleAbstractor implements IDynamicFilter {
   public tableName: string;
   public model: MetableModel;
   public responseMeta: { [key: string]: any } = {};
-  public relationFields = [];
+  public relationFields: string[] = [];
 
   /**
    * Sets model the dynamic filter service.
@@ -368,7 +368,7 @@ export abstract class DynamicFilterRoleAbstractor implements IDynamicFilter {
       field &&
       field.fieldType === FIELD_TYPE.RELATION
     ) {
-      this.relationFields.push(field.relationKey);
+      this.relationFields.push((field as IModelMetaRelationField).relationKey);
     }
   };
 

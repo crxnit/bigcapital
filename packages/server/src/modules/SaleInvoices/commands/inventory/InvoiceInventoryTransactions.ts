@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { InventoryTransactionsService } from '@/modules/InventoryCost/commands/InventoryTransactions.service';
 import { ItemsEntriesService } from '@/modules/Items/ItemsEntries.service';
 import { Injectable } from '@nestjs/common';
@@ -40,7 +39,7 @@ export class InvoiceInventoryTransactions {
       warehouseId: saleInvoice.warehouseId,
 
       date: saleInvoice.invoiceDate,
-      direction: 'OUT',
+      direction: 'OUT' as const,
       entries: inventoryEntries,
       createdAt: saleInvoice.createdAt,
     };

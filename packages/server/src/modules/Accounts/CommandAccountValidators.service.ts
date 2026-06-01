@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Inject, Injectable, Scope } from '@nestjs/common';
 // import { IAccountDTO, IAccount, IAccountCreateDTO } from './Accounts.types';
 // import AccountTypesUtils from '@/lib/AccountTypes';
@@ -17,7 +16,7 @@ export class CommandAccountValidators {
     @Inject(Account.name)
     private readonly accountModel: TenantModelProxy<typeof Account>,
     private readonly accountRepository: AccountRepository,
-  ) { }
+  ) {}
 
   /**
    * Throws error if the account was prefined.

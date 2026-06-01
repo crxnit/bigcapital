@@ -1,9 +1,11 @@
 import { Knex } from 'knex';
-import { IFinancialSheetCommonMeta, INumberFormatQuery } from '../../types/Report.types';
+import {
+  IFinancialSheetCommonMeta,
+  INumberFormatQuery,
+} from '../../types/Report.types';
 import { Account } from '@/modules/Accounts/models/Account.model';
 import { Ledger } from '@/modules/Ledger/Ledger';
 import { IFinancialTable, ITableRow } from '../../types/Table.types';
-
 
 export interface ICashFlowStatementQuery {
   fromDate: Date | string;
@@ -35,6 +37,9 @@ export interface ICashFlowStatementCommonSection {
   label: string;
   total: ICashFlowStatementTotal;
   footerLabel?: string;
+  sectionType?: ICashFlowStatementSectionType;
+  children?: ICashFlowStatementAccountMeta[] | ICashFlowStatementSection[];
+  periods?: ICashFlowDatePeriod[];
 }
 
 export interface ICashFlowStatementAccountMeta {
@@ -45,6 +50,7 @@ export interface ICashFlowStatementAccountMeta {
   accountType: string;
   adjustmentType: string;
   sectionType: ICashFlowStatementSectionType.ACCOUNT;
+  periods?: ICashFlowDatePeriod[];
 }
 
 export enum ICashFlowStatementSectionType {
@@ -111,7 +117,7 @@ export interface ICashFlowStatementTable extends IFinancialTable {
 export interface ICashFlowStatementService {
   cashFlow(
     tenantId: number,
-    query: ICashFlowStatementQuery
+    query: ICashFlowStatementQuery,
   ): Promise<ICashFlowStatementDOO>;
 }
 
@@ -120,7 +126,9 @@ export interface ICashFlowStatementService {
 export interface ICashFlowSchemaCommonSection {
   id: string;
   label: string;
-  children: ICashFlowSchemaSection[];
+  sectionType: ICashFlowStatementSectionType;
+  children?: ICashFlowSchemaSection[];
+  accountsRelations?: ICashFlowSchemaAccountRelation[];
   footerLabel?: string;
 }
 
@@ -202,7 +210,7 @@ export interface ICashFlowStatement {
     cashLedger: Ledger,
     netIncomeLedger: Ledger,
     query: ICashFlowStatementQuery,
-    baseCurrency: string
+    baseCurrency: string,
   ): void;
 
   reportData(): ICashFlowStatementData;
@@ -216,6 +224,15 @@ export interface ICashFlowTable {
 export interface IDateRange {
   fromDate: Date;
   toDate: Date;
+}
+
+/**
+ * Date range used by cash-flow / financial table column labelling.
+ * Dates may arrive as Date instances or as serialized strings from the query.
+ */
+export interface ICashFlowDateRange {
+  fromDate: Date | string;
+  toDate: Date | string;
 }
 
 export interface ICashflowTransactionSchema {

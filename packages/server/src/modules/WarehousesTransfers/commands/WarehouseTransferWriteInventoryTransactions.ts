@@ -114,7 +114,7 @@ export class WarehouseTransferInventoryTransactions {
         itemId: entry.itemId,
         quantity: entry.quantity,
         rate: entry.cost,
-        direction: 'OUT',
+        direction: 'OUT' as const,
         warehouseId: warehouseTransfer.fromWarehouseId,
       }),
     );
@@ -140,7 +140,7 @@ export class WarehouseTransferInventoryTransactions {
         itemId: entry.itemId,
         quantity: entry.quantity,
         rate: entry.cost,
-        direction: 'IN',
+        direction: 'IN' as const,
         warehouseId: warehouseTransfer.toWarehouseId,
       }),
     );

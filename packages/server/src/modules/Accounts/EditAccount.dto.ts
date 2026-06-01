@@ -31,6 +31,11 @@ export class EditAccountDTO {
   })
   accountType: string;
 
+  // Type-only declaration: shared validators reference `currencyCode` on the
+  // Create/Edit DTO union. No validation decorator so runtime whitelist
+  // behavior is unchanged.
+  declare currencyCode?: string;
+
   @IsOptional()
   @IsString()
   @ApiProperty({

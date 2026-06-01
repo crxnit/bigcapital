@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Knex } from 'knex';
 import { Injectable } from '@nestjs/common';
 import { VendorCredit } from '../models/VendorCredit';
@@ -35,7 +34,7 @@ export class VendorCreditInventoryTransactions {
       transactionNumber: vendorCredit.vendorCreditNumber,
       exchangeRate: vendorCredit.exchangeRate,
       date: vendorCredit.vendorCreditDate,
-      direction: 'OUT',
+      direction: 'OUT' as const,
       entries: inventoryEntries,
       warehouseId: vendorCredit.warehouseId,
       createdAt: vendorCredit.createdAt,

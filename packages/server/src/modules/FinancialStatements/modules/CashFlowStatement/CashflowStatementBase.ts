@@ -1,14 +1,13 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { map } from 'lodash';
-import { Account } from "@/modules/Accounts/models/Account.model";
+import { Account } from '@/modules/Accounts/models/Account.model';
 import { ICashFlowStatementQuery } from './Cashflow.types';
 import { FinancialSheet } from '../../common/FinancialSheet';
 
 export class CashflowStatementBase extends FinancialSheet {
   readonly accountsByRootType: Map<string, Account[]>;
   readonly query: ICashFlowStatementQuery;
-  
+
   // --------------------------------------------
   // # GENERAL UTILITIES
   // --------------------------------------------
@@ -38,10 +37,13 @@ export class CashflowStatementBase extends FinancialSheet {
    * @param {number} amount -
    * @return {number}
    */
-  public amountAdjustment = (direction: 'mines' | 'plus', amount): number => {
+  public amountAdjustment = (
+    direction: 'mines' | 'plus',
+    amount: number,
+  ): number => {
     return R.when(
       R.always(R.equals(direction, 'mines')),
       R.multiply(-1),
-    )(amount);
+    )(amount) as number;
   };
 }

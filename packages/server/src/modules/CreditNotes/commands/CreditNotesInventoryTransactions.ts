@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Injectable } from '@nestjs/common';
 import { InventoryTransactionsService } from '@/modules/InventoryCost/commands/InventoryTransactions.service';
 import { ItemsEntriesService } from '@/modules/Items/ItemsEntries.service';
@@ -30,7 +29,7 @@ export class CreditNoteInventoryTransactions {
       transactionNumber: creditNote.creditNoteNumber,
       exchangeRate: creditNote.exchangeRate,
       date: creditNote.creditNoteDate,
-      direction: 'IN',
+      direction: 'IN' as const,
       entries: inventoryEntries,
       createdAt: creditNote.createdAt,
       warehouseId: creditNote.warehouseId,
