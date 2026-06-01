@@ -23,25 +23,23 @@ export class PaymentReceivedInvoiceSync {
     oldPaymentReceiveEntries?: IPaymentReceivedEntryDTO[],
     trx?: Knex.Transaction,
   ): Promise<void> {
-    const opers: Promise<void>[] = [];
-
     const diffEntries = entriesAmountDiff(
       newPaymentReceiveEntries,
       oldPaymentReceiveEntries,
       'paymentAmount',
       'invoiceId',
     );
-    diffEntries.forEach((diffEntry: any) => {
+    // Run sequentially — `trx` is not concurrency-safe; parallel writes on a
+    // single Knex transaction give non-deterministic per-row failures.
+    for (const diffEntry of diffEntries) {
       if (diffEntry.paymentAmount === 0) {
-        return;
+        continue;
       }
-      const oper = this.saleInvoiceModel().changePaymentAmount(
+      await this.saleInvoiceModel().changePaymentAmount(
         diffEntry.invoiceId,
         diffEntry.paymentAmount,
         trx,
       );
-      opers.push(oper);
-    });
-    await Promise.all([...opers]);
+    }
   }
 }

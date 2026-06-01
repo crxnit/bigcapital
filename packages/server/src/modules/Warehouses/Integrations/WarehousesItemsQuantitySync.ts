@@ -53,11 +53,11 @@ export class WarehousesItemsQuantitySync {
     warehousesItemsQuantity: IItemWarehouseQuantityChange[],
     trx?: Knex.Transaction,
   ): Promise<void> => {
-    const mutationsOpers = warehousesItemsQuantity.map(
-      (change: IItemWarehouseQuantityChange) =>
-        this.mutateWarehouseItemQuantity(change, trx),
-    );
-    await Promise.all(mutationsOpers);
+    // Run sequentially — each mutation is a read-modify-write on the same
+    // trx; parallelising races (lost updates) and is unsafe on one Knex trx.
+    for (const change of warehousesItemsQuantity) {
+      await this.mutateWarehouseItemQuantity(change, trx);
+    }
   };
 
   /**
@@ -85,10 +85,12 @@ export class WarehousesItemsQuantitySync {
         warehouseItemQuantity.amount,
       );
     } else {
-      await ItemWarehouseQuantity.query(trx).insert({
-        ...omit(warehouseItemQuantity, ['amount']),
-        quantityOnHand: warehouseItemQuantity.amount,
-      });
+      await this.itemWarehouseQuantityModel()
+        .query(trx)
+        .insert({
+          ...omit(warehouseItemQuantity, ['amount']),
+          quantityOnHand: warehouseItemQuantity.amount,
+        });
     }
   };
 

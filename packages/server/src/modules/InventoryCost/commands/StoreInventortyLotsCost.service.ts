@@ -19,30 +19,26 @@ export class StoreInventoryLotsCostService {
    * @param {Knex.Transaction} trx - Knex transaction.
    * @return {Promise<object>}
    */
-  public storeInventoryLotsCost(
+  public async storeInventoryLotsCost(
     costLotsTransactions: InventoryCostLotTracker[],
     trx?: Knex.Transaction,
-  ): Promise<object> {
-    const opers: any = [];
-
-    costLotsTransactions.forEach((transaction: any) => {
+  ): Promise<void> {
+    // Run sequentially — `trx` is not concurrency-safe; parallel inserts /
+    // decrements on a single Knex transaction give non-deterministic failures.
+    for (const transaction of costLotsTransactions as any[]) {
       if (transaction.lotTransId && transaction.decrement) {
-        const decrementOper = this.inventoryCostLotTracker()
+        await this.inventoryCostLotTracker()
           .query(trx)
           .where('id', transaction.lotTransId)
           .decrement('remaining', transaction.decrement);
-
-        opers.push(decrementOper);
       } else if (!transaction.lotTransId) {
-        const operation = this.inventoryCostLotTracker()
+        await this.inventoryCostLotTracker()
           .query(trx)
           .insert({
             ...omit(transaction, ['decrement', 'invTransId', 'lotTransId']),
           });
-        opers.push(operation);
       }
-    });
-    return Promise.all(opers);
+    }
   }
 
   /**

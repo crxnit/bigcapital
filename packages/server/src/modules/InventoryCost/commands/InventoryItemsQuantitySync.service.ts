@@ -86,16 +86,13 @@ export class InventoryItemsQuantitySyncService {
     itemsQuantity: IItemsQuantityChanges[],
     trx?: Knex.Transaction,
   ): Promise<void> {
-    const opers = [];
-
-    itemsQuantity.forEach((itemQuantity: IItemsQuantityChanges) => {
-      const changeQuantityOper = this.itemModel()
+    // Run sequentially — `trx` is not concurrency-safe; parallel writes on a
+    // single Knex transaction give non-deterministic per-row failures.
+    for (const itemQuantity of itemsQuantity) {
+      await this.itemModel()
         .query(trx)
         .where({ id: itemQuantity.itemId, type: 'inventory' })
         .modify('updateQuantityOnHand', itemQuantity.balanceChange);
-
-      opers.push(changeQuantityOper);
-    });
-    await Promise.all(opers);
+    }
   }
 }

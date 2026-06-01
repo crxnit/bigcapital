@@ -28,7 +28,7 @@ export class ItemsEntriesService {
 
     @Inject(ItemEntry.name)
     private readonly itemEntryModel: TenantModelProxy<typeof ItemEntry>,
-  ) { }
+  ) {}
 
   /**
    * Retrieve the inventory items entries of the reference id and type.
@@ -84,7 +84,9 @@ export class ItemsEntriesService {
    * @param {IItemEntryDTO[]} itemEntries - Items entries.
    * @returns {Promise<Item[]>}
    */
-  public async validateItemsIdsExistance(itemEntries: Array<{ itemId: number }>) {
+  public async validateItemsIdsExistance(
+    itemEntries: Array<{ itemId: number }>,
+  ) {
     const itemsIds = itemEntries.map((e) => e.itemId);
 
     const foundItems = await this.itemModel().query().whereIn('id', itemsIds);
@@ -130,9 +132,7 @@ export class ItemsEntriesService {
    * Validate the entries items that not purchase-able.
    * @param {IItemEntryDTO[]} itemEntries -
    */
-  public async validateNonPurchasableEntriesItems(
-    itemEntries: ItemEntryDto[],
-  ) {
+  public async validateNonPurchasableEntriesItems(itemEntries: ItemEntryDto[]) {
     const itemsIds = itemEntries.map((e: ItemEntryDto) => e.itemId);
     const purchasbleItems = await this.itemModel()
       .query()
@@ -176,23 +176,20 @@ export class ItemsEntriesService {
     entries: ItemEntry[],
     oldEntries?: ItemEntry[],
   ): Promise<void> {
-    const opers = [];
-
     const diffEntries = entriesAmountDiff(
       entries,
       oldEntries,
       'quantity',
       'itemId',
     );
-    diffEntries.forEach((entry: ItemEntry) => {
-      const changeQuantityOper = this.itemModel()
+    // Run sequentially — these are read-modify-write updates of quantityOnHand;
+    // parallelising them races (lost updates) and, on a shared trx, is unsafe.
+    for (const entry of diffEntries as ItemEntry[]) {
+      await this.itemModel()
         .query()
         .where({ id: entry.itemId, type: 'inventory' })
         .modify('quantityOnHand', entry.quantity);
-
-      opers.push(changeQuantityOper);
-    });
-    await Promise.all(opers);
+    }
   }
 
   /**

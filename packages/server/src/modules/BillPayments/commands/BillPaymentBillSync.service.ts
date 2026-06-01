@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Knex } from 'knex';
 import { Bill } from '../../Bills/models/Bill';
 import { entriesAmountDiff } from '@/utils/entries-amount-diff';
-import Objection, { ModelObject } from 'objection';
+import { ModelObject } from 'objection';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { BillPaymentEntryDto } from '../dtos/BillPayment.dto';
 import { BillPaymentEntry } from '../models/BillPaymentEntry';
@@ -25,27 +25,26 @@ export class BillPaymentBillSync {
     oldPaymentMadeEntries?: ModelObject<BillPaymentEntry>[],
     trx?: Knex.Transaction,
   ): Promise<void> {
-    const opers: Objection.QueryBuilder<Bill, Bill[]>[] = [];
-
     const diffEntries = entriesAmountDiff(
       paymentMadeEntries,
       oldPaymentMadeEntries,
       'paymentAmount',
       'billId',
     );
-    diffEntries.forEach(
-      (diffEntry: { paymentAmount: number; billId: number }) => {
-        if (diffEntry.paymentAmount === 0) {
-          return;
-        }
-        const oper = this.bill().changePaymentAmount(
-          diffEntry.billId,
-          diffEntry.paymentAmount,
-          trx,
-        );
-        opers.push(oper);
-      },
-    );
-    await Promise.all(opers);
+    // Run sequentially — `trx` is not concurrency-safe; parallel writes on a
+    // single Knex transaction give non-deterministic per-row failures.
+    for (const diffEntry of diffEntries as Array<{
+      paymentAmount: number;
+      billId: number;
+    }>) {
+      if (diffEntry.paymentAmount === 0) {
+        continue;
+      }
+      await this.bill().changePaymentAmount(
+        diffEntry.billId,
+        diffEntry.paymentAmount,
+        trx,
+      );
+    }
   }
 }

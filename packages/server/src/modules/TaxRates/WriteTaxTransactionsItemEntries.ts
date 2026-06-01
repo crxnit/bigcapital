@@ -61,14 +61,14 @@ export class WriteTaxTransactionsItemEntries {
     referenceId: number,
     trx?: Knex.Transaction,
   ) {
-    await Promise.all([
-      this.removeTaxTransactionsFromItemEntries(
-        referenceId,
-        referenceType,
-        trx,
-      ),
-      this.writeTaxTransactionsFromItemEntries(itemEntries, trx),
-    ]);
+    // Must run sequentially (delete then write): `trx` is not concurrency-safe,
+    // and a parallel upsert could land before the delete and wipe the new rows.
+    await this.removeTaxTransactionsFromItemEntries(
+      referenceId,
+      referenceType,
+      trx,
+    );
+    await this.writeTaxTransactionsFromItemEntries(itemEntries, trx);
   }
 
   /**
