@@ -66,7 +66,10 @@ export class RefundCreditNoteGLEntries {
 
     return {
       ...commonEntry,
-      debit: refundCreditNote.amount,
+      // Post the local amount (amount * exchangeRate) to match the credit-note
+      // GL convention (CreditNoteGL uses totalLocal); raw foreign `amount`
+      // would diverge from the customer's local-currency A/R for FX refunds.
+      debit: refundCreditNote.amount * refundCreditNote.exchangeRate,
       accountId: ARAccountId,
       contactId: refundCreditNote.creditNote.customerId,
       index: 1,
@@ -86,7 +89,8 @@ export class RefundCreditNoteGLEntries {
 
     return {
       ...commonEntry,
-      credit: refundCreditNote.amount,
+      // Local amount (see receivable leg) — keeps the two legs balanced.
+      credit: refundCreditNote.amount * refundCreditNote.exchangeRate,
       accountId: refundCreditNote.fromAccountId,
       index: 2,
       accountNormal: AccountNormal.DEBIT,
@@ -123,15 +127,15 @@ export class RefundCreditNoteGLEntries {
     trx?: Knex.Transaction,
   ) => {
     // Retrieve the refund with associated credit note.
-    const refundCreditNote = await this.refundCreditNoteModel().query(trx)
+    const refundCreditNote = await this.refundCreditNoteModel()
+      .query(trx)
       .findById(refundCreditNoteId)
       .withGraphFetched('creditNote');
 
     // Receivable account A/R.
-    const receivableAccount = await this.accountModel().query().findOne(
-      'slug',
-      'accounts-receivable',
-    );
+    const receivableAccount = await this.accountModel()
+      .query()
+      .findOne('slug', 'accounts-receivable');
     // Retrieve refund credit GL entries.
     const refundGLEntries = this.getRefundCreditGLEntries(
       refundCreditNote,

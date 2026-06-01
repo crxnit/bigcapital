@@ -176,16 +176,22 @@ export class CreditNoteGL {
         exchangeRate: this.creditNoteModel.exchangeRate,
       },
     );
-    const discountEntry = this.discountEntry;
-    const adjustmentEntry = this.adjustmentEntry;
-
-    return [
+    const entries: ILedgerEntry[] = [
       AREntry,
-      discountEntry,
-      adjustmentEntry,
       ...itemsEntries,
       ...categoryEntries,
     ];
+
+    // Only emit discount/adjustment legs when non-zero. discountAmountLocal is
+    // null when there's no discount, so an unconditional leg posts credit:null
+    // (and a possibly-null account id) — noise at best, ER_BAD_NULL at worst.
+    if (this.creditNoteModel.discountAmountLocal) {
+      entries.push(this.discountEntry);
+    }
+    if (this.creditNoteModel.adjustmentLocal) {
+      entries.push(this.adjustmentEntry);
+    }
+    return entries;
   }
 
   /**
