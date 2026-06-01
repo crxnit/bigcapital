@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { BalanceSheetComparsionPreviousPeriod } from './BalanceSheetComparsionPreviousPeriod';
 import { FinancialPreviousPeriod } from '../../common/FinancialPreviousPeriod';
@@ -7,6 +6,7 @@ import {
   IBalanceSheetNetIncomeNode,
   IBalanceSheetTotal,
 } from './BalanceSheet.types';
+import { IFinancialDatePeriodsUnit } from '../../types/Report.types';
 import { BalanceSheetQuery } from './BalanceSheetQuery';
 import { BalanceSheetRepository } from './BalanceSheetRepository';
 import { GConstructor } from '@/common/types/Constructor';
@@ -81,7 +81,7 @@ export const BalanceSheetNetIncomeDatePeriodsPP = <
       (node: IBalanceSheetNetIncomeNode, totalNode) => {
         const total = this.getPPNetIncomeDatePeriodTotal(
           totalNode.previousPeriodToDate.date,
-        );
+        ) as unknown as number;
         return R.assoc('previousPeriod', this.getAmountMeta(total), totalNode);
       },
     );
@@ -112,10 +112,11 @@ export const BalanceSheetNetIncomeDatePeriodsPP = <
           R.when(
             this.query.isPreviousPeriodActive,
             this.assocPreviousPeriodHorizNodeFromToDates(
-              this.query.displayColumnsBy,
+              this.query
+                .displayColumnsBy as unknown as IFinancialDatePeriodsUnit,
             ),
           ),
-        )(horiontalTotalNode);
+        )(horiontalTotalNode) as unknown as IBalanceSheetTotal;
       },
     );
 

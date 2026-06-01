@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { FinancialDatePeriods } from '../../common/FinancialDatePeriods';
 import { ModelObject } from 'objection';
@@ -7,6 +6,7 @@ import { ILedger } from '@/modules/Ledger/types/Ledger.types';
 import { ACCOUNT_PARENT_TYPE } from '@/constants/accounts';
 import { GConstructor } from '@/common/types/Constructor';
 import { FinancialSheet } from '../../common/FinancialSheet';
+import { BalanceSheetQuery } from './BalanceSheetQuery';
 
 export const BalanceSheetRepositoryNetIncome = <
   T extends GConstructor<FinancialSheet>,
@@ -14,6 +14,25 @@ export const BalanceSheetRepositoryNetIncome = <
   Base: T,
 ) =>
   class extends R.pipe(FinancialDatePeriods)(Base) {
+    // Members provided at runtime by the concrete `BalanceSheetRepository` class
+    // that composes this mixin. Declared (type only, no runtime emit) so this
+    // mixin's methods can reference them.
+    declare query: BalanceSheetQuery;
+    declare accountsByParentType: any;
+    declare incomeLedger: ILedger;
+    declare expensesLedger: ILedger;
+    declare totalAccountsLedger: ILedger;
+    declare periodsAccountsLedger: ILedger;
+    declare periodsOpeningAccountLedger: ILedger;
+    declare PPTotalAccountsLedger: ILedger;
+    declare PPPeriodsAccountsLedger: ILedger;
+    declare PPPeriodsOpeningAccountLedger: ILedger;
+    declare PYTotalAccountsLedger: ILedger;
+    declare PYPeriodsAccountsLedger: ILedger;
+    declare PYPeriodsOpeningAccountLedger: ILedger;
+    declare initAccounts: () => Promise<void>;
+    declare initAccountsTotalLedger: () => Promise<void>;
+
     // -----------------------
     // # Net Income
     // -----------------------

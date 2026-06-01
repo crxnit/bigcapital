@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { sumBy } from 'lodash';
 import {
@@ -12,6 +11,7 @@ import { IDateRange, IFormatNumberSettings } from '../../types/Report.types';
 import { GConstructor } from '@/common/types/Constructor';
 import { FinancialSheet } from '../../common/FinancialSheet';
 import { BalanceSheetQuery } from './BalanceSheetQuery';
+import { BalanceSheetRepository } from './BalanceSheetRepository';
 
 /**
  * Balance sheet date periods.
@@ -24,6 +24,10 @@ export const BalanceSheetDatePeriods = <T extends GConstructor<FinancialSheet>>(
      * @param {IBalanceSheetQuery}
      */
     public readonly query: BalanceSheetQuery;
+
+    // Provided at runtime by the concrete `BalanceSheet` class. Declared
+    // (type only, no runtime emit) so this mixin's methods can read it.
+    declare repository: BalanceSheetRepository;
 
     /**
      * Retrieves the date periods based on the report query.
@@ -45,20 +49,21 @@ export const BalanceSheetDatePeriods = <T extends GConstructor<FinancialSheet>>(
      */
     public getReportNodeDatePeriods = (
       node: IBalanceSheetCommonNode,
-      callback: (
-        node: IBalanceSheetCommonNode,
-        fromDate: Date,
-        toDate: Date,
-        index: number,
-      ) => any,
-    ) => {
+      // Accepts either a plain `(node, fromDate, toDate, index)` callback or a
+      // ramda-curried equivalent (whose `Curry<>` type is not assignable to the
+      // plain function signature).
+      callback: (...args: any[]) => any,
+    ): IBalanceSheetTotalPeriod[] => {
+      // `getNodeDatePeriods` is a fully-applied ramda-curried mixin method; its
+      // declared `Curry<>` type does not collapse to the result on full
+      // application, so assert the concrete period-array result type.
       return this.getNodeDatePeriods(
-        this.query.fromDate,
-        this.query.toDate,
+        this.query.fromDate as unknown as Date,
+        this.query.toDate as unknown as Date,
         this.query.displayColumnsBy,
         node,
         callback,
-      );
+      ) as unknown as IBalanceSheetTotalPeriod[];
     };
 
     /**
@@ -143,7 +148,11 @@ export const BalanceSheetDatePeriods = <T extends GConstructor<FinancialSheet>>(
     ): IBalanceSheetAccountNode => {
       const datePeriods = this.getAccountsNodeDatePeriods(node);
 
-      return R.assoc('horizontalTotals', datePeriods, node);
+      return R.assoc(
+        'horizontalTotals',
+        datePeriods,
+        node,
+      ) as unknown as IBalanceSheetAccountNode;
     };
 
     // --------------------------------

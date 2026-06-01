@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { I18nService } from 'nestjs-i18n';
 import { ITableColumn } from '../../types/Table.types';
@@ -38,7 +37,7 @@ export const BalanceSheetTablePercentage = <
             label: this.i18n.t('balance_sheet.percentage_of_row'),
           }),
         ),
-      )([]);
+      )([]) as ITableColumn[];
     };
 
     // --------------------
@@ -64,7 +63,7 @@ export const BalanceSheetTablePercentage = <
             accessor: 'percentageRow.formattedAmount',
           }),
         ),
-      )([]);
+      )([]) as unknown as ITableColumn[];
     };
 
     /**
@@ -90,6 +89,6 @@ export const BalanceSheetTablePercentage = <
             accessor: `horizontalTotals[${index}].percentageRow.formattedAmount`,
           }),
         ),
-      )([]);
+      )([]) as unknown as ITableColumn[];
     };
   };

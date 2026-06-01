@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { I18nService } from 'nestjs-i18n';
 import {
@@ -34,6 +33,26 @@ export const BalanceSheetNetIncome = <T extends GConstructor<FinancialSheet>>(
     public repository: BalanceSheetRepository;
     public query: BalanceSheetQuery;
     public i18n: I18nService;
+
+    // Provided at runtime by sibling mixins (`BalanceSheetDatePeriods`,
+    // `BalanceSheetBase`, `FinancialSheetStructure`) composed into the concrete
+    // `BalanceSheet` class. Declared (type only, no runtime emit).
+    declare getReportNodeDatePeriods: (
+      node: IBalanceSheetNetIncomeNode,
+      callback: (...args: any[]) => any,
+    ) => IBalanceSheetTotalPeriod[];
+    declare getDatePeriodTotalMeta: (
+      total: number,
+      fromDate: Date,
+      toDate: Date,
+    ) => IBalanceSheetTotalPeriod;
+    declare isSchemaNodeType: (
+      type: string,
+    ) => (node: IBalanceSheetSchemaNode) => boolean;
+    declare mapNodesDeep: (
+      nodes: (IBalanceSheetSchemaNode | IBalanceSheetDataNode)[],
+      callback: (node: IBalanceSheetSchemaNode) => IBalanceSheetDataNode,
+    ) => IBalanceSheetDataNode[];
 
     /**
      * Retrieves the closing balance of income accounts.
@@ -79,7 +98,7 @@ export const BalanceSheetNetIncome = <T extends GConstructor<FinancialSheet>>(
         name: this.i18n.t(node.name),
         nodeType: BALANCE_SHEET_SCHEMA_NODE_TYPE.NET_INCOME,
         total: this.getTotalAmountMeta(total),
-      };
+      } as unknown as IBalanceSheetNetIncomeNode;
     };
 
     /**
@@ -198,7 +217,11 @@ export const BalanceSheetNetIncome = <T extends GConstructor<FinancialSheet>>(
     ): IBalanceSheetNetIncomeNode => {
       const datePeriods = this.getNetIncomeDatePeriodsNode(node);
 
-      return R.assoc('horizontalTotals', datePeriods, node);
+      return R.assoc(
+        'horizontalTotals',
+        datePeriods,
+        node,
+      ) as unknown as IBalanceSheetNetIncomeNode;
     };
 
     // -----------------------------
@@ -214,10 +237,14 @@ export const BalanceSheetNetIncome = <T extends GConstructor<FinancialSheet>>(
     ): IBalanceSheetDataNode => {
       return R.compose(
         R.when(
-          this.isSchemaNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.NET_INCOME),
-          this.schemaNetIncomeNodeCompose,
+          this.isSchemaNodeType(
+            BALANCE_SHEET_SCHEMA_NODE_TYPE.NET_INCOME,
+          ) as unknown as (node: IBalanceSheetSchemaNode) => boolean,
+          this.schemaNetIncomeNodeCompose as unknown as (
+            node: IBalanceSheetSchemaNode,
+          ) => IBalanceSheetDataNode,
         ),
-      )(schemaNode);
+      )(schemaNode) as unknown as IBalanceSheetDataNode;
     };
 
     /**

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { get } from 'lodash';
 import { BalanceSheetQuery } from './BalanceSheetQuery';
@@ -11,6 +10,13 @@ export const BalanceSheetPercentage = <T extends GConstructor<FinancialSheet>>(
 ) =>
   class extends Base {
     readonly query: BalanceSheetQuery;
+
+    // Provided at runtime by the `FinancialSheetStructure` mixin composed into
+    // the concrete `BalanceSheet` class. Declared (type only, no runtime emit).
+    declare mapNodesDeep: (
+      nodes: IBalanceSheetDataNode[],
+      callback: (node: IBalanceSheetDataNode) => IBalanceSheetDataNode,
+    ) => IBalanceSheetDataNode[];
 
     /**
      * Assoc percentage of column to report node.
@@ -70,7 +76,11 @@ export const BalanceSheetPercentage = <T extends GConstructor<FinancialSheet>>(
         const assocRowPercen = this.assocReportNodeRowPercentage(parentTotal);
         const horTotals = R.map(assocRowPercen)(node.horizontalTotals);
 
-        return R.assoc('horizontalTotals', horTotals, node);
+        return R.assoc(
+          'horizontalTotals',
+          horTotals,
+          node,
+        ) as unknown as IBalanceSheetDataNode;
       },
     );
 
@@ -118,13 +128,18 @@ export const BalanceSheetPercentage = <T extends GConstructor<FinancialSheet>>(
      */
     public reportNodeColumnPercentageComposer = R.curry((parentNode, node) => {
       const parentTotal = parentNode.total.amount;
+      type NodeMapper = (node: IBalanceSheetDataNode) => IBalanceSheetDataNode;
 
       return R.compose(
         R.when(
           this.isNodeHasHorizoTotals,
-          this.assocColumnPercentageHorizTotals(parentNode),
+          this.assocColumnPercentageHorizTotals(
+            parentNode,
+          ) as unknown as NodeMapper,
         ),
-        this.assocReportNodeColumnPercentage(parentTotal),
+        this.assocReportNodeColumnPercentage(
+          parentTotal,
+        ) as unknown as NodeMapper,
       )(node);
     });
 
@@ -135,13 +150,14 @@ export const BalanceSheetPercentage = <T extends GConstructor<FinancialSheet>>(
      */
     private reportNodeRowPercentageComposer = (node) => {
       const total = node.total.amount;
+      type NodeMapper = (node: IBalanceSheetDataNode) => IBalanceSheetDataNode;
 
       return R.compose(
         R.when(
           this.isNodeHasHorizoTotals,
-          this.assocRowPercentageHorizTotals(total),
+          this.assocRowPercentageHorizTotals(total) as unknown as NodeMapper,
         ),
-        this.assocReportNodeRowPercentage(total),
+        this.assocReportNodeRowPercentage(total) as unknown as NodeMapper,
       )(node);
     };
 
@@ -151,7 +167,9 @@ export const BalanceSheetPercentage = <T extends GConstructor<FinancialSheet>>(
     private assocNodeColumnPercentageChildren = (node) => {
       const children = this.mapNodesDeep(
         node.children,
-        this.reportNodeColumnPercentageComposer(node),
+        this.reportNodeColumnPercentageComposer(node) as unknown as (
+          node: IBalanceSheetDataNode,
+        ) => IBalanceSheetDataNode,
       );
       return R.assoc('children', children, node);
     };
@@ -161,18 +179,25 @@ export const BalanceSheetPercentage = <T extends GConstructor<FinancialSheet>>(
      * @param node
      * @returns
      */
-    private reportNodeColumnPercentageDeepMap = (node) => {
+    private reportNodeColumnPercentageDeepMap = (
+      node,
+    ): IBalanceSheetDataNode => {
       const parentTotal = node.total.amount;
       const parentNode = node;
+      type NodeMapper = (node: IBalanceSheetDataNode) => IBalanceSheetDataNode;
 
       return R.compose(
         R.when(
           this.isNodeHasHorizoTotals,
-          this.assocColumnPercentageHorizTotals(parentNode),
+          this.assocColumnPercentageHorizTotals(
+            parentNode,
+          ) as unknown as NodeMapper,
         ),
-        this.assocReportNodeColumnPercentage(parentTotal),
+        this.assocReportNodeColumnPercentage(
+          parentTotal,
+        ) as unknown as NodeMapper,
         this.assocNodeColumnPercentageChildren,
-      )(node);
+      )(node) as unknown as IBalanceSheetDataNode;
     };
 
     /**

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { get } from 'lodash';
 import {
@@ -25,6 +24,11 @@ export const BalanceSheetFiltering = <T extends GConstructor<FinancialSheet>>(
      */
     readonly repository: BalanceSheetRepository;
 
+    // Provided at runtime by the `FinancialSchema` (via `BalanceSheetSchema`)
+    // mixin composed into the concrete `BalanceSheet` class. Declared (type
+    // only, no runtime emit) so this mixin's methods can call it.
+    declare getSchemaNodeById: (id: string | number) => any;
+
     // -----------------------
     // # Account
     // -----------------------
@@ -37,7 +41,9 @@ export const BalanceSheetFiltering = <T extends GConstructor<FinancialSheet>>(
       node: IBalanceSheetDataNode,
     ): boolean => {
       return R.ifElse(
-        this.isNodeType(BALANCE_SHEET_NODE_TYPE.ACCOUNT),
+        this.isNodeType(BALANCE_SHEET_NODE_TYPE.ACCOUNT) as unknown as (
+          node: IBalanceSheetDataNode,
+        ) => boolean,
         this.isNodeNoneZero,
         R.always(true),
       )(node);
@@ -52,7 +58,9 @@ export const BalanceSheetFiltering = <T extends GConstructor<FinancialSheet>>(
       node: IBalanceSheetDataNode,
     ): boolean => {
       return R.ifElse(
-        this.isNodeType(BALANCE_SHEET_NODE_TYPE.ACCOUNT),
+        this.isNodeType(BALANCE_SHEET_NODE_TYPE.ACCOUNT) as unknown as (
+          node: IBalanceSheetDataNode,
+        ) => boolean,
         this.isNodeNoneZero,
         R.always(true),
       )(node);

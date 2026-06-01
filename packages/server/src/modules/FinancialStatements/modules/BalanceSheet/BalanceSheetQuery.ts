@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { merge } from 'lodash';
 import * as R from 'ramda';
 import {
@@ -7,13 +6,15 @@ import {
 } from './BalanceSheet.types';
 import { FinancialDateRanges } from '../../common/FinancialDateRanges';
 import { DISPLAY_COLUMNS_BY } from './constants';
+import { GConstructor } from '@/common/types/Constructor';
+import { FinancialSheet } from '../../common/FinancialSheet';
 
 // The constructor returns `merge(this, query)`, so every `IBalanceSheetQuery`
 // field is also present at the top level of the instance at runtime.
 export interface BalanceSheetQuery extends IBalanceSheetQuery {}
 
 export class BalanceSheetQuery extends R.compose(FinancialDateRanges)(
-  class {},
+  class {} as unknown as GConstructor<FinancialSheet>,
 ) {
   /**
    * Balance sheet query.

@@ -1,12 +1,12 @@
-// @ts-nocheck
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import * as R from 'ramda';
-import { Knex } from 'knex';
+import { QueryBuilder } from 'objection';
 import { isEmpty } from 'lodash';
 import {
   IAccountTransactionsGroupBy,
   IBalanceSheetQuery,
 } from './BalanceSheet.types';
+import { IFinancialDatePeriodsUnit } from '../../types/Report.types';
 import { BalanceSheetQuery } from './BalanceSheetQuery';
 import { FinancialDatePeriods } from '../../common/FinancialDatePeriods';
 import { BalanceSheetRepositoryNetIncome } from './BalanceSheetRepositoryNetIncome';
@@ -56,6 +56,11 @@ export class BalanceSheetRepository extends R.compose(
    *
    */
   public accountsByType: any;
+
+  /**
+   *
+   */
+  public accountsByParentType: any;
 
   /**
    * PY from date.
@@ -161,7 +166,7 @@ export class BalanceSheetRepository extends R.compose(
     this.query = new BalanceSheetQuery(query);
 
     this.transactionsGroupType = this.getGroupByFromDisplayColumnsBy(
-      this.query.displayColumnsBy,
+      this.query.displayColumnsBy as unknown as IFinancialDatePeriodsUnit,
     );
   }
 
@@ -247,8 +252,8 @@ export class BalanceSheetRepository extends R.compose(
   public initTotalDatePeriods = async (): Promise<void> => {
     // Retrieves grouped transactions by given date group.
     const periodsByAccount = await this.accountsDatePeriods(
-      this.query.fromDate,
-      this.query.toDate,
+      this.query.fromDate as unknown as Date,
+      this.query.toDate as unknown as Date,
       this.transactionsGroupType,
     );
     // Retrieves opening balance of grouped transactions.
@@ -395,9 +400,11 @@ export class BalanceSheetRepository extends R.compose(
 
   /**
    * Common branches filter query.
-   * @param {Knex.QueryBuilder} query
+   * @param {QueryBuilder<AccountTransaction>} query
    */
-  public commonFilterBranchesQuery = (query: Knex.QueryBuilder) => {
+  public commonFilterBranchesQuery = (
+    query: QueryBuilder<AccountTransaction>,
+  ) => {
     if (!isEmpty(this.query.branchesIds)) {
       query.modify('filterByBranches', this.query.branchesIds);
     }

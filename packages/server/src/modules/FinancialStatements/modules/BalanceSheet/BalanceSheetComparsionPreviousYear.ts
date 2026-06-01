@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { sumBy, isEmpty } from 'lodash';
 import {
@@ -37,7 +36,7 @@ export const BalanceSheetComparsionPreviousYear = <
     ): IBalanceSheetDataNode => {
       const closingBalance =
         this.repository.PYTotalAccountsLedger.whereAccountId(
-          node.id,
+          node.id as number,
         ).getClosingBalance();
 
       return R.assoc('previousYear', this.getAmountMeta(closingBalance), node);
@@ -51,21 +50,30 @@ export const BalanceSheetComparsionPreviousYear = <
     protected previousYearAccountNodeComposer = (
       node: IBalanceSheetAccountNode,
     ): IBalanceSheetAccountNode => {
+      // Sibling PY mappers are typed (via `FinancialPreviousYear`) against the
+      // common financial node shape, so the heterogeneous compose chain does not
+      // unify on the balance-sheet account node. Each step operates on the same
+      // runtime node; assert a uniform node-mapper signature.
+      type NodeMapper = (
+        node: IBalanceSheetAccountNode,
+      ) => IBalanceSheetAccountNode;
+
       return R.compose(
         R.when(
           this.isNodeHasHorizontalTotals,
-          this.assocPreviousYearAccountHorizNodeComposer,
+          this
+            .assocPreviousYearAccountHorizNodeComposer as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousYearPercentageActive,
-          this.assocPreviousYearPercentageNode,
+          this.assocPreviousYearPercentageNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousYearChangeActive,
-          this.assocPreviousYearChangetNode,
+          this.assocPreviousYearChangetNode as unknown as NodeMapper,
         ),
-        this.assocPreviousYearAccountNode,
-      )(node);
+        this.assocPreviousYearAccountNode as unknown as NodeMapper,
+      )(node) as unknown as IBalanceSheetAccountNode;
     };
 
     // ------------------------------
@@ -92,21 +100,27 @@ export const BalanceSheetComparsionPreviousYear = <
     protected previousYearAggregateNodeComposer = (
       node: IBalanceSheetAccountNode,
     ): IBalanceSheetAccountNode => {
+      // See note above: assert a uniform node-mapper signature so the
+      // heterogeneous compose chain unifies on the balance-sheet node type.
+      type NodeMapper = (
+        node: IBalanceSheetAccountNode,
+      ) => IBalanceSheetAccountNode;
+
       return R.compose(
         R.when(
           this.query.isPreviousYearPercentageActive,
-          this.assocPreviousYearTotalPercentageNode,
+          this.assocPreviousYearTotalPercentageNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousYearChangeActive,
-          this.assocPreviousYearTotalChangeNode,
+          this.assocPreviousYearTotalChangeNode as unknown as NodeMapper,
         ),
         R.when(
           this.isNodeHasHorizontalTotals,
-          this.assocPreviousYearAggregateHorizNode,
+          this.assocPreviousYearAggregateHorizNode as unknown as NodeMapper,
         ),
-        this.assocPreviousYearAggregateNode,
-      )(node);
+        this.assocPreviousYearAggregateNode as unknown as NodeMapper,
+      )(node) as unknown as IBalanceSheetAccountNode;
     };
 
     // ------------------------------
@@ -140,24 +154,30 @@ export const BalanceSheetComparsionPreviousYear = <
         horiontalTotalNode: IBalanceSheetTotal,
         index: number,
       ): IBalanceSheetTotal => {
+        type TotalMapper = (node: IBalanceSheetTotal) => IBalanceSheetTotal;
+
         return R.compose(
           R.when(
             this.query.isPreviousYearPercentageActive,
-            this.assocPreviousYearTotalPercentageNode,
+            this.assocPreviousYearTotalPercentageNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousYearChangeActive,
-            this.assocPreviousYearTotalChangeNode,
+            this.assocPreviousYearTotalChangeNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousYearActive,
-            this.assocPreviousYearAggregateHorizTotalNode(node, index),
+            this.assocPreviousYearAggregateHorizTotalNode(
+              node,
+              index,
+            ) as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousYearActive,
-            this.assocPreviousYearHorizNodeFromToDates,
+            this
+              .assocPreviousYearHorizNodeFromToDates as unknown as TotalMapper,
           ),
-        )(horiontalTotalNode);
+        )(horiontalTotalNode) as unknown as IBalanceSheetTotal;
       },
     );
 
@@ -214,7 +234,7 @@ export const BalanceSheetComparsionPreviousYear = <
           node.id,
           totalNode.previousYearFromDate.date,
           totalNode.previousYearToDate.date,
-        );
+        ) as unknown as number;
         return R.assoc('previousYear', this.getAmountMeta(total), totalNode);
       },
     );
@@ -230,24 +250,29 @@ export const BalanceSheetComparsionPreviousYear = <
         node: IBalanceSheetAccountNode,
         horizontalTotalNode: IBalanceSheetTotal,
       ): IBalanceSheetTotal => {
+        type TotalMapper = (node: IBalanceSheetTotal) => IBalanceSheetTotal;
+
         return R.compose(
           R.when(
             this.query.isPreviousYearPercentageActive,
-            this.assocPreviousYearPercentageNode,
+            this.assocPreviousYearPercentageNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousYearChangeActive,
-            this.assocPreviousYearChangetNode,
+            this.assocPreviousYearChangetNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousYearActive,
-            this.assocPreviousYearAccountHorizTotal(node),
+            this.assocPreviousYearAccountHorizTotal(
+              node,
+            ) as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousYearActive,
-            this.assocPreviousYearHorizNodeFromToDates,
+            this
+              .assocPreviousYearHorizNodeFromToDates as unknown as TotalMapper,
           ),
-        )(horizontalTotalNode);
+        )(horizontalTotalNode) as unknown as IBalanceSheetTotal;
       },
     );
 

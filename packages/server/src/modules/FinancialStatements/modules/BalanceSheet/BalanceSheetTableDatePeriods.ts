@@ -1,6 +1,6 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import * as moment from 'moment';
+import { I18nService } from 'nestjs-i18n';
 import { ITableColumn, ITableColumnAccessor } from '../../types/Table.types';
 import { FinancialDatePeriods } from '../../common/FinancialDatePeriods';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../CashFlowStatement/Cashflow.types';
 import { GConstructor } from '@/common/types/Constructor';
 import { FinancialSheet } from '../../common/FinancialSheet';
+import { BalanceSheetQuery } from './BalanceSheetQuery';
 
 export const BalanceSheetTableDatePeriods = <
   T extends GConstructor<FinancialSheet>,
@@ -17,6 +18,28 @@ export const BalanceSheetTableDatePeriods = <
 ) =>
   class extends R.pipe(FinancialDatePeriods)(Base) {
     public i18n: I18nService;
+
+    // Members provided at runtime by sibling mixins composed into the concrete
+    // `BalanceSheetTable` class (`BalanceSheetTablePercentage`,
+    // `BalanceSheetTablePreviousPeriod`, `BalanceSheetTablePreviousYear`).
+    // Declared (type only, no runtime emit) so this mixin's methods can use them.
+    declare query: BalanceSheetQuery;
+    declare percentageColumns: () => ITableColumn[];
+    declare percetangeDatePeriodColumnsAccessor: (
+      index: number,
+    ) => ITableColumnAccessor[];
+    declare previousPeriodHorizColumnAccessors: (
+      index: number,
+    ) => ITableColumnAccessor[];
+    declare previousPeriodHorizontalColumns: (
+      dateRange: IDateRange,
+    ) => ITableColumn[];
+    declare previousYearHorizontalColumnAccessors: (
+      index: number,
+    ) => ITableColumnAccessor[];
+    declare getPreviousYearHorizontalColumns: (
+      dateRange: IDateRange,
+    ) => ITableColumn[];
 
     /**
      * Retrieves the date periods based on the report query.
@@ -49,11 +72,16 @@ export const BalanceSheetTableDatePeriods = <
       ];
       const conditionsPairs = R.map(
         ([type, formatFn]) => [
-          R.always(this.query.isDisplayColumnsBy(type)),
+          R.always(this.query.isDisplayColumnsBy(type as string)),
           formatFn,
         ],
         conditions,
-      );
+      ) as unknown as Array<
+        [
+          (range: ICashFlowDateRange) => boolean,
+          (range: ICashFlowDateRange) => string,
+        ]
+      >;
       return R.compose(R.cond(conditionsPairs))(dateRange);
     };
 
@@ -77,7 +105,7 @@ export const BalanceSheetTableDatePeriods = <
               accessor: `horizontalTotals[${index}].total.formattedAmount`,
             },
           ]),
-        )([]);
+        )([] as ITableColumnAccessor[]) as unknown as ITableColumnAccessor[];
       },
     );
 
@@ -86,10 +114,18 @@ export const BalanceSheetTableDatePeriods = <
      * @returns {ITableColumnAccessor[]}
      */
     public datePeriodsColumnsAccessors = (): ITableColumnAccessor[] => {
+      // `R.addIndex(R.map)(curriedFn)` types as a `Curry<>`; assert the plain
+      // indexed-mapping function it is at runtime.
+      const mapIndexed = R.addIndex(R.map)(this.datePeriodColumnsAccessor) as (
+        list: IDateRange[],
+      ) => ITableColumnAccessor[][];
+
+      // `R.compose(R.flatten, …)` loses its element type through the ramda
+      // typings; the runtime value is a flat accessor array.
       return R.compose(
         R.flatten,
-        R.addIndex(R.map)(this.datePeriodColumnsAccessor),
-      )(this.datePeriods);
+        mapIndexed,
+      )(this.datePeriods) as unknown as ITableColumnAccessor[];
     };
 
     // -------------------------
@@ -115,7 +151,7 @@ export const BalanceSheetTableDatePeriods = <
         R.concat(this.percentageColumns()),
         R.concat(this.getPreviousYearHorizontalColumns(dateRange)),
         R.concat(this.previousPeriodHorizontalColumns(dateRange)),
-      )([]);
+      )([] as ITableColumn[]) as unknown as ITableColumn[];
     };
 
     /**

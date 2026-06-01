@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { I18nService } from 'nestjs-i18n';
 import {
@@ -53,11 +52,6 @@ export const BalanceSheetAggregators = <T extends GConstructor<FinancialSheet>>(
     readonly baseCurrency: string;
 
     /**
-     * Localization.
-     */
-    readonly i18n: any;
-
-    /**
      * Sets total amount that calculated from node children.
      * @param {IBalanceSheetSection} node
      * @returns {IBalanceSheetDataNode}
@@ -98,7 +92,7 @@ export const BalanceSheetAggregators = <T extends GConstructor<FinancialSheet>>(
         type: BALANCE_SHEET_SCHEMA_NODE_TYPE.AGGREGATE,
         total: this.getTotalAmountMeta(total),
         children: node.children,
-      };
+      } as unknown as IBalanceSheetAggregateNode;
     };
 
     /**
@@ -123,16 +117,27 @@ export const BalanceSheetAggregators = <T extends GConstructor<FinancialSheet>>(
     public reportAggregateSchemaParser = (
       node: IBalanceSheetSchemaNode,
     ): IBalanceSheetDataNode => {
+      type SchemaPredicate = (node: IBalanceSheetSchemaNode) => boolean;
+      type SchemaMapper = (
+        node: IBalanceSheetSchemaNode,
+      ) => IBalanceSheetSchemaNode | IBalanceSheetDataNode;
+      const schemaAggregateNodeCompose = this
+        .schemaAggregateNodeCompose as unknown as SchemaMapper;
+
       return R.compose(
         R.when(
-          this.isSchemaNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.AGGREGATE),
-          this.schemaAggregateNodeCompose,
+          this.isSchemaNodeType(
+            BALANCE_SHEET_SCHEMA_NODE_TYPE.AGGREGATE,
+          ) as unknown as SchemaPredicate,
+          schemaAggregateNodeCompose,
         ),
         R.when(
-          this.isSchemaNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.ACCOUNTS),
-          this.schemaAggregateNodeCompose,
+          this.isSchemaNodeType(
+            BALANCE_SHEET_SCHEMA_NODE_TYPE.ACCOUNTS,
+          ) as unknown as SchemaPredicate,
+          schemaAggregateNodeCompose,
         ),
-      )(node);
+      )(node) as unknown as IBalanceSheetDataNode;
     };
 
     /**

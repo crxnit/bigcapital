@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { sumBy } from 'lodash';
 import {
@@ -14,6 +13,7 @@ import { GConstructor } from '@/common/types/Constructor';
 import { FinancialSheet } from '../../common/FinancialSheet';
 import { BalanceSheetQuery } from './BalanceSheetQuery';
 import { BalanceSheetRepository } from './BalanceSheetRepository';
+import { IFinancialDatePeriodsUnit } from '../../types/Report.types';
 
 export const BalanceSheetComparsionPreviousPeriod = <
   T extends GConstructor<FinancialSheet>,
@@ -39,7 +39,7 @@ export const BalanceSheetComparsionPreviousPeriod = <
       node: IBalanceSheetDataNode,
     ): IBalanceSheetDataNode => {
       const total = this.repository.PPTotalAccountsLedger.whereAccountId(
-        node.id,
+        node.id as number,
       ).getClosingBalance();
 
       return R.assoc('previousPeriod', this.getAmountMeta(total), node);
@@ -53,24 +53,33 @@ export const BalanceSheetComparsionPreviousPeriod = <
     public previousPeriodAccountNodeComposer = (
       node: IBalanceSheetAccountNode,
     ): IBalanceSheetAccountNode => {
+      // Sibling PP mappers are typed (via `FinancialPreviousPeriod`) against the
+      // common/profit-loss node shape, so the heterogeneous compose chain does
+      // not unify on the balance-sheet account node. Each step operates on the
+      // same runtime node; assert a uniform node-mapper signature.
+      type NodeMapper = (
+        node: IBalanceSheetAccountNode,
+      ) => IBalanceSheetAccountNode;
+
       return R.compose(
         R.when(
           this.isNodeHasHorizTotals,
-          this.assocPreivousPeriodAccountHorizNodeComposer,
+          this
+            .assocPreivousPeriodAccountHorizNodeComposer as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousPeriodPercentageActive,
-          this.assocPreviousPeriodPercentageNode,
+          this.assocPreviousPeriodPercentageNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousPeriodChangeActive,
-          this.assocPreviousPeriodChangeNode,
+          this.assocPreviousPeriodChangeNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousPeriodActive,
-          this.assocPreviousPeriodAccountNode,
+          this.assocPreviousPeriodAccountNode as unknown as NodeMapper,
         ),
-      )(node);
+      )(node) as unknown as IBalanceSheetAccountNode;
     };
 
     // ------------------------------
@@ -97,24 +106,30 @@ export const BalanceSheetComparsionPreviousPeriod = <
     public previousPeriodAggregateNodeComposer = (
       node: IBalanceSheetAccountNode,
     ): IBalanceSheetAccountNode => {
+      // See note above: assert a uniform node-mapper signature so the
+      // heterogeneous compose chain unifies on the balance-sheet node type.
+      type NodeMapper = (
+        node: IBalanceSheetAccountNode,
+      ) => IBalanceSheetAccountNode;
+
       return R.compose(
         R.when(
           this.isNodeHasHorizTotals,
-          this.assocPreviousPeriodAggregateHorizNode,
+          this.assocPreviousPeriodAggregateHorizNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousPeriodPercentageActive,
-          this.assocPreviousPeriodTotalPercentageNode,
+          this.assocPreviousPeriodTotalPercentageNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousPeriodChangeActive,
-          this.assocPreviousPeriodTotalChangeNode,
+          this.assocPreviousPeriodTotalChangeNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousPeriodActive,
-          this.assocPreviousPeriodAggregateNode,
+          this.assocPreviousPeriodAggregateNode as unknown as NodeMapper,
         ),
-      )(node);
+      )(node) as unknown as IBalanceSheetAccountNode;
     };
 
     // ------------------------------
@@ -154,7 +169,7 @@ export const BalanceSheetComparsionPreviousPeriod = <
           node.id,
           totalNode.previousPeriodFromDate.date,
           totalNode.previousPeriodToDate.date,
-        );
+        ) as unknown as number;
         return R.assoc('previousPeriod', this.getAmountMeta(total), totalNode);
       },
     );
@@ -170,26 +185,31 @@ export const BalanceSheetComparsionPreviousPeriod = <
         node: IBalanceSheetAccountNode,
         horizontalTotalNode: IBalanceSheetTotal,
       ): IBalanceSheetTotal => {
+        type TotalMapper = (node: IBalanceSheetTotal) => IBalanceSheetTotal;
+
         return R.compose(
           R.when(
             this.query.isPreviousPeriodPercentageActive,
-            this.assocPreviousPeriodPercentageNode,
+            this.assocPreviousPeriodPercentageNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousPeriodChangeActive,
-            this.assocPreviousPeriodChangeNode,
+            this.assocPreviousPeriodChangeNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousPeriodActive,
-            this.assocPreviousPeriodAccountHorizTotal(node),
+            this.assocPreviousPeriodAccountHorizTotal(
+              node,
+            ) as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousPeriodActive,
             this.assocPreviousPeriodHorizNodeFromToDates(
-              this.query.displayColumnsBy,
-            ),
+              this.query
+                .displayColumnsBy as unknown as IFinancialDatePeriodsUnit,
+            ) as unknown as TotalMapper,
           ),
-        )(horizontalTotalNode);
+        )(horizontalTotalNode) as unknown as IBalanceSheetTotal;
       },
     );
 
@@ -239,26 +259,33 @@ export const BalanceSheetComparsionPreviousPeriod = <
         horiontalTotalNode: IBalanceSheetTotal,
         index: number,
       ): IBalanceSheetTotal => {
+        type TotalMapper = (node: IBalanceSheetTotal) => IBalanceSheetTotal;
+
         return R.compose(
           R.when(
             this.query.isPreviousPeriodPercentageActive,
-            this.assocPreviousPeriodTotalPercentageNode,
+            this
+              .assocPreviousPeriodTotalPercentageNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousPeriodChangeActive,
-            this.assocPreviousPeriodTotalChangeNode,
+            this.assocPreviousPeriodTotalChangeNode as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousPeriodActive,
-            this.assocPreviousPeriodAggregateHorizTotalNode(node, index),
+            this.assocPreviousPeriodAggregateHorizTotalNode(
+              node,
+              index,
+            ) as unknown as TotalMapper,
           ),
           R.when(
             this.query.isPreviousPeriodActive,
             this.assocPreviousPeriodHorizNodeFromToDates(
-              this.query.displayColumnsBy,
-            ),
+              this.query
+                .displayColumnsBy as unknown as IFinancialDatePeriodsUnit,
+            ) as unknown as TotalMapper,
           ),
-        )(horiontalTotalNode);
+        )(horiontalTotalNode) as unknown as IBalanceSheetTotal;
       },
     );
 

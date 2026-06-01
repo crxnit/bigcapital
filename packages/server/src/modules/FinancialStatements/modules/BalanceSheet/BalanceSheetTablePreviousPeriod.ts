@@ -1,9 +1,11 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { BalanceSheetQuery } from './BalanceSheetQuery';
 import { FinancialTablePreviousPeriod } from '../../common/FinancialTablePreviousPeriod';
 import { FinancialDateRanges } from '../../common/FinancialDateRanges';
-import { IDateRange } from '../../types/Report.types';
+import {
+  IDateRange,
+  IFinancialDatePeriodsUnit,
+} from '../../types/Report.types';
 import { ITableColumn } from '../../types/Table.types';
 import { GConstructor } from '@/common/types/Constructor';
 import { FinancialSheet } from '../../common/FinancialSheet';
@@ -41,7 +43,7 @@ export const BalanceSheetTablePreviousPeriod = <
           this.query.isPreviousPeriodPercentageActive,
           R.append(this.getPreviousPeriodPercentageColumn()),
         ),
-      )([]);
+      )([]) as ITableColumn[];
     };
 
     /**
@@ -55,7 +57,7 @@ export const BalanceSheetTablePreviousPeriod = <
       const PPDateRange = this.getPPDatePeriodDateRange(
         dateRange.fromDate,
         dateRange.toDate,
-        this.query.displayColumnsBy,
+        this.query.displayColumnsBy as unknown as IFinancialDatePeriodsUnit,
       );
       return this.previousPeriodColumns({
         fromDate: PPDateRange.fromDate,
@@ -85,7 +87,7 @@ export const BalanceSheetTablePreviousPeriod = <
           this.query.isPreviousPeriodPercentageActive,
           R.append(this.getPreviousPeriodPercentageAccessor()),
         ),
-      )([]);
+      )([]) as unknown as ITableColumn[];
     };
 
     /**
@@ -110,6 +112,6 @@ export const BalanceSheetTablePreviousPeriod = <
           this.query.isPreviousPeriodPercentageActive,
           R.append(this.getPreviousPeriodPercentageHorizAccessor(index)),
         ),
-      )([]);
+      )([]) as unknown as ITableColumn[];
     };
   };

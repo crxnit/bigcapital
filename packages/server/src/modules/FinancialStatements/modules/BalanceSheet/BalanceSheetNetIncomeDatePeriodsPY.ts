@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { BalanceSheetComparsionPreviousYear } from './BalanceSheetComparsionPreviousYear';
 import { FinancialPreviousPeriod } from '../../common/FinancialPreviousPeriod';
@@ -11,6 +10,7 @@ import { BalanceSheetQuery } from './BalanceSheetQuery';
 import { BalanceSheetRepository } from './BalanceSheetRepository';
 import { GConstructor } from '@/common/types/Constructor';
 import { FinancialSheet } from '../../common/FinancialSheet';
+import { IFinancialCommonHorizDatePeriodNode } from '../../types/Report.types';
 
 export const BalanceSheetNetIncomeDatePeriodsPY = <
   T extends GConstructor<FinancialSheet>,
@@ -78,7 +78,7 @@ export const BalanceSheetNetIncomeDatePeriodsPY = <
       (node: IBalanceSheetNetIncomeNode, totalNode) => {
         const total = this.getPYNetIncomeDatePeriodTotal(
           totalNode.previousYearToDate.date,
-        );
+        ) as unknown as number;
         return R.assoc('previousYear', this.getAmountMeta(total), totalNode);
       },
     );
@@ -110,7 +110,9 @@ export const BalanceSheetNetIncomeDatePeriodsPY = <
             this.query.isPreviousYearActive,
             this.assocPreviousYearHorizNodeFromToDates,
           ),
-        )(horiontalTotalNode);
+        )(
+          horiontalTotalNode as unknown as IFinancialCommonHorizDatePeriodNode,
+        ) as unknown as IBalanceSheetTotal;
       },
     );
 

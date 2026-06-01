@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import {
   IBalanceSheetNetIncomeNode,
@@ -27,7 +26,19 @@ export const BalanceSheetNetIncomeDatePeriods = <
     FinancialPreviousPeriod,
     FinancialHorizTotals,
   )(Base) {
-    repository: BalanceSheetRepository;
+    declare repository: BalanceSheetRepository;
+
+    // Provided at runtime by the `BalanceSheetDatePeriods` mixin composed into
+    // the concrete `BalanceSheet` class. Declared (type only, no runtime emit).
+    declare getReportNodeDatePeriods: (
+      node: IBalanceSheetNetIncomeNode,
+      callback: (...args: any[]) => any,
+    ) => IBalanceSheetTotalPeriod[];
+    declare getDatePeriodTotalMeta: (
+      total: number,
+      fromDate: Date,
+      toDate: Date,
+    ) => IBalanceSheetTotalPeriod;
 
     // --------------------------------
     // # Date Periods
@@ -120,6 +131,10 @@ export const BalanceSheetNetIncomeDatePeriods = <
     ): IBalanceSheetNetIncomeNode => {
       const datePeriods = this.getNetIncomeDatePeriodsNode(node);
 
-      return R.assoc('horizontalTotals', datePeriods, node);
+      return R.assoc(
+        'horizontalTotals',
+        datePeriods,
+        node,
+      ) as unknown as IBalanceSheetNetIncomeNode;
     };
   };

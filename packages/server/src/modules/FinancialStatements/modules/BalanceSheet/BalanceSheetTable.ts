@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { I18nService } from 'nestjs-i18n';
 import {
@@ -82,7 +81,7 @@ export class BalanceSheetTable extends R.pipe(
    * @return {boolean}
    */
   public isNodeType = R.curry(
-    (type: string, node: IBalanceSheetSchemaNode): boolean => {
+    (type: string, node: IBalanceSheetDataNode): boolean => {
       return node.nodeType === type;
     },
   );
@@ -95,14 +94,16 @@ export class BalanceSheetTable extends R.pipe(
    * @param {ITableColumnAccessor[]}
    */
   public commonColumnsAccessors = (): ITableColumnAccessor[] => {
-    return R.compose(
-      R.concat([{ key: 'name', accessor: 'name' }]),
+    type AccMapper = (a: ITableColumnAccessor[]) => ITableColumnAccessor[];
+    const compose = R.compose(
+      R.concat([{ key: 'name', accessor: 'name' }]) as unknown as AccMapper,
       R.ifElse(
         R.always(this.isDisplayColumnsBy(DISPLAY_COLUMNS_BY.DATE_PERIODS)),
-        R.concat(this.datePeriodsColumnsAccessors()),
-        R.concat(this.totalColumnAccessor()),
-      ),
-    )([]);
+        R.concat(this.datePeriodsColumnsAccessors()) as unknown as AccMapper,
+        R.concat(this.totalColumnAccessor()) as unknown as AccMapper,
+      ) as unknown as AccMapper,
+    ) as unknown as AccMapper;
+    return compose([]);
   };
 
   /**
@@ -110,12 +111,21 @@ export class BalanceSheetTable extends R.pipe(
    * @return {ITableColumnAccessor[]}
    */
   public totalColumnAccessor = (): ITableColumnAccessor[] => {
-    return R.pipe(
-      R.concat(this.previousPeriodColumnAccessor()),
-      R.concat(this.previousYearColumnAccessor()),
-      R.concat(this.percentageColumnsAccessor()),
-      R.concat([{ key: 'total', accessor: 'total.formattedAmount' }]),
-    )([]);
+    const pipe = R.pipe(
+      R.concat(
+        this.previousPeriodColumnAccessor() as unknown as ITableColumnAccessor[],
+      ),
+      R.concat(
+        this.previousYearColumnAccessor() as unknown as ITableColumnAccessor[],
+      ),
+      R.concat(
+        this.percentageColumnsAccessor() as unknown as ITableColumnAccessor[],
+      ),
+      R.concat([
+        { key: 'total', accessor: 'total.formattedAmount' },
+      ] as ITableColumnAccessor[]),
+    ) as unknown as (a: ITableColumnAccessor[]) => ITableColumnAccessor[];
+    return pipe([]);
   };
 
   /**
@@ -189,23 +199,31 @@ export class BalanceSheetTable extends R.pipe(
    * @returns {ITableRow}
    */
   public nodeToTableRowsMapper = (node: IBalanceSheetDataNode): ITableRow => {
+    // The curried `isNodeType` predicates and per-node-type row mappers do not
+    // unify under R.cond's tuple typing; assert a uniform predicate/mapper pair
+    // over the balance-sheet data node.
+    type CondPair = [
+      (node: IBalanceSheetDataNode) => boolean,
+      (node: IBalanceSheetDataNode) => ITableRow,
+    ];
+
     return R.cond([
       [
         this.isNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.AGGREGATE),
         this.aggregateNodeTableRowsMapper,
-      ],
+      ] as unknown as CondPair,
       [
         this.isNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.ACCOUNTS),
         this.accountsNodeTableRowsMapper,
-      ],
+      ] as unknown as CondPair,
       [
         this.isNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.ACCOUNT),
         this.accountNodeTableRowsMapper,
-      ],
+      ] as unknown as CondPair,
       [
         this.isNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.NET_INCOME),
         this.netIncomeNodeTableRowsMapper,
-      ],
+      ] as unknown as CondPair,
     ])(node);
   };
 
@@ -225,15 +243,19 @@ export class BalanceSheetTable extends R.pipe(
    * @returns {ITableColumn[]}
    */
   public totalColumnChildren = (): ITableColumn[] => {
-    return R.compose(
+    type ColMapper = (a: ITableColumn[]) => ITableColumn[];
+    const compose = R.compose(
       R.unless(
         R.isEmpty,
-        R.concat([{ key: 'total', label: this.i18n.t('balance_sheet.total') }]),
+        R.concat([
+          { key: 'total', label: this.i18n.t('balance_sheet.total') },
+        ]) as unknown as ColMapper,
       ),
-      R.concat(this.percentageColumns()),
-      R.concat(this.getPreviousYearColumns()),
-      R.concat(this.previousPeriodColumns()),
-    )([]);
+      R.concat(this.percentageColumns()) as unknown as ColMapper,
+      R.concat(this.getPreviousYearColumns()) as unknown as ColMapper,
+      R.concat(this.previousPeriodColumns()) as unknown as ColMapper,
+    ) as unknown as ColMapper;
+    return compose([]);
   };
 
   /**
@@ -258,7 +280,7 @@ export class BalanceSheetTable extends R.pipe(
     return R.compose(
       this.addTotalRows,
       this.nodesToTableRowsMapper,
-    )(this.reportData);
+    )(this.reportData) as unknown as ITableRow[];
   };
 
   // -------------------------
@@ -269,16 +291,20 @@ export class BalanceSheetTable extends R.pipe(
    * @returns {ITableColumn[]}
    */
   public tableColumns = (): ITableColumn[] => {
-    return R.compose(
-      this.tableColumnsCellIndexing,
+    type ColMapper = (a: ITableColumn[]) => ITableColumn[];
+    const compose = R.compose(
+      this.tableColumnsCellIndexing as unknown as ColMapper,
       R.concat([
         { key: 'name', label: this.i18n.t('balance_sheet.account_name') },
-      ]),
+      ]) as unknown as ColMapper,
       R.ifElse(
-        this.query.isDatePeriodsColumnsType,
-        R.concat(this.datePeriodsColumns()),
-        R.concat(this.totalColumn()),
-      ),
-    )([]);
+        this.query.isDatePeriodsColumnsType as unknown as (
+          a: ITableColumn[],
+        ) => boolean,
+        R.concat(this.datePeriodsColumns()) as unknown as ColMapper,
+        R.concat(this.totalColumn()) as unknown as ColMapper,
+      ) as unknown as ColMapper,
+    ) as unknown as ColMapper;
+    return compose([]);
   };
 }

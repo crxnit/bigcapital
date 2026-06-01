@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { defaultTo, toArray } from 'lodash';
 import { I18nService } from 'nestjs-i18n';
@@ -131,7 +130,7 @@ export const BalanceSheetAccounts = <T extends GConstructor<FinancialSheet>>(
           this.assocAccountNodeDatePeriods,
         ),
         this.reportSchemaAccountNodeMapper,
-      )(account);
+      )(account) as unknown as IBalanceSheetAccountNode;
     };
 
     // -----------------------------
@@ -169,7 +168,7 @@ export const BalanceSheetAccounts = <T extends GConstructor<FinancialSheet>>(
       node: IBalanceSheetSchemaAccountNode,
     ): IBalanceSheetAccountsNode => {
       const accounts = this.getAccountsNodesByAccountTypes(node.accountsTypes);
-      const children = toArray(node?.children);
+      const children = toArray((node as { children?: unknown })?.children);
 
       return {
         id: node.id,
@@ -178,7 +177,7 @@ export const BalanceSheetAccounts = <T extends GConstructor<FinancialSheet>>(
         type: BALANCE_SHEET_SCHEMA_NODE_TYPE.ACCOUNTS,
         children: [...accounts, ...children],
         total: this.getTotalAmountMeta(0),
-      };
+      } as unknown as IBalanceSheetAccountsNode;
     };
 
     /**
@@ -191,10 +190,14 @@ export const BalanceSheetAccounts = <T extends GConstructor<FinancialSheet>>(
     ): IBalanceSheetSchemaNode | IBalanceSheetDataNode => {
       return R.compose(
         R.when(
-          this.isSchemaNodeType(BALANCE_SHEET_SCHEMA_NODE_TYPE.ACCOUNTS),
-          this.reportSchemaAccountsNodeMapper,
+          this.isSchemaNodeType(
+            BALANCE_SHEET_SCHEMA_NODE_TYPE.ACCOUNTS,
+          ) as unknown as (node: IBalanceSheetSchemaNode) => boolean,
+          this.reportSchemaAccountsNodeMapper as unknown as (
+            node: IBalanceSheetSchemaNode | IBalanceSheetDataNode,
+          ) => IBalanceSheetSchemaNode | IBalanceSheetDataNode,
         ),
-      )(node);
+      )(node) as IBalanceSheetSchemaNode | IBalanceSheetDataNode;
     };
 
     /**

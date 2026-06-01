@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { IBalanceSheetNetIncomeNode } from './BalanceSheet.types';
 import { BalanceSheetComparsionPreviousYear } from './BalanceSheetComparsionPreviousYear';
@@ -59,21 +58,29 @@ export const BalanceSheetNetIncomePY = <T extends GConstructor<FinancialSheet>>(
     public previousYearNetIncomeNodeCompose = (
       node: IBalanceSheetNetIncomeNode,
     ): IBalanceSheetNetIncomeNode => {
+      // The sibling PY mappers are typed (via the shared `FinancialPreviousYear`
+      // mixin) against the common financial node shape, so the heterogeneous
+      // compose chain does not unify on the balance-sheet node type. Each step
+      // operates on the same runtime node; assert a uniform node-mapper signature.
+      type NodeMapper = (
+        node: IBalanceSheetNetIncomeNode,
+      ) => IBalanceSheetNetIncomeNode;
+
       return R.compose(
         R.when(
           this.query.isPreviousYearPercentageActive,
-          this.assocPreviousYearTotalPercentageNode,
+          this.assocPreviousYearTotalPercentageNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousYearChangeActive,
-          this.assocPreviousYearTotalChangeNode,
+          this.assocPreviousYearTotalChangeNode as unknown as NodeMapper,
         ),
         // Associate the PY to date periods horizontal nodes.
         R.when(
           this.isNodeHasHorizontalTotals,
           this.assocPreviousYearNetIncomeHorizNode,
         ),
-        this.assocPreviousYearNetIncomeNode,
-      )(node);
+        this.assocPreviousYearNetIncomeNode as unknown as NodeMapper,
+      )(node) as unknown as IBalanceSheetNetIncomeNode;
     };
   };

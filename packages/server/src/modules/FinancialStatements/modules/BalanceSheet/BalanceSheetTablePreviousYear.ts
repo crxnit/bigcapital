@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import { IDateRange } from '../../types/Report.types';
 import { ITableColumn } from '../../types/Table.types';
@@ -40,7 +39,7 @@ export const BalanceSheetTablePreviousYear = <
           this.query.isPreviousYearPercentageActive,
           R.append(this.getPreviousYearPercentageColumn()),
         ),
-      )([]);
+      )([]) as ITableColumn[];
     };
 
     /**
@@ -78,7 +77,7 @@ export const BalanceSheetTablePreviousYear = <
           this.query.isPreviousYearPercentageActive,
           R.append(this.getPreviousYearPercentageAccessor()),
         ),
-      )([]);
+      )([]) as unknown as ITableColumn[];
     };
 
     /**
@@ -103,6 +102,6 @@ export const BalanceSheetTablePreviousYear = <
           this.query.isPreviousYearPercentageActive,
           R.append(this.getPreviousYearPercentageHorizAccessor(index)),
         ),
-      )([]);
+      )([]) as unknown as ITableColumn[];
     };
   };

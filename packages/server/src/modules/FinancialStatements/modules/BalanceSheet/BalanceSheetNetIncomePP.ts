@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as R from 'ramda';
 import {
   IBalanceSheetDataNode,
@@ -61,6 +60,15 @@ export const BalanceSheetNetIncomePP = <T extends GConstructor<FinancialSheet>>(
     public previousPeriodNetIncomeNodeCompose = (
       node: IBalanceSheetNetIncomeNode,
     ): IBalanceSheetNetIncomeNode => {
+      // The sibling PP mappers (`assocPreviousPeriod*Node`) are typed (via the
+      // shared `FinancialPreviousPeriod` mixin) against the profit/loss node
+      // shape, so the heterogeneous compose chain does not unify on the
+      // balance-sheet node type. Each step operates on the same runtime node;
+      // assert a uniform node-mapper signature on the polluted mappers.
+      type NodeMapper = (
+        node: IBalanceSheetNetIncomeNode,
+      ) => IBalanceSheetNetIncomeNode;
+
       return R.compose(
         R.when(
           this.isNodeHasHorizTotals,
@@ -68,13 +76,13 @@ export const BalanceSheetNetIncomePP = <T extends GConstructor<FinancialSheet>>(
         ),
         R.when(
           this.query.isPreviousPeriodPercentageActive,
-          this.assocPreviousPeriodPercentageNode,
+          this.assocPreviousPeriodPercentageNode as unknown as NodeMapper,
         ),
         R.when(
           this.query.isPreviousPeriodChangeActive,
-          this.assocPreviousPeriodChangeNode,
+          this.assocPreviousPeriodChangeNode as unknown as NodeMapper,
         ),
-        this.assocPreviousPeriodNetIncomeNode,
-      )(node);
+        this.assocPreviousPeriodNetIncomeNode as unknown as NodeMapper,
+      )(node) as unknown as IBalanceSheetNetIncomeNode;
     };
   };
