@@ -42,7 +42,7 @@ export class GetSaleReceiptsService {
 
     // Dynamic list service.
     const dynamicFilter = await this.dynamicListService.dynamicList(
-      SaleReceipt,
+      this.saleReceiptModel(),
       filter,
     );
     const { results, pagination } = await this.saleReceiptModel()

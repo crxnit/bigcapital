@@ -11,7 +11,7 @@ import { ModelObject } from 'objection';
 export class JournalSheetRepository {
   @Inject(TenancyContext)
   private tenancyContext: TenancyContext;
-  
+
   @Inject(AccountRepository)
   private accountRepository: AccountRepository;
 
@@ -21,31 +21,32 @@ export class JournalSheetRepository {
   @Inject(AccountTransaction.name)
   private accountTransaction: TenantModelProxy<typeof AccountTransaction>;
 
-  @Inject(AccountTransaction.name)
+  // Holds query results — NOT an injected model (the @Inject here was a
+  // copy-paste error); initialised by initAccountTransactions().
   private accountTransactions: Array<ModelObject<AccountTransaction>>;
 
   /**
-   * 
+   *
    */
   public filter: any;
 
   /**
-   * 
+   *
    */
   public accountsGraph: any;
 
   /**
-   * 
+   *
    */
-  public contacts: Array<ModelObject<Contact>>
+  public contacts: Array<ModelObject<Contact>>;
 
   /**
    * Contacts by id map.
    */
   public contactsById: Map<number, ModelObject<Contact>>;
-  
+
   /**
-   * 
+   *
    */
   public ledger: Ledger;
 
@@ -69,7 +70,7 @@ export class JournalSheetRepository {
   /**
    * Initialize base currency.
    */
-  async initBaseCurrency () {
+  async initBaseCurrency() {
     const metadata = await this.tenancyContext.getTenantMetadata();
 
     this.baseCurrency = metadata.baseCurrency;
@@ -127,8 +128,7 @@ export class JournalSheetRepository {
     this.contactsById = transformToMap(contacts, 'id');
   }
 
-  async initLedger(){
+  async initLedger() {
     this.ledger = Ledger.fromTransactions(this.accountTransactions);
   }
-  
 }

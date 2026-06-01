@@ -306,10 +306,10 @@ export abstract class DynamicFilterRoleAbstractor implements IDynamicFilter {
   ) => {
     const hasTimeFormat = moment(
       role.value,
-      'YYYY-MM-DD HH:MM',
+      'YYYY-MM-DD HH:mm',
       true,
     ).isValid();
-    const dateFormat = 'YYYY-MM-DD HH:MM:SS';
+    const dateFormat = 'YYYY-MM-DD HH:mm:ss';
 
     if (hasTimeFormat) {
       const targetDateTime = moment(role.value).format(dateFormat);
@@ -337,11 +337,11 @@ export abstract class DynamicFilterRoleAbstractor implements IDynamicFilter {
     const comparator = role.comparator === COMPARATOR_TYPE.BEFORE ? '<' : '>';
     const hasTimeFormat = moment(
       role.value,
-      'YYYY-MM-DD HH:MM',
+      'YYYY-MM-DD HH:mm',
       true,
     ).isValid();
     const targetDate = moment(role.value);
-    const dateFormat = 'YYYY-MM-DD HH:MM:SS';
+    const dateFormat = 'YYYY-MM-DD HH:mm:ss';
 
     if (!hasTimeFormat) {
       if (role.comparator === COMPARATOR_TYPE.BEFORE) {

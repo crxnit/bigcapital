@@ -47,7 +47,7 @@ export class GetItemsService {
 
     // Dynamic list service.
     const dynamicFilter = await this.dynamicListService.dynamicList(
-      Item,
+      this.itemModel(),
       filter,
     );
     const { results: items, pagination } = await this.itemModel()

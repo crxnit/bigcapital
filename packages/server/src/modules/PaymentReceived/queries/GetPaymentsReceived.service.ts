@@ -43,7 +43,7 @@ export class GetPaymentsReceivedService {
 
     // Dynamic list service.
     const dynamicList = await this.dynamicListService.dynamicList(
-      PaymentReceived,
+      this.paymentReceivedModel(),
       filter,
     );
     const { results, pagination } = await this.paymentReceivedModel()

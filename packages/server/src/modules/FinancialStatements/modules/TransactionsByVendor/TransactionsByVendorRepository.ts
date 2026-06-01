@@ -265,8 +265,9 @@ export class TransactionsByVendorRepository extends TransactionsByContactReposit
         // Filter by date.
         query.modify('filterDateRange', fromDate, toDate);
 
-        // Filter by customers.
-        query.whereNot('contactId', null);
+        // Filter by vendors. whereNot(col, null) is `NOT (col = NULL)` —
+        // always false in SQL; use whereNotNull.
+        query.whereNotNull('contactId');
 
         // Filter by accounts.
         query.whereIn('accountId', receivableAccountsIds);
