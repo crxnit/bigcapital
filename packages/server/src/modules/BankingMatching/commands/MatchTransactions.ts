@@ -34,7 +34,7 @@ export class MatchBankTransactions {
     private readonly uncategorizedBankTransactionModel: TenantModelProxy<
       typeof UncategorizedBankTransaction
     >,
-  ) { }
+  ) {}
 
   /**
    * Validates the match bank transactions DTO.
@@ -103,7 +103,9 @@ export class MatchBankTransactions {
     // uncategorized transaction amount.
     // Use tolerance-based comparison to handle floating-point precision issues
     const tolerance = 0.01; // Allow 0.01 difference for floating-point precision
-    const difference = Math.abs(totalUncategorizedTransactions - totalMatchedTranasctions);
+    const difference = Math.abs(
+      totalUncategorizedTransactions - totalMatchedTranasctions,
+    );
     if (difference > tolerance) {
       throw new ServiceError(ERRORS.TOTAL_MATCHING_TRANSACTIONS_INVALID);
     }
@@ -116,7 +118,9 @@ export class MatchBankTransactions {
    */
   public async matchTransaction(
     uncategorizedTransactionId: number | Array<number>,
-    matchedTransactionsDto: MatchTransactionEntryDto | Array<MatchTransactionEntryDto>,
+    matchedTransactionsDto:
+      | MatchTransactionEntryDto
+      | Array<MatchTransactionEntryDto>,
   ): Promise<void> {
     const uncategorizedTransactionIds = castArray(uncategorizedTransactionId);
     const matchedTransactions = castArray(matchedTransactionsDto);
@@ -131,20 +135,19 @@ export class MatchBankTransactions {
         trx,
       } as IBankTransactionMatchingEventPayload);
 
-      // Matches the given transactions under promise pool concurrency controlling.
-      await PromisePool.withConcurrency(10)
-        .for(matchedTransactions)
-        .process(async (matchedTransaction: MatchTransactionEntryDto) => {
-          const getMatchedTransactionsService =
-            this.matchedBankTransactions.registry.get(
-              matchedTransaction.referenceType,
-            );
-          await getMatchedTransactionsService.createMatchedTransaction(
-            uncategorizedTransactionIds,
-            matchedTransaction,
-            trx,
+      // Create matches sequentially — these write on the shared `trx`, which
+      // is not concurrency-safe.
+      for (const matchedTransaction of matchedTransactions) {
+        const getMatchedTransactionsService =
+          this.matchedBankTransactions.registry.get(
+            matchedTransaction.referenceType,
           );
-        });
+        await getMatchedTransactionsService.createMatchedTransaction(
+          uncategorizedTransactionIds,
+          matchedTransaction,
+          trx,
+        );
+      }
       // Triggers the event `onBankTransactionMatched`.
       await this.eventPublisher.emitAsync(events.bankMatch.onMatched, {
         uncategorizedTransactionIds,

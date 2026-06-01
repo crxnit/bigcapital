@@ -32,24 +32,22 @@ export class PlaidWebooks {
       item: this.itemsHandler.bind(this),
     };
     const webhookHandler =
-      webhookHandlerMap[_webhookType] || this.unhandledWebhook;
+      webhookHandlerMap[_webhookType] || this.unhandledWebhook.bind(this);
 
     await webhookHandler(plaidItemId, webhookCode);
   }
 
   /**
    * Handles all unhandled/not yet implemented webhook events.
-   * @param {string} webhookType - Webhook type.
-   * @param {string} webhookCode - Webhook code.
    * @param {string} plaidItemId - Plaid item id.
+   * @param {string} webhookCode - Webhook code.
    */
   private async unhandledWebhook(
-    webhookType: string,
-    webhookCode: string,
     plaidItemId: string,
+    webhookCode: string,
   ): Promise<void> {
     console.log(
-      `UNHANDLED ${webhookType} WEBHOOK: ${webhookCode}: Plaid item id ${plaidItemId}: unhandled webhook type received.`,
+      `UNHANDLED WEBHOOK: ${webhookCode}: Plaid item id ${plaidItemId}: unhandled webhook type received.`,
     );
   }
 

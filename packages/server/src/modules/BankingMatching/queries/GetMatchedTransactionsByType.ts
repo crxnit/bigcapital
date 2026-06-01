@@ -5,16 +5,13 @@ import {
   MatchedTransactionPOJO,
   MatchedTransactionsPOJO,
 } from '../types';
-import PromisePool from '@supercharge/promise-pool';
 import { MatchedBankTransaction } from '../models/MatchedBankTransaction';
 import { Inject } from '@nestjs/common';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 
 export abstract class GetMatchedTransactionsByType {
   @Inject(MatchedBankTransaction.name)
-  matchedBankTransactionModel: TenantModelProxy<
-    typeof MatchedBankTransaction
-  >;
+  matchedBankTransactionModel: TenantModelProxy<typeof MatchedBankTransaction>;
 
   /**
    * Retrieves the matched transactions.
@@ -57,15 +54,17 @@ export abstract class GetMatchedTransactionsByType {
     matchTransactionDTO: IMatchTransactionDTO,
     trx?: Knex.Transaction,
   ) {
-    await PromisePool.withConcurrency(2)
-      .for(uncategorizedTransactionIds)
-      .process(async (uncategorizedTransactionId) => {
-        await this.matchedBankTransactionModel().query(trx).insert({
+    // Insert sequentially — `trx` is not concurrency-safe; parallel inserts
+    // on one Knex transaction give non-deterministic per-row failures.
+    for (const uncategorizedTransactionId of uncategorizedTransactionIds) {
+      await this.matchedBankTransactionModel()
+        .query(trx)
+        .insert({
           uncategorizedTransactionId,
           referenceType: matchTransactionDTO.referenceType,
           referenceId: matchTransactionDTO.referenceId,
           referenceSubId: matchTransactionDTO.referenceSubId ?? null,
         });
-      });
+    }
   }
 }

@@ -26,7 +26,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CreateUncategorizedTransactionService } from '@/modules/BankingCategorize/commands/CreateUncategorizedTransaction.service';
 import { TenantModelProxy } from '../../System/models/TenantBaseModel';
 
-const CONCURRENCY_ASYNC = 10;
+// All bluebird.map call sites below write on the passed-in Knex `trx`, which
+// is not concurrency-safe — run them sequentially (concurrency 1).
+const CONCURRENCY_ASYNC = 1;
 
 @Injectable()
 export class PlaidSyncDb {

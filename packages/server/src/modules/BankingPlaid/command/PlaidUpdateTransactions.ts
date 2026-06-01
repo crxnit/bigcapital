@@ -149,8 +149,10 @@ export class PlaidUpdateTransactions {
         cursor = data.next_cursor;
       }
     } catch (err) {
+      // Don't return a truncated page set — the caller would persist a partial
+      // sync. Rethrow so the surrounding UoW rolls back and Plaid re-delivers.
       console.error(`Error fetching transactions: ${err.message}`);
-      cursor = lastCursor;
+      throw err;
     }
     return { added, modified, removed, cursor, accessToken: plaidAccessToken };
   }

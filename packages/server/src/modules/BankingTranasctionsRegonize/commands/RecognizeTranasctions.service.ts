@@ -1,13 +1,11 @@
 import { Knex } from 'knex';
 import { Inject, Injectable } from '@nestjs/common';
 import { castArray, isEmpty } from 'lodash';
-import { PromisePool } from '@supercharge/promise-pool';
 import { bankRulesMatchTransaction } from '../_utils';
 import { RecognizeTransactionsCriteria } from '../_types';
 import { BankRule } from '@/modules/BankRules/models/BankRule';
 import { RecognizedBankTransaction } from '../models/RecognizedBankTransaction';
 import { UncategorizedBankTransaction } from '@/modules/BankingTransactions/models/UncategorizedBankTransaction';
-import { transformToMapBy } from '@/utils/transform-to-map-by';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 
 @Injectable()
@@ -99,21 +97,19 @@ export class RecognizeTranasctionsService {
         q.orderBy('order', 'asc');
       });
 
-    const bankRulesByAccountId = transformToMapBy(
-      bankRules,
-      'applyIfAccountId',
-    );
-    // Try to recognize the transaction.
-    const regonizeTransaction = async (
-      transaction: UncategorizedBankTransaction,
-    ) => {
-      const allAccountsBankRules = bankRulesByAccountId.get(`null`);
-      const accountBankRules = bankRulesByAccountId.get(
-        `${transaction.accountId}`,
+    // Recognize sequentially — markBankRuleAsRecognized writes (INSERT + PATCH)
+    // on the shared trx, which is not concurrency-safe.
+    for (const transaction of uncategorizedTranasctions) {
+      // Rules scoped to this account PLUS global rules (applyIfAccountId null),
+      // kept in priority order (bankRules is already ordered by `order` asc).
+      const applicableBankRules = bankRules.filter(
+        (rule) =>
+          rule.applyIfAccountId == null ||
+          rule.applyIfAccountId === transaction.accountId,
       );
       const recognizedBankRule = bankRulesMatchTransaction(
         transaction,
-        accountBankRules,
+        applicableBankRules,
       );
       if (recognizedBankRule) {
         await this.markBankRuleAsRecognized(
@@ -122,21 +118,6 @@ export class RecognizeTranasctionsService {
           trx,
         );
       }
-    };
-    const result = await PromisePool.withConcurrency(MIGRATION_CONCURRENCY)
-      .for(uncategorizedTranasctions)
-      .process((transaction: UncategorizedBankTransaction, index, pool) => {
-        return regonizeTransaction(transaction);
-      });
+    }
   }
-
-  /**
-   *
-   * @param {number} uncategorizedTransaction
-   */
-  public async regonizeTransaction(
-    uncategorizedTransaction: UncategorizedBankTransaction,
-  ) {}
 }
-
-const MIGRATION_CONCURRENCY = 10;
