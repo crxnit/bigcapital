@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import intl from 'react-intl-universal';
+import styled from 'styled-components';
 import { Form, useFormikContext } from 'formik';
 import { Button, Classes, FormGroup, Intent } from '@blueprintjs/core';
 import {
@@ -252,14 +253,7 @@ function AccountFormDialogFields({
             />
 
             {selectedLibraryLogo && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginTop: 8,
-                }}
-              >
+              <LogoPreviewRow>
                 <BankLogoMark
                   logo={{
                     kind: 'library',
@@ -276,12 +270,12 @@ function AccountFormDialogFields({
                 >
                   <T id={'remove'} />
                 </Button>
-              </div>
+              </LogoPreviewRow>
             )}
 
-            <div style={{ margin: '10px 0 6px', fontSize: 12, opacity: 0.7 }}>
+            <LogoUploadDivider>
               <T id={'bank_account_logo.or_upload'} />
-            </div>
+            </LogoUploadDivider>
             <CompanyLogoUpload
               initialPreview={customLogoPreview}
               value={values._logo_file}
@@ -348,6 +342,21 @@ function AccountFormDialogFields({
     </Form>
   );
 }
+
+// Selected-library-logo preview: the mark sits beside its "Remove" button.
+const LogoPreviewRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+`;
+
+// "— or upload your own —" divider between the library picker and the uploader.
+const LogoUploadDivider = styled.div`
+  margin: 10px 0 6px;
+  font-size: 12px;
+  opacity: 0.7;
+`;
 
 export default compose(
   withAccounts(({ accountsTypes, accountsList }) => ({
