@@ -16,8 +16,8 @@ export function configureLemonSqueezy() {
   if (missingVars.length > 0) {
     throw new Error(
       `Missing required LEMONSQUEEZY env variables: ${missingVars.join(
-        ', '
-      )}. Please, set them in your .env file.`
+        ', ',
+      )}. Please, set them in your .env file.`,
     );
   }
   lemonSqueezySetup({
@@ -96,5 +96,10 @@ export function createHmacSignature(secretKey, body) {
 export function compareSignatures(signature, comparison_signature) {
   const source = Buffer.from(signature, 'utf8');
   const comparison = Buffer.from(comparison_signature, 'utf8');
+  // timingSafeEqual throws RangeError on length mismatch — guard so a forged
+  // signature of the wrong length cleanly returns false instead of a 500.
+  if (source.length !== comparison.length) {
+    return false;
+  }
   return require('crypto').timingSafeEqual(source, comparison);
 }

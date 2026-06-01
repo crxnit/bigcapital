@@ -42,7 +42,6 @@ export class ImportFileCommon {
     const importable = await this.importableRegistry.getImportable(
       importFile.resource,
     );
-    const concurrency = importable.concurrency || 10;
 
     const success: ImportOperSuccess[] = [];
     const failed: ImportOperError[] = [];
@@ -102,7 +101,10 @@ export class ImportFileCommon {
         failed.push({ index, error });
       }
     };
-    await bluebird.map(parsedData, importAsync, { concurrency });
+    // Import rows sequentially — importable.importable() writes on the shared
+    // `trx`, which is not concurrency-safe; parallel rows corrupt the unit of
+    // work (the per-row try/catch still records each row's success/failure).
+    await bluebird.map(parsedData, importAsync, { concurrency: 1 });
 
     // Run post-processing (e.g. deferred parent-child relationship resolution).
     await importable.afterImport(trx);

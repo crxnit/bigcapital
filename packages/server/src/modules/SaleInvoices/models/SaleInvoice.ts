@@ -603,7 +603,10 @@ export class SaleInvoice extends TenantBaseModel {
           to: 'contacts.id',
         },
         filter(query) {
-          query.where('contact_service', 'Customer');
+          // Canonical contact_service value is lowercase 'customer'
+          // (ContactService.Customer); 'Customer' misses on case-sensitive
+          // MariaDB collations.
+          query.where('contact_service', 'customer');
         },
       },
 

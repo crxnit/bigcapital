@@ -5,7 +5,6 @@ import {
   Inject,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { Reflector } from '@nestjs/core';
 import { ClsService } from 'nestjs-cls';
 import { ABILITIES_CACHE, getAbilityForRole } from './TenantAbilities';
 import { TenantModelProxy } from '../System/models/TenantBaseModel';
@@ -21,7 +20,7 @@ export class AuthorizationGuard implements CanActivate {
 
     @Inject(TenantUser.name)
     private readonly tenantUserModel: TenantModelProxy<typeof TenantUser>,
-  ) { }
+  ) {}
 
   /**
    * Checks if the user has the required abilities to access the route
@@ -30,7 +29,6 @@ export class AuthorizationGuard implements CanActivate {
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const { user } = request as any;
     const userId = this.clsService.get('userId');
 
     if (ABILITIES_CACHE.has(userId)) {
@@ -38,7 +36,9 @@ export class AuthorizationGuard implements CanActivate {
     } else {
       const ability = await this.getAbilityForUser();
       (request as any).ability = ability;
-      ABILITIES_CACHE.set(user.id, ability);
+      // Key the write with the SAME userId used for the read above — writing
+      // by a different id meant the cache was never hit.
+      ABILITIES_CACHE.set(userId, ability);
     }
     return true;
   }

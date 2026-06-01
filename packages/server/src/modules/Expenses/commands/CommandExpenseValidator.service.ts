@@ -21,7 +21,8 @@ export class CommandExpenseValidator {
   public validateCategoriesNotEqualZero = (
     expenseDTO: CreateExpenseDto | EditExpenseDto,
   ) => {
-    const totalAmount = sumBy(expenseDTO.categories, 'amount') || 0;
+    const totalAmount =
+      sumBy(expenseDTO.categories, (c) => Number(c.amount) || 0) || 0;
 
     if (totalAmount <= 0) {
       throw new ServiceError(ERRORS.TOTAL_AMOUNT_EQUALS_ZERO);
@@ -81,7 +82,8 @@ export class CommandExpenseValidator {
     if (provided.length > 0) return provided;
 
     if (expenseDTO.paymentAccountId != null) {
-      const total = sumBy(expenseDTO.categories || [], 'amount') || 0;
+      const total =
+        sumBy(expenseDTO.categories || [], (c) => Number(c.amount) || 0) || 0;
       return [
         {
           index: 1,
@@ -129,8 +131,9 @@ export class CommandExpenseValidator {
     expenseDTO: CreateExpenseDto | EditExpenseDto,
     splits: ExpensePaymentSplitDto[],
   ) => {
-    const categoriesTotal = sumBy(expenseDTO.categories || [], 'amount') || 0;
-    const splitsTotal = sumBy(splits, 'amount') || 0;
+    const categoriesTotal =
+      sumBy(expenseDTO.categories || [], (c) => Number(c.amount) || 0) || 0;
+    const splitsTotal = sumBy(splits, (s) => Number(s.amount) || 0) || 0;
     const percentRows = (expenseDTO.categories || []).filter(
       (c) => c.amountType === 'percent',
     ).length;

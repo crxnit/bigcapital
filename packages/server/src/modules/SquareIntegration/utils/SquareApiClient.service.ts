@@ -42,6 +42,9 @@ export class SquareApiClient {
   ): AxiosInstance {
     return axios.create({
       baseURL: this.baseUrl(environment),
+      // Bound every outbound Square call — without a timeout a hung request
+      // (e.g. inside a webhook) holds the open UoW transaction indefinitely.
+      timeout: 10000,
       headers: {
         'Square-Version': SQUARE_API_VERSION,
         'Content-Type': 'application/json',
@@ -162,13 +165,11 @@ export class SquareApiClient {
         const newRefreshEncrypted = this.tokenEncryption.encrypt(
           refreshed.refreshToken,
         );
-        await this.connectionModel()
-          .query()
-          .patchAndFetchById(connection.id, {
-            accessTokenEncrypted: newAccessEncrypted,
-            refreshTokenEncrypted: newRefreshEncrypted,
-            tokenExpiresAt: refreshed.expiresAt,
-          });
+        await this.connectionModel().query().patchAndFetchById(connection.id, {
+          accessTokenEncrypted: newAccessEncrypted,
+          refreshTokenEncrypted: newRefreshEncrypted,
+          tokenExpiresAt: refreshed.expiresAt,
+        });
         // Update the in-memory object so callers holding it see fresh
         // values (and downstream handlers in the same call don't re-401).
         connection.accessTokenEncrypted = newAccessEncrypted;

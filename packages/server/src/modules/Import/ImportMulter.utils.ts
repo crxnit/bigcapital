@@ -6,13 +6,14 @@ export const getImportsStoragePath = () => {
   return path.join(global.__static_dirname, `/imports`);
 };
 
+const ALLOWED_SHEET_EXTENSIONS = ['.csv', '.xls', '.xlsx'];
+
 export function allowSheetExtensions(req, file, cb) {
-  if (
-    file.mimetype !== 'text/csv' &&
-    file.mimetype !== 'application/vnd.ms-excel' &&
-    file.mimetype !==
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  ) {
+  // Gate on the file extension, not MIME — browsers send inconsistent MIME
+  // types for .csv (text/plain, application/octet-stream, ...), so a MIME
+  // allowlist both rejects legit CSVs and lets through anything mislabelled.
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  if (!ALLOWED_SHEET_EXTENSIONS.includes(ext)) {
     cb(new ServiceError('IMPORTED_FILE_EXTENSION_INVALID'));
     return;
   }
@@ -34,5 +35,5 @@ const storage = Multer.diskStorage({
 export const uploadImportFileMulterOptions = {
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
-  // fileFilter: allowSheetExtensions,
+  fileFilter: allowSheetExtensions,
 };
