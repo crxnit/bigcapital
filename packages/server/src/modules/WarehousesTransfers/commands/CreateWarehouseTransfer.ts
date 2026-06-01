@@ -63,7 +63,8 @@ export class CreateWarehouseTransfer {
       warehouseTransferDTO.entries,
     );
     // Retrieves the auto-increment the warehouse transfer number.
-    const autoNextNumber = this.autoIncrementOrders.getNextTransferNumber();
+    const autoNextNumber =
+      await this.autoIncrementOrders.getNextTransferNumber();
 
     // Warehouse transfer order transaction number.
     const transactionNumber =

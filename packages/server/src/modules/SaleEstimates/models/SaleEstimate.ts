@@ -132,10 +132,10 @@ export class SaleEstimate extends TenantBaseModel {
    * Estimate total.
    * @returns {number}
    */
-  get total() {
+  get total(): number {
     const adjustmentAmount = defaultTo(this.adjustment, 0);
 
-    return this.subtotal - this.discountAmount - adjustmentAmount;
+    return this.subtotal - this.discountAmount + adjustmentAmount;
   }
 
   /**

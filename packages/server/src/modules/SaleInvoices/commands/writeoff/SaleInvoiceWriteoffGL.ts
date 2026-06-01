@@ -62,8 +62,9 @@ export class SaleInvoiceWriteoffGL {
       debit: 0,
       index: 1,
       indexGroup: 300,
-      accountNormal:
-        this.saleInvoiceModel.writtenoffExpenseAccount.accountNormal,
+      // A/R is an asset — its ledger normal is DEBIT (matches InvoiceGL's
+      // receivable leg), not the write-off expense account's normal.
+      accountNormal: AccountNormal.DEBIT,
     };
   }
 
@@ -77,7 +78,7 @@ export class SaleInvoiceWriteoffGL {
 
     return {
       ...commontEntry,
-      debit: this.saleInvoiceModel.writtenoffAmount,
+      debit: this.saleInvoiceModel.writtenoffAmountLocal,
       accountId: this.saleInvoiceModel.writtenoffExpenseAccountId,
       credit: 0,
       index: 2,

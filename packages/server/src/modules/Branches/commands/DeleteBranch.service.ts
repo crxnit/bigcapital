@@ -45,18 +45,21 @@ export class DeleteBranchService {
 
     // Deletes branch under unit-of-work.
     return this.uow.withTransaction(async (trx: Knex.Transaction) => {
-      // Triggers `onBranchCreate` event.
-      await this.eventPublisher.emitAsync(events.warehouse.onEdit, {
+      // Triggers `onBranchDeleting` event.
+      await this.eventPublisher.emitAsync(events.branch.onDeleting, {
         oldBranch,
         trx,
       } as IBranchDeletePayload);
 
-      await this.branchModel().query().findById(branchId).deleteIfNoRelations({
-        type: ERRORS.BRANCH_HAS_ASSOCIATED_TRANSACTIONS,
-        message: 'Branch has associated transactions',
-      });
-      // Triggers `onBranchCreate` event.
-      await this.eventPublisher.emitAsync(events.warehouse.onEdited, {
+      await this.branchModel()
+        .query(trx)
+        .findById(branchId)
+        .deleteIfNoRelations({
+          type: ERRORS.BRANCH_HAS_ASSOCIATED_TRANSACTIONS,
+          message: 'Branch has associated transactions',
+        });
+      // Triggers `onBranchDeleted` event.
+      await this.eventPublisher.emitAsync(events.branch.onDeleted, {
         oldBranch,
         trx,
       } as IBranchDeletedPayload);

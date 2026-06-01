@@ -587,6 +587,10 @@ export const events = {
     onActivate: 'onBranchActivate',
     onActivated: 'onBranchActivated',
 
+    onDelete: 'onBranchDelete',
+    onDeleting: 'onBranchDeleting',
+    onDeleted: 'onBranchDeleted',
+
     onMarkPrimary: 'onBranchMarkPrimary',
     onMarkedPrimary: 'onBranchMarkedPrimary',
   },

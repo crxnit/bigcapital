@@ -165,7 +165,7 @@ export class AttachmentsController {
     @Body() unlinkDto: UnlinkAttachmentDto,
     @Param('id') documentId: string,
   ) {
-    await this.attachmentsApplication.link(
+    await this.attachmentsApplication.unlink(
       documentId,
       unlinkDto.modelRef,
       unlinkDto.modelId,
@@ -173,7 +173,7 @@ export class AttachmentsController {
 
     return {
       status: 200,
-      message: 'The document has been linked successfully.',
+      message: 'The document has been unlinked successfully.',
     };
   }
 

@@ -45,7 +45,7 @@ export class AccountTransformer extends Transformer {
       const node = this.options.accountsGraph.getNodeData(dependId);
       return `${node.name}: `;
     });
-    return `${prefixAccounts}${account.name}`;
+    return `${prefixAccounts.join('')}${account.name}`;
   };
 
   /**

@@ -47,7 +47,7 @@ export class CreateManualJournalService {
     const date = moment(manualJournalDTO.date).format('YYYY-MM-DD');
 
     // Retrieve the next manual journal number.
-    const autoNextNumber = this.autoIncrement.getNextJournalNumber();
+    const autoNextNumber = await this.autoIncrement.getNextJournalNumber();
 
     // The manual or auto-increment journal number.
     const journalNumber = manualJournalDTO.journalNumber || autoNextNumber;
