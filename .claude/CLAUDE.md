@@ -202,6 +202,15 @@ Full detail + status moved to **`docs/CI-CD.md` → "Open items & bring-up statu
 
 (Done/for-reference: devDep-leak cleanup, Node 24 actions bump, containerd-flake prune cron, restic version, backup env naming — see `docs/CI-CD.md`.)
 
+## Staging UAT run (2026-06-02) — in progress
+
+Structured regression/UAT of the ~2-week changeset against staging (`staging.bc.jjocllc.com`, tenant DB `bigcapital_tenant_35i5f1mo1phc5w`). Full plan + findings log: `docs/UAT-REGRESSION-PLAN.md`. **6 issues found, 5 fixed + deployed + verified live**; post-mortems in `docs/FORK-BUG-HISTORY.md`, active rules added to this file.
+
+- **Fixed this run**: REGRESSION-001/002 (allocation invoice/credit-note dropped income leg — missing `categories` eager-load in GL writer), REGRESSION-006 (editing a published credit note left GL stale — `upsertGraph`→`upsertGraphAndFetch`), BUG-003/004 (exchange-rate `/latest` 404→500→best-effort degrade; never worked before).
+- **Sections green**: §1 GL gate, §2 ledger/currency (all 7: FX invoice/credit-note/write-off, fixed discount, 10× trailing-line guard, >255-char NOTE, auto-numbering), §3 allocations (create/edit/delete), §4.1–4.4 + 4.10 (parent-posting guard, cashflow-accounts page, match direction filter, register ordering).
+- **Open (logged, non-blocking)**: CONFIG-005 (staging `.env` `OPEN_EXCHANGE_RATE_APP_ID` = leaked template comment; clean the line + audit others), BUG-007 (`GET /sale-invoices/:id` on a deleted id returns 400 not 404; webapp refetches deleted entity), DATA-008 (staging data: Mercury Savings acct 1621 fully duplicates Checking 1625 — phantom account, books-owner cleanup, NOT a code bug).
+- **Remaining UAT**: §4.5/4.7 (blocked until DATA-008 Mercury dupes cleaned), §4.8 (account-delete cascade), §4.9 (bank-CSV import), §5 payments, §6 reports, §7 integrations, §8 UI.
+
 ## Open QA-review follow-ups
 
 Whole-server backend QA review (2026-06-01) → ~40 HIGH/MED/LOW fixes committed + pushed in small `tsc`-gated commits (concurrency/parallel-trx writes serialized, UoW-escaping writes threaded `trx`, GL/webhook/auth hardening, vendor-credit apply-to-bills sync wired, `@ts-nocheck` removed from **60 of 68** files). Still open (each a real task, not a quick fix):
