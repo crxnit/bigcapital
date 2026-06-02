@@ -79,7 +79,14 @@ export const validateUncategorizedTransactionsExcluded = (
  * leaving the candidate list empty (no 500, no log entry, just missing
  * rows). Filtering on the `dueAmount` virtual after the query sidesteps
  * the raw-SQL-meets-joined-graph trap entirely.
+ *
+ * The threshold is an ε (0.005), not `> 0`: `dueAmount` is `total -
+ * balanceAmount`, and a fully-settled doc whose discount/payment legs
+ * don't cancel to a clean zero in floating point leaves a residue
+ * (~5.68e-14) that `> 0` would let through as a phantom "$0.00"
+ * candidate (bit invoice 114, a discounted+fully-paid Square invoice,
+ * UAT 2026-06-02). Same money-gate ε rule as commit a5893e40c.
  */
 export const filterDueGreaterThanZero = <T extends { dueAmount: number }>(
   rows: T[],
-): T[] => rows.filter((r) => Number(r.dueAmount) > 0);
+): T[] => rows.filter((r) => Number(r.dueAmount) > 0.005);
