@@ -11,7 +11,8 @@ import {
   Spinner,
 } from '@blueprintjs/core';
 import { AppToaster } from '@/components';
-import { AccountsSelect } from '@/components/Accounts';
+import { ListSelect } from '@/components/Select';
+import { usePreprocessingAccounts } from '@/components/Accounts/_hooks';
 import {
   useEditCategorizeTransaction,
   useCashflowTransaction,
@@ -51,7 +52,9 @@ function EditCategorizationAlert({
     });
 
   const { data: accounts, isLoading: isAccountsLoading } = useAccounts(
-    {},
+    // `page_size: 10000` — ListSelect filters in-memory, so a category
+    // account beyond page 1 would otherwise be unselectable (FSelect trap).
+    { page_size: 10000 },
     { enabled: isOpen },
   );
 
@@ -113,6 +116,12 @@ function EditCategorizationAlert({
 
   const accountRootTypes = CATEGORY_ACCOUNT_ROOT_TYPES[transactionType] || [];
 
+  // Filter category accounts by the selected transaction type's root types
+  // (parents hidden by default — posting-to-parent is blocked server-side).
+  const filteredAccounts = usePreprocessingAccounts(accounts || [], {
+    filterByRootTypes: accountRootTypes,
+  });
+
   return (
     <Dialog
       title="Edit Categorization"
@@ -135,14 +144,17 @@ function EditCategorizationAlert({
               />
             </FormGroup>
             <FormGroup label="Category Account" labelFor="credit-account">
-              <AccountsSelect
-                name="creditAccountId"
-                items={accounts || []}
-                filterByRootTypes={accountRootTypes}
-                value={selectedAccountId}
+              <ListSelect
+                items={filteredAccounts}
+                selectedItem={selectedAccountId}
+                selectedItemProp={'id'}
+                textProp={'name'}
+                labelProp={'code'}
                 onItemSelect={(account) => setSelectedAccountId(account.id)}
+                defaultText={'Select an account…'}
                 popoverProps={{ minimal: true }}
-                fill={true}
+                filterable={true}
+                disabled={isAccountsLoading}
               />
             </FormGroup>
             <FormGroup label="Description" labelFor="description">
