@@ -93,7 +93,13 @@ export class EditCategorizeBankTransaction {
     if (editDTO.creditAccountId !== undefined) {
       patch.creditAccountId = editDTO.creditAccountId;
     }
-    if (editDTO.transactionType !== undefined) {
+    // Guard: only patch a NON-EMPTY transactionType. An empty/blank value
+    // (e.g. a mis-mapped form field) would otherwise blank the column, and the
+    // GL writer then emits two zero-amount legs that the ledger drops —
+    // silently destroying the transaction's GL with no error and no imbalance
+    // (the trial-balance gate can't see a removed balanced pair). Validation
+    // above is already gated on truthiness; keep the patch gate consistent.
+    if (editDTO.transactionType) {
       patch.transactionType = transformCashflowTransactionType(
         editDTO.transactionType,
       );
@@ -119,14 +125,8 @@ export class EditCategorizeBankTransaction {
 
       // Rewrite journal entries if account or type changed.
       if (needsGLRewrite) {
-        await this.glEntries.revertJournalEntries(
-          cashflowTransaction.id,
-          trx,
-        );
-        await this.glEntries.writeJournalEntries(
-          cashflowTransaction.id,
-          trx,
-        );
+        await this.glEntries.revertJournalEntries(cashflowTransaction.id, trx);
+        await this.glEntries.writeJournalEntries(cashflowTransaction.id, trx);
       }
 
       return this.bankTransactionModel()

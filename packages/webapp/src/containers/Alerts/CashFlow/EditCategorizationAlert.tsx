@@ -64,10 +64,18 @@ function EditCategorizationAlert({
   const [initialized, setInitialized] = useState(false);
 
   // Pre-fill form when transaction data loads.
+  // GET banking/transactions/:id returns camelCase (BankTransactionTransformer);
+  // responses are NOT snake-cased. Reading snake_case here left transactionType
+  // empty, and saving an empty type blanked the column + destroyed the GL
+  // (BUG-013). Read camelCase, with a snake_case fallback for safety.
   useEffect(() => {
     if (transaction && !initialized) {
-      setSelectedAccountId(transaction.credit_account_id || null);
-      setTransactionType(transaction.transaction_type || '');
+      setSelectedAccountId(
+        transaction.creditAccountId ?? transaction.credit_account_id ?? null,
+      );
+      setTransactionType(
+        transaction.transactionType ?? transaction.transaction_type ?? '',
+      );
       setDesc(transaction.description || '');
       setInitialized(true);
     }
