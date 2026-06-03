@@ -1,7 +1,15 @@
 // @ts-nocheck
 import React from 'react';
 import intl from 'react-intl-universal';
-import { Intent, Menu, MenuItem, Tag } from '@blueprintjs/core';
+import {
+  Intent,
+  Menu,
+  MenuItem,
+  Tag,
+  Button,
+  Popover,
+  Position,
+} from '@blueprintjs/core';
 import { Icon } from '@/components';
 import { safeCallback } from '@/utils';
 import { useAccountTransactionsContext } from './AccountTransactionsProvider';
@@ -53,6 +61,30 @@ export function ActionsMenu({
         />
       )}
     </Menu>
+  );
+}
+
+/**
+ * Visible per-row actions trigger. Mirrors the right-click ContextMenu so the
+ * actions (Edit Category / Uncategorize / Unmatch) are discoverable without a
+ * right-click. Reuses ActionsMenu, which gates each item by status — so we only
+ * render the trigger for rows that actually have an action (categorized/matched).
+ */
+function ActionsCell(props) {
+  const status = props?.row?.original?.status;
+  const hasActions = status === 'categorized' || status === 'matched';
+
+  if (!hasActions) {
+    return null;
+  }
+  return (
+    <Popover
+      content={<ActionsMenu {...props} />}
+      position={Position.BOTTOM_RIGHT}
+      minimal
+    >
+      <Button minimal small icon={<Icon icon="more-h-16" iconSize={16} />} />
+    </Popover>
   );
 }
 
@@ -169,6 +201,15 @@ export function useAccountTransactionsColumns() {
         textOverview: true,
         clickable: true,
         money: true,
+      },
+      {
+        id: 'actions',
+        Header: '',
+        Cell: ActionsCell,
+        className: 'actions',
+        width: 50,
+        disableResizing: true,
+        disableSortBy: true,
       },
     ],
     [],
