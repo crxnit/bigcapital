@@ -19,12 +19,25 @@ export class UncategorizedTransactionsImportable extends Importable {
 
     @Inject(Account.name)
     private readonly accountModel: TenantModelProxy<typeof Account>,
+
+    @Inject(UncategorizedBankTransaction.name)
+    private readonly uncategorizedBankTransaction: TenantModelProxy<
+      typeof UncategorizedBankTransaction
+    >,
   ) {
     super();
   }
 
   /**
    * Passing the sheet DTO to create uncategorized transaction.
+   *
+   * De-dupe on re-import: a bank statement re-uploaded (a fresh `batch`) must
+   * not double its rows. We skip a row when an identical one — same
+   * (accountId, date, amount, payee) — already exists from a DIFFERENT batch.
+   * Excluding the current batch is deliberate: two genuinely-identical lines
+   * within the SAME statement (e.g. two equal same-day charges to one payee)
+   * are legitimate and must both import. Rows run sequentially on the shared
+   * trx (ImportFileCommon concurrency:1), so this check sees prior rows safely.
    * @param {CreateUncategorizedTransactionDTO,} createDTO
    * @param {Knex.Transaction} trx
    */
@@ -32,6 +45,33 @@ export class UncategorizedTransactionsImportable extends Importable {
     createDTO: CreateUncategorizedTransactionDTO,
     trx?: Knex.Transaction,
   ) {
+    const { accountId, date, amount, payee, batch } = createDTO as any;
+
+    const existing = await this.uncategorizedBankTransaction()
+      .query(trx)
+      .where('accountId', accountId)
+      .where('date', date)
+      .where('amount', amount)
+      .where((q) => {
+        // NULL-safe payee match (MySQL `= NULL` is never true).
+        if (payee === null || payee === undefined || payee === '') {
+          q.whereNull('payee').orWhere('payee', '');
+        } else {
+          q.where('payee', payee);
+        }
+      })
+      .modify((q) => {
+        // Only collide against OTHER imports, never the current batch.
+        if (batch) {
+          q.whereNot('batch', batch);
+        }
+      })
+      .first();
+
+    // Already imported in a prior batch — skip (counts as a successful row).
+    if (existing) {
+      return existing;
+    }
     return this.createUncategorizedTransaction.create(createDTO, trx);
   }
 
