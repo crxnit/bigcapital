@@ -77,14 +77,19 @@ function ActionsCell(props) {
   if (!hasActions) {
     return null;
   }
+  // Stop the click from bubbling to the cell handler — without this, opening
+  // the actions menu also fires `onCellClick`, which slides the transaction
+  // detail drawer in behind the menu (confusing double-action).
   return (
-    <Popover
-      content={<ActionsMenu {...props} />}
-      position={Position.BOTTOM_RIGHT}
-      minimal
-    >
-      <Button minimal small icon={<Icon icon="more-h-16" iconSize={16} />} />
-    </Popover>
+    <div onClick={(e) => e.stopPropagation()}>
+      <Popover
+        content={<ActionsMenu {...props} />}
+        position={Position.BOTTOM_RIGHT}
+        minimal
+      >
+        <Button minimal small icon={<Icon icon="more-h-16" iconSize={16} />} />
+      </Popover>
+    </div>
   );
 }
 

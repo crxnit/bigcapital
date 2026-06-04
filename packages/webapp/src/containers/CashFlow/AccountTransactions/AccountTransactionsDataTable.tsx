@@ -94,7 +94,17 @@ function AccountTransactionsDataTable({
   const handleEditCategorization = (transaction) => {
     openAlert('edit-categorization', {
       uncategorizedTransactionId: transaction.uncategorized_transaction_id,
-      cashflowTransactionId: transaction.referenceId,
+      // Register rows are snake_case (`reference_id`; see
+      // `handleCashFlowTransactionType` reading `reference.reference_id`).
+      // Reading camelCase `referenceId` here left `cashflowTransactionId`
+      // undefined → `useCashflowTransaction` stayed disabled → the dialog never
+      // pre-filled. With an empty `transactionType` the native <select>
+      // mis-displays its first option ("Other Income") while state is '', so
+      // `accountRootTypes` is [] and the Category Account list is unfiltered
+      // (every account, incl. the AR clearing row, shows). Save was unaffected
+      // (it uses `uncategorizedTransactionId`), which masked this.
+      cashflowTransactionId:
+        transaction.reference_id ?? transaction.referenceId,
     });
   };
 
