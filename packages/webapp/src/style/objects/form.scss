@@ -62,11 +62,9 @@ label.bp4-label {
   }
 }
 
-.bp4-input-group{
-
-  &.bp4-intent-danger{
-    
-    .bp4-input{
+.bp4-input-group {
+  &.bp4-intent-danger {
+    .bp4-input {
       box-shadow: 0 0 0 transparent;
       border-color: #db3737;
 
@@ -84,8 +82,11 @@ label.bp4-label {
 
   &.#{$ns}-intent-danger {
     select {
-      box-shadow: 0 0 0 0 rgba(228, 226, 226, 0), 0 0 0 0 rgba(2, 2, 2, 0),
-        inset 0 0 0 1px #db3737, inset 0 0 0 1px rgba(16, 22, 26, 0.15),
+      box-shadow:
+        0 0 0 0 rgba(228, 226, 226, 0),
+        0 0 0 0 rgba(2, 2, 2, 0),
+        inset 0 0 0 1px #db3737,
+        inset 0 0 0 1px rgba(16, 22, 26, 0.15),
         inset 0 1px 1px rgba(16, 22, 26, 0.2);
     }
   }
@@ -112,7 +113,7 @@ label.bp4-label {
     background-color: var(--color-ui-input-background);
     border: 1px solid var(--color-ui-input-border);
   }
-  
+
   &:focus {
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     border-color: #80bdff;
@@ -150,7 +151,7 @@ label.bp4-label {
     flex: 1 1 auto;
   }
   .bp4-control-group {
-    >.input-group-prepend:first-child .input-group-text {
+    > .input-group-prepend:first-child .input-group-text {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
     }
@@ -164,7 +165,6 @@ label.bp4-label {
 }
 
 .bp4-datepicker-caption select {
-
   &,
   &:hover {
     border-color: transparent;
@@ -190,7 +190,6 @@ label.bp4-label {
 }
 
 .form-group--select-list {
-
   .form-group--select-list.bp4-intent-danger & {
     & {
       border-color: #db3737;
@@ -203,8 +202,7 @@ label.bp4-label {
     padding-right: 25px;
     justify-content: start;
 
-    &:not([class*="bp4-intent-"]):not(.bp4-minimal) {
-
+    &:not([class*='bp4-intent-']):not(.bp4-minimal) {
       &,
       &:hover {
         outline: none;
@@ -228,11 +226,9 @@ label.bp4-label {
   }
 
   .bp4-popover-target.bp4-popover-open {
-
     .#{$ns}-button {
-
-      &:not([class*="bp4-intent-"]):not(.bp4-minimal):not(:disabled),
-      &:not([class*="bp4-intent-"]):not(.bp4-minimal):hover:not(:disabled) {
+      &:not([class*='bp4-intent-']):not(.bp4-minimal):not(:disabled),
+      &:not([class*='bp4-intent-']):not(.bp4-minimal):hover:not(:disabled) {
         background-color: #fafafa;
       }
     }
@@ -245,7 +241,7 @@ label.bp4-label {
       left: 0;
       margin: 7px;
 
-      +.bp4-button-text {
+      + .bp4-button-text {
         padding-left: 20px;
       }
     }
@@ -263,6 +259,45 @@ label.bp4-label {
   }
 }
 
+// Dark-theme override (e.g. Edit Categorization dialog, BUG-016): the light
+// rules above hardcode `background: #fff` / `color: #333` on the select-list
+// button, overriding Blueprint's dark button styling and leaving a white
+// button inside a dark portal. Restore Blueprint dark defaults when nested
+// under `.bp4-dark` — leaves every light-context usage untouched.
+.#{$ns}-dark {
+  .form-group--select-list {
+    .#{$ns}-button {
+      color: #f6f7f9;
+
+      &:not([class*='bp4-intent-']):not(.bp4-minimal) {
+        &,
+        &:hover {
+          border-color: rgba(17, 20, 24, 0.4);
+
+          &:not(:disabled) {
+            background: #383e47;
+          }
+        }
+      }
+    }
+
+    .#{$ns}-popover-target {
+      .#{$ns}-button {
+        color: #f6f7f9;
+      }
+    }
+
+    .#{$ns}-popover-target.#{$ns}-popover-open {
+      .#{$ns}-button {
+        &:not([class*='bp4-intent-']):not(.bp4-minimal):not(:disabled),
+        &:not([class*='bp4-intent-']):not(.bp4-minimal):hover:not(:disabled) {
+          background-color: #2f343c;
+        }
+      }
+    }
+  }
+}
+
 .select-list--fill-popover {
   position: relative;
 
@@ -276,7 +311,7 @@ label.bp4-label {
   display: block;
 }
 .bp4-menu-item::before,
-.bp4-menu-item>.bp4-icon {
+.bp4-menu-item > .bp4-icon {
   color: #4b5d6b;
 }
 
@@ -310,6 +345,6 @@ label.bp4-label {
   }
 }
 
-.bp4-control.bp4-checkbox .bp4-control-indicator{
+.bp4-control.bp4-checkbox .bp4-control-indicator {
   border-color: #666;
 }

@@ -16,5 +16,6 @@
   "field.parent_account": "Parent Account",
   "field.parent_account_code": "Parent Account Code",
   "field.created_at": "Created at",
-  "field.account_hint": "Matches the account name or code."
+  "field.account_hint": "Matches the account name or code.",
+  "accounts_receivable.currency": "Accounts Receivable ({currency})"
 }
