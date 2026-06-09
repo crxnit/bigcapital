@@ -41,6 +41,13 @@ CVE-2026-42264
 CVE-2026-44492
 CVE-2026-44494
 CVE-2026-44495
+#    2026-06 batch (all outbound-only, same transitive root, fixed 1.16.0/0.32.0):
+#    proxy-auth header leak on HTTP→HTTPS redirect (-44486/-44487), unthrottled
+#    resource allocation (-44488), ReDoS via cookie-name injection (-44496).
+CVE-2026-44486
+CVE-2026-44487
+CVE-2026-44488
+CVE-2026-44496
 
 # ── multer 1.4.5-lts.1 — direct dep; all fixes land in 2.0.0 (MAJOR, changes
 #    the NestJS file-upload integration). Tracked for a dedicated bump+QA.
