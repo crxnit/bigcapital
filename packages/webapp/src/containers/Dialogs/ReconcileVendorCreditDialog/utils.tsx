@@ -5,7 +5,7 @@ import clsx from 'classnames';
 import { Callout, Intent, Classes } from '@blueprintjs/core';
 
 import { CLASSES } from '@/constants/classes';
-import {T , MoneyFieldCell, FormatDateCell } from '@/components';
+import { T, MoneyFieldCell, FormatDateCell } from '@/components';
 
 export const transformErrors = (errors, { setErrors }) => {};
 
@@ -29,7 +29,10 @@ export const useReconcileVendorCreditTableColumns = () => {
     () => [
       {
         Header: intl.get('bill_date'),
-        accessor: 'formatted_bill_date',
+        // Raw `bill_date` (ISO) — FormatDateCell moment-parses + localizes it.
+        // Feeding the already-formatted `formatted_bill_date` made moment parse
+        // "June 09, 2026" and emit the RFC2822/ISO deprecation warning (BUG-018).
+        accessor: 'bill_date',
         Cell: FormatDateCell,
         disableSortBy: true,
         width: '120',

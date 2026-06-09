@@ -53,7 +53,10 @@ export const useReconcileCreditNoteTableColumns = () => {
     () => [
       {
         Header: intl.get('invoice_date'),
-        accessor: 'formatted_invoice_date',
+        // Raw `invoice_date` (ISO) — FormatDateCell moment-parses + localizes it.
+        // The already-formatted `formatted_invoice_date` tripped moment's
+        // RFC2822/ISO deprecation warning (BUG-018), same as the VC reconcile.
+        accessor: 'invoice_date',
         Cell: FormatDateCell,
         disableSortBy: true,
         width: '120',
