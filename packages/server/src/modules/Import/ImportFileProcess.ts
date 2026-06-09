@@ -56,7 +56,7 @@ export class ImportFileProcess {
     const resourceFields = await this.resource.getResourceFields2(resource);
 
     // Runs the importing operation with ability to return errors that will happen.
-    const [successedImport, failedImport, allData] =
+    const [successedImport, failedImport, skippedImport, allData] =
       await this.uow.withTransaction(async (trx: Knex.Transaction) => {
         // Prases the sheet json data.
         const parsedData = await this.importParser.parseSheetData(
@@ -65,12 +65,9 @@ export class ImportFileProcess {
           sheetData,
           trx,
         );
-        const [successedImport, failedImport] = await this.importCommon.import(
-          importFile,
-          parsedData,
-          trx,
-        );
-        return [successedImport, failedImport, parsedData];
+        const [successedImport, failedImport, skippedImport] =
+          await this.importCommon.import(importFile, parsedData, trx);
+        return [successedImport, failedImport, skippedImport, parsedData];
       }, trx);
     const mapping = importFile.mappingParsed;
     const errors = chain(failedImport)
@@ -78,12 +75,21 @@ export class ImportFileProcess {
       .flatten()
       .value();
 
+    // Rows the importable intentionally skipped (e.g. re-import dedupe) —
+    // reported separately from errors so a re-import reads "0 created, N
+    // skipped" instead of falsely claiming N created.
+    const skipped = skippedImport.map((oper) => ({
+      rowNumber: oper.rowNumber,
+      uniqueValue: oper.uniqueValue,
+      reason: oper.reason,
+    }));
+
     const unmappedColumns = getUnmappedSheetColumns(sheetColumns, mapping);
     const totalCount = allData.length;
 
     const createdCount = successedImport.length;
     const errorsCount = failedImport.length;
-    const skippedCount = errorsCount;
+    const skippedCount = skippedImport.length;
 
     return {
       resource,
@@ -92,6 +98,7 @@ export class ImportFileProcess {
       totalCount,
       errorsCount,
       errors,
+      skipped,
       unmappedColumns: unmappedColumns,
       unmappedColumnsCount: unmappedColumns.length,
     };

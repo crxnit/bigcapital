@@ -4,7 +4,7 @@ import * as yup from 'yup';
 import * as uniqid from 'uniqid';
 import { Importable } from '../../Import/Importable';
 import { CreateUncategorizedTransactionService } from './CreateUncategorizedTransaction.service';
-import { ImportableContext } from '../../Import/interfaces';
+import { ImportableContext, ImportSkippedRow } from '../../Import/interfaces';
 import { BankTransactionsSampleData } from '../../BankingTransactions/constants';
 import { Account } from '@/modules/Accounts/models/Account.model';
 import { CreateUncategorizedTransactionDTO } from '../types/BankingCategorize.types';
@@ -68,9 +68,13 @@ export class UncategorizedTransactionsImportable extends Importable {
       })
       .first();
 
-    // Already imported in a prior batch — skip (counts as a successful row).
+    // Already imported in a prior batch — skip (reported as "skipped", not
+    // "created", so a re-import doesn't falsely claim it added rows).
     if (existing) {
-      return existing;
+      return new ImportSkippedRow(
+        existing,
+        'Already imported in a previous upload (same account, date, amount & payee).',
+      );
     }
     return this.createUncategorizedTransaction.create(createDTO, trx);
   }

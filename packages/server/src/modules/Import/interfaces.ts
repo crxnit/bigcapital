@@ -1,5 +1,5 @@
-import { IModelMetaField2 } from "@/interfaces/Model";
-import { ImportModelShape } from "./models/Import";
+import { IModelMetaField2 } from '@/interfaces/Model';
+import { ImportModelShape } from './models/Import';
 
 export interface ImportMappingAttr {
   from: string;
@@ -43,6 +43,12 @@ export interface ImportFileMapPOJO {
   };
 }
 
+export interface ImportSkippedInfo {
+  rowNumber: number;
+  uniqueValue: unknown;
+  reason: string;
+}
+
 export interface ImportFilePreviewPOJO {
   resource: string;
   createdCount: number;
@@ -50,6 +56,7 @@ export interface ImportFilePreviewPOJO {
   totalCount: number;
   errorsCount: number;
   errors: ImportInsertError[];
+  skipped: ImportSkippedInfo[];
   unmappedColumns: string[];
   unmappedColumnsCount: number;
 }
@@ -64,6 +71,27 @@ export interface ImportOperError {
   index: number;
 }
 
+export interface ImportOperSkipped {
+  index: number;
+  data: unknown;
+  rowNumber: number;
+  uniqueValue: unknown;
+  reason: string;
+}
+
+/**
+ * Marker an `Importable.importable()` returns to signal a row was intentionally
+ * skipped (e.g. a re-import dedupe) rather than created. The framework buckets
+ * it as "skipped" instead of "created" so the import report is honest. Default
+ * behaviour is unchanged for importables that never skip.
+ */
+export class ImportSkippedRow {
+  constructor(
+    public readonly data: unknown,
+    public readonly reason: string = 'Skipped (duplicate of an already-imported row).',
+  ) {}
+}
+
 export interface ImportableContext {
   import: ImportModelShape;
   rowIndex: number;
@@ -75,7 +103,6 @@ export const ImportDateFormats = [
   'MM/dd/yy',
   'dd/MMM/yyyy',
 ];
-
 
 export interface IImportFileCommitedEventPayload {
   importId: string;

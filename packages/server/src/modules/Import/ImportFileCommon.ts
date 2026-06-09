@@ -6,7 +6,9 @@ import { Knex } from 'knex';
 import {
   ImportInsertError,
   ImportOperError,
+  ImportOperSkipped,
   ImportOperSuccess,
+  ImportSkippedRow,
   ImportableContext,
 } from './interfaces';
 import { getUniqueImportableValue, trimObject } from './_utils';
@@ -35,7 +37,7 @@ export class ImportFileCommon {
     importFile: ImportModelShape,
     parsedData: Record<string, any>[],
     trx?: Knex.Transaction,
-  ): Promise<[ImportOperSuccess[], ImportOperError[]]> {
+  ): Promise<[ImportOperSuccess[], ImportOperError[], ImportOperSkipped[]]> {
     const resourceFields = await this.resource.getResourceFields2(
       importFile.resource,
     );
@@ -45,6 +47,7 @@ export class ImportFileCommon {
 
     const success: ImportOperSuccess[] = [];
     const failed: ImportOperError[] = [];
+    const skipped: ImportOperSkipped[] = [];
 
     const importAsync = async (objectDTO, index: number): Promise<void> => {
       const context: ImportableContext = {
@@ -67,7 +70,19 @@ export class ImportFileCommon {
         try {
           // Run the importable function and listen to the errors.
           const data = await importable.importable(transformedDTO, trx);
-          success.push({ index, data });
+          // A row the importable intentionally skipped (e.g. re-import dedupe)
+          // is bucketed as "skipped", not "created", so the report is honest.
+          if (data instanceof ImportSkippedRow) {
+            skipped.push({
+              index,
+              data: data.data,
+              rowNumber,
+              uniqueValue,
+              reason: data.reason,
+            });
+          } else {
+            success.push({ index, data });
+          }
         } catch (err) {
           if (err instanceof ServiceError) {
             const error: ImportInsertError[] = [
@@ -109,7 +124,7 @@ export class ImportFileCommon {
     // Run post-processing (e.g. deferred parent-child relationship resolution).
     await importable.afterImport(trx);
 
-    return [success, failed];
+    return [success, failed, skipped];
   }
 
   /**

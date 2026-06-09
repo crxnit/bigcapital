@@ -42,6 +42,7 @@ function ImportFilePreviewContent() {
 
           <ImportFilePreviewImported />
           <ImportFilePreviewSkipped />
+          <ImportFilePreviewErrors />
           <ImportFilePreviewUnmapped />
         </Stack>
       </ImportFileContainer>
@@ -82,7 +83,7 @@ function ImportFilePreviewImported() {
 function ImportFilePreviewSkipped() {
   const { importPreview } = useImportFilePreviewBootContext();
 
-  // Can't continue if there's no skipped items.
+  // Nothing to show when no rows were skipped.
   if (importPreview.skippedCount <= 0) return null;
 
   return (
@@ -90,6 +91,35 @@ function ImportFilePreviewSkipped() {
       collapseProps={{ defaultIsOpen: false }}
       collapsible={true}
       title={`(${importPreview.skippedCount}) Items are skipped`}
+    >
+      <SectionCard padded={true}>
+        <table className={clsx('bp4-html-table', styles.skippedTable)}>
+          <tbody>
+            {importPreview?.skipped?.map((row, key) => (
+              <tr key={key}>
+                <td>{row.rowNumber}</td>
+                <td>{row.uniqueValue}</td>
+                <td>{row.reason}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+    </Section>
+  );
+}
+
+function ImportFilePreviewErrors() {
+  const { importPreview } = useImportFilePreviewBootContext();
+
+  // Nothing to show when no rows errored.
+  if (importPreview.errorsCount <= 0) return null;
+
+  return (
+    <Section
+      collapseProps={{ defaultIsOpen: false }}
+      collapsible={true}
+      title={`(${importPreview.errorsCount}) Items have errors`}
     >
       <SectionCard padded={true}>
         <table className={clsx('bp4-html-table', styles.skippedTable)}>
@@ -143,11 +173,13 @@ function ImportFilePreviewFloatingActions() {
   const handleSubmitBtn = () => {
     importFile(importId)
       .then(() => {
+        const skippedNote =
+          importPreview.skippedCount > 0
+            ? ` (${importPreview.skippedCount} skipped as duplicates)`
+            : '';
         AppToaster.show({
           intent: Intent.SUCCESS,
-          message: `The ${
-            importPreview.createdCount
-          } of ${10} has imported successfully.`,
+          message: `${importPreview.createdCount} of ${importPreview.totalCount} items imported successfully${skippedNote}.`,
         });
         onImportSuccess && onImportSuccess();
       })
