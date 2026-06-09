@@ -89,6 +89,28 @@ export class DeleteSaleInvoice {
   };
 
   /**
+   * Validate the sale invoice is not written-off.
+   *
+   * A write-off posts its OWN ledger (`InvoiceWriteOff`: DR bad-debt expense /
+   * CR A/R) under a separate reference from the invoice. Deleting the invoice
+   * only reverses the `SaleInvoice` ledger — it leaves the write-off legs
+   * orphaned (phantom expense + phantom negative A/R that the §1 per-reference
+   * gate can't see, since the write-off pair balances internally). Require the
+   * write-off to be cancelled first (`WriteoffSaleInvoice.cancelWrittenoff`
+   * reverses those legs) before the invoice can be deleted.
+   */
+  private validateInvoiceIsNotWrittenoff(oldSaleInvoice: {
+    writtenoffAt?: any;
+  }) {
+    if (oldSaleInvoice.writtenoffAt) {
+      throw new ServiceError(
+        ERRORS.CANNOT_DELETE_WRITTEN_OFF_INVOICE,
+        'Cannot delete a written-off invoice. Cancel the write-off first.',
+      );
+    }
+  }
+
+  /**
    * Deletes the given sale invoice with associated entries
    * and journal transactions.
    * @param {Number} saleInvoiceId - The given sale invoice id.
@@ -112,6 +134,9 @@ export class DeleteSaleInvoice {
 
     // Validate the sale invoice has applied to credit note transaction.
     await this.validateInvoiceHasNoAppliedToCredit(saleInvoiceId);
+
+    // Validate the invoice isn't written-off (would orphan the write-off GL).
+    this.validateInvoiceIsNotWrittenoff(oldSaleInvoice);
 
     // Triggers `onSaleInvoiceDelete` event.
     await this.eventPublisher.emitAsync(events.saleInvoice.onDelete, {

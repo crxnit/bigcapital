@@ -105,6 +105,13 @@ export const handleDeleteErrors = (errors) => {
       message: 'Cannot delete a transaction matched with a bank transaction.',
     });
   }
+  if (errors.find((e) => e.type === 'CANNOT_DELETE_WRITTEN_OFF_INVOICE')) {
+    AppToaster.show({
+      intent: Intent.DANGER,
+      message:
+        'Cannot delete a written-off invoice. Cancel the write-off first.',
+    });
+  }
 };
 
 export function ActionsMenu({
