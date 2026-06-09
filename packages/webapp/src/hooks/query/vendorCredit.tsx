@@ -327,7 +327,10 @@ export function useReconcileVendorCredit(id, props, requestProps) {
     [t.RECONCILE_VENDOR_CREDIT, id],
     {
       method: 'get',
-      url: `vendor-credits/${id}/apply-to-bills`,
+      // Server exposes the applicable-bills list at GET `:id/bills-to-apply`
+      // (`apply-to-bills` is POST-only — the create endpoint). The old GET path
+      // 404'd, so the "Reconcile with Purchase Invoices" dialog never loaded.
+      url: `vendor-credits/${id}/bills-to-apply`,
       ...requestProps,
     },
     {
