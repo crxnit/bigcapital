@@ -367,7 +367,10 @@ export function useDeleteReconcileVendorCredit(props) {
   const apiRequest = useApiRequest();
 
   return useMutation(
-    (id) => apiRequest.delete(`vendor-credits/applied-to-bills/${id}`),
+    // Server route is `applied-bills` (@Delete('applied-bills/:id')), not
+    // `applied-to-bills` — the old path 404'd so un-reconcile never worked
+    // (sibling of BUG-017's GET mismatch in this same feature).
+    (id) => apiRequest.delete(`vendor-credits/applied-bills/${id}`),
     {
       onSuccess: (res, id) => {
         // Common invalidate queries.
