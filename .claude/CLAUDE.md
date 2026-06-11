@@ -205,7 +205,7 @@ Full detail + status moved to **`docs/CI-CD.md` → "Open items & bring-up statu
 
 (Done/for-reference: devDep-leak cleanup, Node 24 actions bump, containerd-flake prune cron, restic version, backup env naming — see `docs/CI-CD.md`.)
 
-## Staging UAT run (2026-06-02 → 2026-06-09) — nearly complete
+## Staging UAT run (2026-06-02 → 2026-06-11) — complete (only externally-blocked items remain)
 
 Structured regression/UAT of the ~2-week changeset against staging (`staging.bc.jjocllc.com`, tenant DB `bigcapital_tenant_35i5f1mo1phc5w`). Full plan + findings log: `docs/UAT-REGRESSION-PLAN.md`. **~12 issues found, all fixed + deployed + verified live**; post-mortems in `docs/FORK-BUG-HISTORY.md`, active rules in this file.
 
