@@ -2,7 +2,7 @@
 # Nightly at 03:27 UTC; stdout+stderr go to journald under tag `bc-sofis-backup`.
 # View results:  journalctl -t bc-sofis-backup --since today
 #
-# Requires:  /srv/bigcapital/backup.sh (0750 root:root)
+# Requires:  /srv/portal/clients/sofis-bc/backup.sh (0750 root:root)
 #            /etc/restic/bigcapital-sofis.env (0600 root:root)
 
-27 3 * * * root /srv/bigcapital/backup.sh 2>&1 | logger -t bc-sofis-backup
+27 3 * * * root /srv/portal/clients/sofis-bc/backup.sh 2>&1 | logger -t bc-sofis-backup

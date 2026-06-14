@@ -3,11 +3,11 @@
 # Backup script for the dedicated Sofi's Mini Donuts Bigcapital VPS.
 # Adapted from deploy/vps-backup.sh (shared-host envs) for the standalone box.
 #
-# Install at /srv/bigcapital/backup.sh (mode 0750, root:root); run nightly by
+# Install at /srv/portal/clients/sofis-bc/backup.sh (mode 0750, root:root); run nightly by
 # cron (see bigcapital-sofis-backup.cron).
 #
 # Sources:
-#   1. /srv/bigcapital/.env                  — DB + S3 creds (the stack's .env)
+#   1. /srv/portal/clients/sofis-bc/.env                  — DB + S3 creds (the stack's .env)
 #   2. /etc/restic/bigcapital-sofis.env      — RESTIC_REPOSITORY, RESTIC_PASSWORD,
 #                                              and backend creds (e.g. AWS_*)
 #                                              (template: restic.env.example)
