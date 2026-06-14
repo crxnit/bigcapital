@@ -8,16 +8,15 @@ Traefik, no `portal-net`, no JJOC OAuth edge.
 | ----------- | -------------------------------------------------------------------------------------------- |
 | **Host**    | dedicated VPS `163.192.116.72`, **4 GB / 2 vCPU / ≥ 40 GB SSD**, Ubuntu 22.04 LTS, **arm64** |
 | **SSH**     | custom port **4321**, key-only, `PermitRootLogin prohibit-password`                          |
-| **URL**     | `https://books.sofisminidonuts.com` (confirm exact FQDN before boot)                         |
+| **URL**     | `https://books.sofisminidonuts.com` (A record → `163.192.116.72`, confirmed)                 |
 | **Access**  | Client logs in directly; Bigcapital JWT is the only identity gate                            |
 | **Edge**    | Traefik bundled in this compose (Let's Encrypt HTTP-01)                                      |
 | **Images**  | Pinned GHCR SHA tags (`${SERVER_IMAGE}`/`${WEBAPP_IMAGE}`); **manual** updates               |
 | **Data**    | Starts **EMPTY** (fresh org). NOT a clone.                                                   |
 | **On host** | `/srv/bigcapital/`                                                                           |
 
-> ⚠️ **Confirm the exact FQDN first.** `books.sofisminidonuts.com` is assumed in
-> the compose, `.env`, and `traefik-dynamic/sofis-bc.yml`. If it differs, tell me
-> — I'll regenerate.
+> ✅ **FQDN confirmed:** `books.sofisminidonuts.com`, `A` record → `163.192.116.72`.
+> Wired into the compose, `.env`, and `traefik-dynamic/sofis-bc.yml`.
 
 ---
 
@@ -61,7 +60,7 @@ before removing port 22** (UFW _and_ the provider firewall).
 
 ## 3. DNS
 
-- `A` record `books.sofisminidonuts.com` → the VPS public IP.
+- `A` record `books.sofisminidonuts.com` → `163.192.116.72` ✅ (confirmed in place).
 - Let's Encrypt HTTP-01 needs this resolving **and** ports 80/443 open **before**
   first boot, or cert issuance fails (Traefik retries; check `docker logs bigcapital-sofis-traefik`).
 
