@@ -76,8 +76,9 @@ mkdir -p /srv/bigcapital && cd /srv/bigcapital
 Edit two things before boot:
 
 - `traefik/traefik.yml` → set a real **ACME email** (static config; no env interpolation).
-- `.env` → fill every `<...>` (fresh secrets below), pin `SERVER_IMAGE`/`WEBAPP_IMAGE`
-  to the SHA tag proven on staging, leave `SIGNUP_DISABLED=false` +
+- `.env` → fill every `<...>` (fresh secrets below); `SERVER_IMAGE`/`WEBAPP_IMAGE`
+  are pre-pinned to `sha-386d9fd` (vetted clean on sandbox + UAT, arm64), bump only
+  to a newer proven sha. Leave `SIGNUP_DISABLED=false` +
   `SIGNUP_ALLOWED_EMAILS=<client email>` for now.
 
 ```bash
