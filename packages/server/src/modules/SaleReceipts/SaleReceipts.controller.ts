@@ -11,6 +11,7 @@ import {
   Put,
   Query,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { SaleReceiptApplication } from './SaleReceiptApplication.service';
 import {
@@ -27,8 +28,13 @@ import {
 } from './dtos/SaleReceipt.dto';
 import { GetSaleReceiptsQueryDto } from './dtos/GetSaleReceiptsQuery.dto';
 import {
+  SaleReceiptAction,
   SaleReceiptMailOptsDTO,
 } from './types/SaleReceipts.types';
+import { RequirePermission } from '@/modules/Roles/RequirePermission.decorator';
+import { PermissionGuard } from '@/modules/Roles/Permission.guard';
+import { AuthorizationGuard } from '@/modules/Roles/Authorization.guard';
+import { AbilitySubject } from '@/modules/Roles/Roles.types';
 import { AcceptType } from '@/constants/accept-type';
 import { Response } from 'express';
 import { SaleReceiptResponseDto } from './dtos/SaleReceiptResponse.dto';
@@ -47,10 +53,12 @@ import {
 @ApiExtraModels(SaleReceiptStateResponseDto)
 @ApiCommonHeaders()
 @ApiExtraModels(ValidateBulkDeleteResponseDto)
+@UseGuards(AuthorizationGuard, PermissionGuard)
 export class SaleReceiptsController {
-  constructor(private saleReceiptApplication: SaleReceiptApplication) { }
+  constructor(private saleReceiptApplication: SaleReceiptApplication) {}
 
   @Post('validate-bulk-delete')
+  @RequirePermission(SaleReceiptAction.Delete, AbilitySubject.SaleReceipt)
   @ApiOperation({
     summary:
       'Validates which sale receipts can be deleted and returns the results.',
@@ -72,6 +80,7 @@ export class SaleReceiptsController {
   }
 
   @Post('bulk-delete')
+  @RequirePermission(SaleReceiptAction.Delete, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Deletes multiple sale receipts.' })
   @ApiResponse({
     status: 200,
@@ -85,6 +94,7 @@ export class SaleReceiptsController {
   }
 
   @Post()
+  @RequirePermission(SaleReceiptAction.Create, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Create a new sale receipt.' })
   createSaleReceipt(@Body() saleReceiptDTO: CreateSaleReceiptDto) {
     return this.saleReceiptApplication.createSaleReceipt(saleReceiptDTO);
@@ -92,6 +102,7 @@ export class SaleReceiptsController {
 
   @Post(':id/mail')
   @HttpCode(200)
+  @RequirePermission(SaleReceiptAction.Edit, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Send the sale receipt mail.' })
   @ApiParam({
     name: 'id',
@@ -107,6 +118,7 @@ export class SaleReceiptsController {
   }
 
   @Get('state')
+  @RequirePermission(SaleReceiptAction.View, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Retrieves the sale receipt state.' })
   @ApiResponse({
     status: 200,
@@ -121,6 +133,7 @@ export class SaleReceiptsController {
 
   @Get(':id/mail')
   @HttpCode(200)
+  @RequirePermission(SaleReceiptAction.View, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Retrieves the sale receipt mail.' })
   @ApiParam({
     name: 'id',
@@ -133,6 +146,7 @@ export class SaleReceiptsController {
   }
 
   @Put(':id')
+  @RequirePermission(SaleReceiptAction.Edit, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Edit the given sale receipt.' })
   @ApiParam({
     name: 'id',
@@ -148,6 +162,7 @@ export class SaleReceiptsController {
   }
 
   @Get(':id')
+  @RequirePermission(SaleReceiptAction.View, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Retrieves the sale receipt details.' })
   @ApiResponse({
     status: 200,
@@ -188,6 +203,7 @@ export class SaleReceiptsController {
   }
 
   @Get()
+  @RequirePermission(SaleReceiptAction.View, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Retrieves the sale receipts paginated list' })
   @ApiResponse({
     status: 200,
@@ -211,6 +227,7 @@ export class SaleReceiptsController {
   }
 
   @Delete(':id')
+  @RequirePermission(SaleReceiptAction.Delete, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Delete the given sale receipt.' })
   @ApiParam({
     name: 'id',
@@ -223,6 +240,7 @@ export class SaleReceiptsController {
   }
 
   @Post(':id/close')
+  @RequirePermission(SaleReceiptAction.Edit, AbilitySubject.SaleReceipt)
   @ApiOperation({ summary: 'Close the given sale receipt.' })
   @ApiParam({
     name: 'id',

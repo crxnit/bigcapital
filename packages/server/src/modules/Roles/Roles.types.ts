@@ -13,18 +13,17 @@ export const actions = [
 export const subjects = ['Article', 'all'] as const;
 
 export type Abilities = [
-  typeof actions[number],
+  (typeof actions)[number],
   (
-    | typeof subjects[number]
-    | ForcedSubject<Exclude<typeof subjects[number], 'all'>>
-  )
+    | (typeof subjects)[number]
+    | ForcedSubject<Exclude<(typeof subjects)[number], 'all'>>
+  ),
 ];
 
 export type AppAbility = Ability<Abilities>;
 
 export const createAbility = (rules: RawRuleOf<AppAbility>[]) =>
   new Ability<Abilities>(rules);
-
 
 export interface ISubjectAbilitySchema {
   key: string;
@@ -60,7 +59,20 @@ export enum AbilitySubject {
   CreditNote = 'CreditNode',
   VendorCredit = 'VendorCredit',
   Project = 'Project',
-  TaxRate = 'TaxRate'
+  TaxRate = 'TaxRate',
+  // Admin-only system-administration subjects. Intentionally NOT listed in
+  // AbilitySchema, so they never appear in the role-permissions UI and cannot
+  // be delegated — only the predefined `admin` role (CASL `manage all`) passes.
+  Role = 'Role',
+  User = 'User',
+}
+
+/**
+ * Generic action for admin-only system-administration subjects (Role/User).
+ * Matched by the `admin` role's `manage all` rule; denied for everyone else.
+ */
+export enum AdminAction {
+  Manage = 'manage',
 }
 
 export interface IRoleCreatedPayload {

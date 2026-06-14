@@ -16,7 +16,13 @@ import {
   Body,
   HttpCode,
   Param,
+  UseGuards,
 } from '@nestjs/common';
+import { RequirePermission } from '@/modules/Roles/RequirePermission.decorator';
+import { PermissionGuard } from '@/modules/Roles/Permission.guard';
+import { AuthorizationGuard } from '@/modules/Roles/Authorization.guard';
+import { AbilitySubject } from '@/modules/Roles/Roles.types';
+import { PreferencesAction } from '../Settings/Settings.types';
 import { Throttle } from '@nestjs/throttler';
 import { BuildOrganizationService } from './commands/BuildOrganization.service';
 import {
@@ -129,6 +135,8 @@ export class OrganizationController {
 
   @Put()
   @HttpCode(200)
+  @UseGuards(AuthorizationGuard, PermissionGuard)
+  @RequirePermission(PreferencesAction.Mutate, AbilitySubject.Preferences)
   @ApiOperation({ summary: 'Update organization information' })
   @ApiBody({ type: UpdateOrganizationDto })
   @ApiResponse({

@@ -8,9 +8,14 @@ import {
   Body,
   HttpStatus,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateRoleDto, EditRoleDto } from './dtos/Role.dto';
 import { RolesApplication } from './Roles.application';
+import { RequirePermission } from './RequirePermission.decorator';
+import { PermissionGuard } from './Permission.guard';
+import { AuthorizationGuard } from './Authorization.guard';
+import { AbilitySubject, AdminAction } from './Roles.types';
 import {
   ApiTags,
   ApiOperation,
@@ -27,10 +32,12 @@ import { ApiCommonHeaders } from '@/common/decorators/ApiCommonHeaders';
 @Controller('roles')
 @ApiExtraModels(RoleResponseDto)
 @ApiCommonHeaders()
+@UseGuards(AuthorizationGuard, PermissionGuard)
 export class RolesController {
-  constructor(private readonly rolesApp: RolesApplication) { }
+  constructor(private readonly rolesApp: RolesApplication) {}
 
   @Post()
+  @RequirePermission(AdminAction.Manage, AbilitySubject.Role)
   @ApiOperation({ summary: 'Create a new role' })
   @ApiBody({ type: CreateRoleDto })
   @ApiResponse({
@@ -47,6 +54,7 @@ export class RolesController {
   }
 
   @Put(':id')
+  @RequirePermission(AdminAction.Manage, AbilitySubject.Role)
   @ApiOperation({ summary: 'Edit an existing role' })
   @ApiParam({ name: 'id', description: 'Role ID' })
   @ApiBody({ type: EditRoleDto })
@@ -67,6 +75,7 @@ export class RolesController {
   }
 
   @Delete(':id')
+  @RequirePermission(AdminAction.Manage, AbilitySubject.Role)
   @ApiOperation({ summary: 'Delete a role' })
   @ApiParam({ name: 'id', description: 'Role ID' })
   @ApiResponse({
