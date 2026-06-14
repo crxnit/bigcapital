@@ -30,6 +30,12 @@ The sed snippet for image-tag bumps in `deploy.sh` uses `|` as the substitute de
 
 The script's remote step runs a targeted `sed` against `docker-compose.yml` to bump only `bigcapital-fork-{server,webapp}:<env>-v<N>` tags. Any other compose change (new env-var passthrough, port change, new service, etc.) is invisible to the script and won't reach the host. After making such a change in the repo, manually edit `/srv/portal/clients/<env>-bc/docker-compose.yml` on the host (or `scp` the updated file in) before running `up -d --force-recreate`. Otherwise the new env var is in the image but won't be injected into the running container.
 
+### Backup scripts `source`d the docker `env_file` as bash → apostrophe in `MAIL_FROM_NAME` killed the nightly backup (2026-06-14, Sofi bring-up)
+
+`backup.sh` (and its parent `deploy/vps-backup.sh`) loaded the stack's `.env` with `set -a; source "$ENV_FILE"` to pick up DB/S3 creds. But a docker `env_file` is **not** a shell script: the whole RHS is the literal value (no quoting/escaping — see the `env_file` gotchas in CLAUDE.md). Sofi's `.env` carries `MAIL_FROM_NAME=Sofi's Mini Donuts Books`; bash read the apostrophe as an opening quote and aborted the whole script with `/srv/portal/clients/sofis-bc/.env: line 37: unexpected EOF while looking for matching '`'. The script exited 2 **before** taking any snapshot — a silent nightly-backup failure (the cron would have logged the error to journald, but on a brand-new box nobody was watching). Staging/sandbox dodged it only because their `MAIL_FROM_NAME` had no apostrophe.
+
+**Fix** (commit `43effa5d6`): parse the app env literally and export, matching docker's semantics — `while IFS='=' read -r _k _v; do [[ "$_k" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue; export "$_k=$_v"; done < <(grep -vE '^[[:space:]]*(#|$)' "$ENV_FILE")`. The restic env (`/etc/restic/bigcapital-<env>.env`) IS a real shell file (`export VAR="..."`) and is still `source`d. Applied to both `backup.sh` and `deploy/vps-backup.sh`. Verified: first Sofi snapshot taken + `restic restore latest` recovered a valid system-DB dump. A second bug in the same bring-up: the cron pointed at the old `/srv/bigcapital/backup.sh` path instead of the portal layout `/srv/portal/clients/sofis-bc/backup.sh` (commit `107ad97bd`).
+
 ## UI labels and date handling
 
 ### UI label inconsistencies
