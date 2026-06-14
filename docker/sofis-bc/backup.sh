@@ -50,10 +50,18 @@ trap cleanup EXIT
 [[ -r "$RESTIC_ENV" ]]   || fail "restic env not readable: $RESTIC_ENV"
 [[ -f "$COMPOSE_FILE" ]] || fail "compose file not found: $COMPOSE_FILE"
 
-# Source app env (DB creds, S3 keys) + restic backend env. `set -a` exports all.
+# Load the app env (DB creds, S3 keys). This is a docker `env_file`, NOT a shell
+# script: the whole RHS is the literal value (no quoting/escaping), so values may
+# legitimately contain spaces, `#`, or apostrophes (e.g. MAIL_FROM_NAME="Sofi's
+# Mini Donuts Books"). `source`-ing it as bash breaks on those — parse KEY=VALUE
+# literally and export, matching docker's semantics.
+while IFS='=' read -r _k _v; do
+  [[ "$_k" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+  export "$_k=$_v"
+done < <(grep -vE '^[[:space:]]*(#|$)' "$ENV_FILE")
+
+# The restic backend env IS a real shell file (`export VAR="..."`) — source it.
 set -a
-# shellcheck disable=SC1090
-source "$ENV_FILE"
 # shellcheck disable=SC1090
 source "$RESTIC_ENV"
 set +a
