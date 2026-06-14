@@ -54,7 +54,7 @@ export class EditOpeningBalanceCustomer {
       );
       // Mutates the customer on the storage.
       const customer = await this.customerModel()
-        .query()
+        .query(trx)
         .patchAndFetchById(customerId, {
           ...openingBalanceEditDTO,
         });

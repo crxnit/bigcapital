@@ -49,7 +49,7 @@ export class EditVendorService {
 
       // Edits the vendor contact.
       const vendor = await this.vendorModel()
-        .query()
+        .query(trx)
         .updateAndFetchById(vendorId, {
           ...vendorObj,
         });

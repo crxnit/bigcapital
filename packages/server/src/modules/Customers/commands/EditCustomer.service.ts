@@ -60,7 +60,7 @@ export class EditCustomer {
 
       // Edits the customer details on the storage.
       const customer = await this.customerModel()
-        .query()
+        .query(trx)
         .updateAndFetchById(customerId, {
           ...customerObj,
         });

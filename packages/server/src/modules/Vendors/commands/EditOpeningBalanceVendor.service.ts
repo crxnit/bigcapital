@@ -56,7 +56,7 @@ export class EditOpeningBalanceVendorService {
 
       // Mutates the vendor on the storage.
       const vendor = await this.vendorModel()
-        .query()
+        .query(trx)
         .patchAndFetchById(vendorId, {
           ...openingBalanceEditDTO,
         });
