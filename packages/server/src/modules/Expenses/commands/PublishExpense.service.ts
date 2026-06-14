@@ -54,11 +54,14 @@ export class PublishExpense {
       } as IExpensePublishingPayload);
 
       // Publish the given expense on the storage.
-      await this.expenseModel().query().findById(expenseId).modify('publish');
+      await this.expenseModel()
+        .query(trx)
+        .findById(expenseId)
+        .modify('publish');
 
       // Retrieve the new expense after modification.
       const expense = await this.expenseModel()
-        .query()
+        .query(trx)
         .findById(expenseId)
         .withGraphFetched('categories');
 

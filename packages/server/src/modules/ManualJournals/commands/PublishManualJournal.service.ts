@@ -63,7 +63,7 @@ export class PublishManualJournal {
         });
       // Retrieve the manual journal with enrties after modification.
       const manualJournal = await this.manualJournalModel()
-        .query()
+        .query(trx)
         .findById(manualJournalId)
         .withGraphFetched('entries');
 

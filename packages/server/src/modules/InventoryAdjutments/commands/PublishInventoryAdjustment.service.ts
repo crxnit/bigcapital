@@ -54,14 +54,14 @@ export class PublishInventoryAdjustmentService {
 
       // Publish the inventory adjustment transaction.
       await this.inventoryAdjustmentModel()
-        .query()
+        .query(trx)
         .findById(inventoryAdjustmentId)
         .patch({
           publishedAt: moment().toMySqlDateTime(),
         });
       // Retrieve the inventory adjustment after the modification.
       const inventoryAdjustment = await this.inventoryAdjustmentModel()
-        .query()
+        .query(trx)
         .findById(inventoryAdjustmentId)
         .withGraphFetched('entries');
 
