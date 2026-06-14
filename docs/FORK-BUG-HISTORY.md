@@ -357,3 +357,26 @@ The "edit-invoice save returns 400" framing from the prior wrap-up was wrong —
 **Process notes for next time** (two traps re-tripped this session): (1) **Anchor on real evidence before fan-out** — the original 400 theory came from a stale audit snapshot of the wrong invoice; one Network-tab response (status + body) collapsed the whole investigation. (2) **Cascade-cancellation**, exactly as the entry above warns: batching tool calls where one references a wrong path (`Drawers/InvoiceDetail/…`, the dir is `Drawers/InvoiceDetailDrawer/…`) cancels every sibling call in the same assistant turn — including unrelated Edits. When exploring unfamiliar paths, verify the directory first or issue calls one at a time.
 
 The separate idea from the prior wrap-up — surfacing `response.data.message` in form `onError` handlers so genuine class-validator 400s aren't invisible — remains a valid latent improvement but was NOT the cause here and was not applied. Pick it up only if a real silent-400 surfaces.
+
+---
+
+### RESOLVED (2026-06-14) — Sofi go-live: signup wizard hung at "Initializing" — hardcoded tenant-DB prefix ignored `TENANT_DB_NAME_PERFIX`
+
+During Sofi's first-org registration on the dedicated box, the setup wizard stalled on the **Organization** step: clicking "Save and Continue" advanced to "Initializing" which then spun forever. **No console or Network error** — the POST `/organization/build` returned fine and a background BullMQ build job ran. The failure was server-log-only:
+
+```
+Processing organization build job: 8
+Error processing organization build job: ER_BAD_DB_ERROR: Unknown database 'bigcapital_tenant_g53fa86mqe3041g'
+Failed to initialize tenant models: ER_BAD_DB_ERROR: Unknown database 'bigcapital_tenant_g53fa86mqe3041g'
+```
+
+**Root cause**: a prefix mismatch between the two tenant-DB code paths. Sofi's `.env` set `TENANT_DB_NAME_PERFIX=bigcapital_sofis_tenant_`. The **CREATE** path (`TenantDBManager.getDatabaseName`) honors that config → created `bigcapital_sofis_tenant_g53...` (confirmed present via `SHOW DATABASES`). But the **CONNECT** path (`Tenancy/TenancyDB/TenancyDB.module.ts:19`) **hardcoded** `` `bigcapital_tenant_${organizationId}` `` → tried to connect/migrate `bigcapital_tenant_g53...` (no `sofis`), which doesn't exist → `ER_BAD_DB_ERROR`. The build job fails at `migrateTenant()` right after `createDatabase()` succeeds, so the tenant is left `building` with an empty, unmigrated DB. Permissions were a red herring (`bigcapital@%` had `ALL PRIVILEGES ON *.*`).
+
+This never bit before because **every prior instance used the default prefix** (staging/sandbox tenant `bigcapital_tenant_35i5f1mo1phc5w`); Sofi was the first to set a custom one, exposing a latent hardcode.
+
+**Fix (two parts)**:
+
+1. **Code** — `TenancyDB.module.ts` now reads `configService.get('tenantDatabase.dbNamePrefix')` instead of the literal, so CREATE and CONNECT always agree. Grep test: `grep -rn "bigcapital_tenant_" --include=*.ts` should hit only `common/config/tenant-database.ts` (the default).
+2. **Box** — aligned Sofi to the default prefix (`TENANT_DB_NAME_PERFIX=bigcapital_tenant_`) and re-initialized the stack (`docker compose down -v && up -d` — the box had zero real data, only the half-built registration). Re-registered → wizard ran through Initializing → Congrats → empty COA. A dedicated/isolated box gains nothing from a custom tenant prefix, so it stays default; `docker/sofis-bc/.env.example` updated to match + warn.
+
+**Diagnostic process that worked**: the form/Network looked clean, so I tailed `docker logs -f bigcapital-sofis-server` while the user clicked — the `ER_BAD_DB_ERROR` named the exact (wrong) DB, then `SHOW DATABASES` + `SHOW GRANTS` proved the DB existed under a _different_ prefix and permissions were fine, isolating it to a create-vs-connect name mismatch. Same lesson as the trial-balance recipe: **check server logs before theorizing about the front end** when a green-looking UI action silently no-ops.

@@ -16,7 +16,13 @@ export const TenancyDatabaseProxyProvider = ClsModule.forFeatureAsync({
   inject: [ConfigService, ClsService],
   useFactory: async (configService: ConfigService, cls: ClsService) => () => {
     const organizationId = cls.get('organizationId');
-    const database = `bigcapital_tenant_${organizationId}`;
+    // Must use the SAME configurable prefix as the create/migrate path
+    // (TenantDBManager.getDatabaseName → tenantDatabase.dbNamePrefix). A
+    // hardcoded `bigcapital_tenant_` here silently ignored TENANT_DB_NAME_PERFIX,
+    // so a custom-prefixed instance created `<prefix>_<org>` but connected to
+    // `bigcapital_tenant_<org>` → ER_BAD_DB_ERROR, build job stuck.
+    const prefix = configService.get('tenantDatabase.dbNamePrefix');
+    const database = `${prefix}${organizationId}`;
     const cachedInstance = lruCache.get(database);
 
     if (cachedInstance) {
