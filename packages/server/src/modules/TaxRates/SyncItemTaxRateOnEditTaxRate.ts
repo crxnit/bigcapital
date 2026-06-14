@@ -24,7 +24,7 @@ export class SyncItemTaxRateOnEditTaxRate {
     if (oldSellTaxRateId === sellTaxRateId) return;
 
     await this.itemModel()
-      .query()
+      .query(trx)
       .where('sellTaxRateId', oldSellTaxRateId)
       .update({
         sellTaxRateId,

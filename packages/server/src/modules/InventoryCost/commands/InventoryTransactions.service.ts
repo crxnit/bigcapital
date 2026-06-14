@@ -50,13 +50,19 @@ export class InventoryTransactionsService {
     override: boolean = false,
     trx?: Knex.Transaction,
   ): Promise<void> {
-    const bulkInsertOpers = [];
+    // Write sequentially — a Knex transaction is not concurrency-safe, and each
+    // record may delete-then-insert; running these in parallel on the shared trx
+    // gives non-deterministic per-row failures (silently dropped inventory legs).
+    const inventoryTransactions: InventoryTransaction[] = [];
 
-    transactions.forEach((transaction: ITransformedInventoryTransaction) => {
-      const oper = this.recordInventoryTransaction(transaction, override, trx);
-      bulkInsertOpers.push(oper);
-    });
-    const inventoryTransactions = await Promise.all(bulkInsertOpers);
+    for (const transaction of transactions) {
+      const inventoryTransaction = await this.recordInventoryTransaction(
+        transaction,
+        override,
+        trx,
+      );
+      inventoryTransactions.push(inventoryTransaction);
+    }
 
     // Triggers `onInventoryTransactionsCreated` event.
     await this.eventEmitter.emitAsync(
@@ -178,9 +184,10 @@ export class InventoryTransactionsService {
    */
   async recordInventoryCostLotTransaction(
     inventoryLotEntry: Partial<InventoryCostLotTracker>,
+    trx?: Knex.Transaction,
   ): Promise<InventoryCostLotTracker> {
     return this.inventoryCostLotTracker()
-      .query()
+      .query(trx)
       .insert({
         ...inventoryLotEntry,
       });
