@@ -1,31 +1,17 @@
 # Traefik DYNAMIC config — Sofi's Mini Donuts dedicated VPS.
-# Mounted read-only at /etc/traefik/dynamic/sofis-bc.yml; Traefik hot-reloads.
+# Lives in the HOST Traefik's dynamic dir: /srv/portal/traefik/dynamic/sofis-bc.yml
+# (NOT inside the client stack). Host Traefik hot-reloads it.
 #
-# ACCESS MODEL: client logs in directly. NO JJOC Google OAuth edge here — this
-# is a separate box outside .jjocllc.com. Bigcapital's JWT is the identity gate;
-# `security-headers` + `rate-limit` are DEFINED BELOW (on the shared portal host
-# they came from jjocllc.yml; on this standalone box we define them ourselves).
+# ACCESS MODEL: client logs in directly. NO JJOC Google OAuth edge here — this is
+# a separate box outside .jjocllc.com. Bigcapital's JWT is the identity gate. We
+# REUSE the host Traefik's predefined `security-headers` + `rate-limit` middlewares
+# (from /srv/portal/traefik/dynamic/middlewares.yml) by `@file` reference — do NOT
+# redefine them here (duplicate names in one provider conflict).
 #
-# The Square webhook router intentionally omits all middleware: HMAC signature
-# is the auth, and rate-limiting Square's delivery is undesirable.
+# The Square webhook router intentionally omits all middleware: HMAC signature is
+# the auth, and rate-limiting Square's delivery is undesirable.
 
 http:
-  middlewares:
-    security-headers:
-      headers:
-        stsSeconds: 31536000
-        stsIncludeSubdomains: true
-        stsPreload: true
-        frameDeny: true
-        contentTypeNosniff: true
-        browserXssFilter: true
-        referrerPolicy: strict-origin-when-cross-origin
-
-    rate-limit:
-      rateLimit:
-        average: 100
-        burst: 50
-
   routers:
     bigcapital-sofis-api:
       rule: "Host(`books.sofisminidonuts.com`) && (PathPrefix(`/api`) || PathPrefix(`/socket`) || PathPrefix(`/public`))"
@@ -35,8 +21,8 @@ http:
       tls:
         certResolver: letsencrypt
       middlewares:
-        - security-headers
-        - rate-limit
+        - security-headers@file
+        - rate-limit@file
 
     bigcapital-sofis-square-webhook:
       rule: "Host(`books.sofisminidonuts.com`) && PathPrefix(`/api/integrations/square/webhooks`)"
@@ -54,8 +40,8 @@ http:
       tls:
         certResolver: letsencrypt
       middlewares:
-        - security-headers
-        - rate-limit
+        - security-headers@file
+        - rate-limit@file
 
   services:
     bigcapital-sofis-api:

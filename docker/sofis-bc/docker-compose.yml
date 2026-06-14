@@ -1,37 +1,26 @@
 # Dedicated, single-client PRODUCTION instance for "Sofi's Mini Donuts".
-# Runs on its OWN VPS (4 GB / 2 vCPU) — self-contained: brings its own Traefik
-# edge (TLS + routing). No shared portal-net, no external OAuth edge.
+# Runs on its OWN VPS (4 GB / 2 vCPU). The box runs the operator's STANDARD
+# hosting environment — a HOST-level Traefik (container `traefik`, on external
+# network `portal-net`, dynamic config in /srv/portal/traefik/dynamic/). So this
+# stack does NOT bring its own edge; `server` + `webapp` join `portal-net` and the
+# host Traefik routes to them via traefik-dynamic/sofis-bc.yml (copied into the
+# host's dynamic dir). Same pattern as docker/sandbox-bc/.
 #
 # Topology decisions (see README.md):
-#   - Self-hosted Traefik (this compose) terminates TLS via Let's Encrypt and
-#     routes to the two app services on the internal network.
-#   - Client logs in directly — Bigcapital JWT is the only auth gate
-#     (traefik-dynamic/sofis-bc.yml defines security-headers + rate-limit, NO OAuth).
+#   - HOST Traefik terminates TLS (Let's Encrypt resolver `letsencrypt`) and routes
+#     to the two app services over `portal-net`. db/redis/etc. stay internal-only.
+#   - Client logs in directly — Bigcapital JWT is the only auth gate. The router
+#     reuses the host's predefined `security-headers@file` + `rate-limit@file`
+#     middlewares. NO OAuth edge.
 #   - Pinned GHCR images (${SERVER_IMAGE}/${WEBAPP_IMAGE}); manual updates only.
 #   - Starts EMPTY (fresh organization). NOT a clone.
 #   - mem_limits bound the stack so a leak can't take down SSH/OS on the small box.
 #
-# Apply from /srv/bigcapital/ on the client VPS after scp'ing this file + .env +
-# traefik/traefik.yml + traefik-dynamic/sofis-bc.yml + mariadb/ + redis/.
+# Apply from /srv/portal/clients/sofis-bc/ on the client VPS after scp'ing this
+# file + .env + mariadb/ + redis/, and copying traefik-dynamic/sofis-bc.yml into
+# /srv/portal/traefik/dynamic/ (host Traefik hot-reloads it).
 
 services:
-  traefik:
-    image: traefik:v3.0
-    container_name: bigcapital-sofis-traefik
-    restart: unless-stopped
-    mem_limit: 128m
-    security_opt:
-      - no-new-privileges:true
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik-dynamic:/etc/traefik/dynamic:ro
-      - traefik_acme:/acme
-    networks:
-      - bigcapital_sofis_network
-
   webapp:
     container_name: bigcapital-sofis-webapp
     image: ${WEBAPP_IMAGE}
@@ -42,6 +31,7 @@ services:
     restart: unless-stopped
     networks:
       - bigcapital_sofis_network
+      - portal-net
 
   server:
     container_name: bigcapital-sofis-server
@@ -56,6 +46,7 @@ services:
       - redis
     networks:
       - bigcapital_sofis_network
+      - portal-net
     environment:
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_USERNAME=${MAIL_USERNAME}
@@ -236,10 +227,11 @@ volumes:
   minio:
     name: bigcapital_sofis_minio
     driver: local
-  traefik_acme:
-    name: bigcapital_sofis_traefik_acme
-    driver: local
 
 networks:
   bigcapital_sofis_network:
     driver: bridge
+  # Host Traefik's external network — created by /srv/portal/docker-compose.yml.
+  portal-net:
+    external: true
+    name: portal-net
