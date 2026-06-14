@@ -1,0 +1,8 @@
+# NEVER commit a user-data file that still contains real secrets.
+# Only the sanitized template (cloud-init.sanitized.yaml) is tracked.
+user-data.real*
+*.real.yaml
+*.real.yml
+*.secret
+*.secret.*
+secrets.env
