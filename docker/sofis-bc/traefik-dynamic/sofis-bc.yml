@@ -1,0 +1,74 @@
+# Traefik DYNAMIC config — Sofi's Mini Donuts dedicated VPS.
+# Mounted read-only at /etc/traefik/dynamic/sofis-bc.yml; Traefik hot-reloads.
+#
+# ACCESS MODEL: client logs in directly. NO JJOC Google OAuth edge here — this
+# is a separate box outside .jjocllc.com. Bigcapital's JWT is the identity gate;
+# `security-headers` + `rate-limit` are DEFINED BELOW (on the shared portal host
+# they came from jjocllc.yml; on this standalone box we define them ourselves).
+#
+# The Square webhook router intentionally omits all middleware: HMAC signature
+# is the auth, and rate-limiting Square's delivery is undesirable.
+
+http:
+  middlewares:
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: strict-origin-when-cross-origin
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+  routers:
+    bigcapital-sofis-api:
+      rule: "Host(`books.sofisminidonuts.com`) && (PathPrefix(`/api`) || PathPrefix(`/socket`) || PathPrefix(`/public`))"
+      service: bigcapital-sofis-api
+      entryPoints: [websecure]
+      priority: 10
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+        - rate-limit
+
+    bigcapital-sofis-square-webhook:
+      rule: "Host(`books.sofisminidonuts.com`) && PathPrefix(`/api/integrations/square/webhooks`)"
+      service: bigcapital-sofis-api
+      entryPoints: [websecure]
+      priority: 20
+      tls:
+        certResolver: letsencrypt
+
+    bigcapital-sofis-webapp:
+      rule: "Host(`books.sofisminidonuts.com`)"
+      service: bigcapital-sofis-webapp
+      entryPoints: [websecure]
+      priority: 1
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - security-headers
+        - rate-limit
+
+  services:
+    bigcapital-sofis-api:
+      loadBalancer:
+        sticky:
+          cookie:
+            name: bigcapital_sofis_sticky
+            secure: true
+            httpOnly: true
+        servers:
+          - url: "http://bigcapital-sofis-server:3000"
+
+    bigcapital-sofis-webapp:
+      loadBalancer:
+        servers:
+          - url: "http://bigcapital-sofis-webapp:80"

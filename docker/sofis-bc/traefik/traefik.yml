@@ -1,0 +1,39 @@
+# Traefik STATIC config — bundled edge for the dedicated Sofi's VPS.
+# Mounted read-only at /etc/traefik/traefik.yml. Self-contained: this box has
+# no shared portal Traefik, so we terminate TLS and route here.
+#
+# EDIT before first boot: set the ACME email below to a real address (Traefik
+# static config does NOT interpolate env vars).
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: <acme-email@yourdomain> # ← set a real address before boot
+      storage: /acme/acme.json
+      httpChallenge:
+        entryPoint: web
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+# Routers/services/middlewares live in the dynamic config (traefik-dynamic/).
+log:
+  level: INFO
