@@ -40,7 +40,7 @@ export class CreateBranchService {
       } as IBranchCreatePayload);
 
       const branch = await this.branchModel()
-        .query()
+        .query(trx)
         .insertAndFetch({
           ...createBranchDTO,
         });

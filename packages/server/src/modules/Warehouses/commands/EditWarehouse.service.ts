@@ -62,7 +62,7 @@ export class EditWarehouse {
       });
       // Updates the given branch on the storage.
       const warehouse = await this.warehouseModel()
-        .query()
+        .query(trx)
         .patchAndFetchById(warehouseId, {
           ...warehouseDTO,
         });

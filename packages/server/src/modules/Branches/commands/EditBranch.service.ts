@@ -42,7 +42,7 @@ export class EditBranchService {
 
       // Edits the branch on the storage.
       const branch = await this.branchModel()
-        .query()
+        .query(trx)
         .patchAndFetchById(branchId, {
           ...editBranchDTO,
         });
