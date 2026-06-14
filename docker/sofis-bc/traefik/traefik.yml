@@ -2,8 +2,10 @@
 # Mounted read-only at /etc/traefik/traefik.yml. Self-contained: this box has
 # no shared portal Traefik, so we terminate TLS and route here.
 #
-# EDIT before first boot: set the ACME email below to a real address (Traefik
-# static config does NOT interpolate env vars).
+# ACME email is set below to letsencrypt@jjocllc.com (Traefik static config does
+# NOT interpolate env vars, so it's hard-coded). NOTE: this whole bundled-Traefik
+# edge may be dropped in favor of the host's standard Traefik (sandbox-bc style) —
+# if so, this file is unused and the host resolver's email applies instead.
 
 global:
   checkNewVersion: false
@@ -24,7 +26,7 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: <acme-email@yourdomain> # ← set a real address before boot
+      email: letsencrypt@jjocllc.com # operator alias — receives LE expiry/policy notices
       storage: /acme/acme.json
       httpChallenge:
         entryPoint: web
