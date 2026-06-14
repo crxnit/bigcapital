@@ -38,8 +38,22 @@ python3 qb_to_bigcapital_accounts.py INPUT.csv accounts.csv \
 
 ### What it deliberately does NOT do
 
-- **Opening balances.** The accounts importer has no balance field. Post balances separately via a
-  **Manual Journal** built from the QuickBooks Trial Balance as of your cutover date.
+- **Opening balances.** The accounts importer has no balance field. With the journal-replay
+  method, balances arrive naturally as you replay every transaction (see the journal tool below);
+  for a TB-snapshot migration instead, post one **Manual Journal** from the QuickBooks Trial
+  Balance as of cutover.
+
+### The name-map sidecar (feeds the journal replay)
+
+Alongside `accounts.csv` the tool writes **`accounts.namemap.json`** (override the path with
+`--name-map`). Because sub-accounts were renamed to leaf-only and colliding leaves disambiguated,
+the journal replay can't reference accounts by their original QuickBooks names without this map.
+It records, lowercased for case-insensitive lookup:
+
+- `by_full_name` — every QB full path (`Deposits in Transit:Square DIT`) → Bigcapital name (`Square DIT`)
+- `by_leaf` — leaf → Bigcapital name, **unambiguous leaves only**
+- `ambiguous_leaves` — leaves that collided (the journal tool fails loudly if the export gives a bare one)
+- `accounts` — the full per-account detail (qb_full_name, bigcapital_name, code, leaf, parent)
 
 ### Then import
 
@@ -49,3 +63,61 @@ Bigcapital UI → Settings → Import → **Accounts** → upload `accounts.csv`
 Field contract mirrored from:
 `packages/server/src/modules/Accounts/{AccountsImportable.service.ts, CreateAccount.dto.ts, models/Account.meta.ts}`,
 `packages/server/src/constants/accounts.ts`, `packages/server/src/modules/Import/_utils.ts`.
+
+---
+
+## `qb_journal_to_bigcapital_manualjournals.py` — journal replay
+
+Converts a QuickBooks Desktop **Journal** report into a Bigcapital **Manual Journals** import CSV:
+every QB transaction → one balanced Manual Journal, every split line → one entry (leg). This is
+the core of the journal-replay migration — replaying all history reproduces every balance, so the
+Bigcapital Trial Balance ties out to QuickBooks by construction.
+
+### Get the input from QuickBooks
+
+`Reports → Accountant & Taxes → Journal`, set **Dates = All** (or through your cutover date),
+`Excel → Create New Worksheet`, save as CSV. Also export the **Trial Balance** as of the same
+date — that's your reconciliation target.
+
+### Run
+
+```bash
+python3 qb_journal_to_bigcapital_manualjournals.py JOURNAL.csv manual-journals.csv \
+    --name-map accounts.namemap.json
+```
+
+- `--name-map` — the sidecar from the accounts tool. **Strongly recommended**; without it account
+  names pass through unchanged and the TB won't tie out.
+- `--with-contacts` — carry the QB `Name` onto each leg's `Contact` (matched by display name).
+  Default blank — the GL ties out without contacts and it avoids contact-match failures. Requires
+  Customers/Vendors imported first if used.
+- `--default-currency USD` — value for the Currency Code column (default blank → tenant base).
+- `--draft` — import as drafts (`Publish=F`, does **not** hit the ledger). Default `Publish=T`.
+- `--split-by-year` — write one `OUTPUT-<year>.csv` per calendar year (import-batch headroom on a
+  small box).
+- `--allow-warnings` — exit 0 despite warnings. By default any unbalanced journal, unmapped
+  account, <2-leg journal, or unparseable date/amount exits **1**.
+
+### What it handles
+
+- Skips QB report **title rows**; auto-detects the real header (Account + Debit/Credit).
+- Groups split lines into transactions by `Trans #` (falls back to `Type`/`Date`), **forward-filling**
+  the date/type/num/name QB prints only on each transaction's first line.
+- Drops per-transaction and grand **Total** rows.
+- Remaps every account through the name-map (full path → leaf → unambiguous-leaf fallback); **fails
+  loudly** on anything unmapped.
+- Parses `1,234.56` / `$…` / `(123.45)` amounts; nets debit−credit per leg; drops zero legs.
+- Asserts **each journal balances** and **>= 2 legs**, plus a global debit==credit check.
+
+### Then import
+
+Import order: TaxRate → **Accounts** (+ Customers/Vendors/Items if used) → **Manual Journals**
+(this file). Then diff the Bigcapital Trial Balance against the QuickBooks one at the same date and
+iterate until it ties.
+
+> ⚠️ QuickBooks Journal CSV headers vary by version/locale. `HEADER_CANDIDATES` covers the common
+> US-desktop layout; confirm against the real export and extend if a column isn't found (the tool
+> errors clearly when it can't locate Account or Debit/Credit).
+
+Field contract mirrored from:
+`packages/server/src/modules/ManualJournals/{commands/ManualJournalsImport.ts, models/ManualJournal.meta.ts, dtos/ManualJournal.dto.ts, constants.ts}`.

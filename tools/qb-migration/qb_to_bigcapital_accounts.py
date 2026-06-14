@@ -28,6 +28,8 @@ Zero dependencies (stdlib only). Python 3.8+.
 
 import argparse
 import csv
+import json
+import os
 import sys
 from collections import defaultdict
 
@@ -170,6 +172,9 @@ def main():
                     help="value for blank Currency Code (default: blank -> tenant base currency)")
     ap.add_argument("--allow-warnings", action="store_true",
                     help="exit 0 even if rows produced warnings (default: exit 1 so warnings can't be ignored)")
+    ap.add_argument("--name-map", default="",
+                    help="path for the QB-full-name -> Bigcapital-name JSON sidecar consumed by the journal "
+                         "transformer (default: <output>.namemap.json next to OUTPUT)")
     args = ap.parse_args()
 
     with open(args.input, newline="", encoding="utf-8-sig") as f:
@@ -188,6 +193,7 @@ def main():
     seen_names = {}          # final name -> row_no
     name_counts = defaultdict(int)  # leaf name -> count (to detect collisions)
     out_rows = []
+    map_accounts = []        # per-account remap info for the name-map sidecar
 
     # First pass: count leaf names so we know which ones collide and need disambiguation.
     parsed = []
@@ -228,6 +234,14 @@ def main():
             "Currency Code": currency,
             "Parent Account": parent,
         })
+        map_accounts.append({
+            "qb_full_name": full,
+            "bigcapital_name": name,
+            "code": code,
+            "leaf": leaf,
+            "parent": parent,
+            "ambiguous_leaf": name_counts[leaf.lower()] > 1,
+        })
 
     with open(args.output, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=OUTPUT_HEADERS)
@@ -235,6 +249,36 @@ def main():
         writer.writerows(out_rows)
 
     print(f"Wrote {len(out_rows)} accounts -> {args.output}", file=sys.stderr)
+
+    # --- name-map sidecar (consumed by qb_journal_to_bigcapital_manualjournals.py) ------------
+    # The journal replay references accounts by their ORIGINAL QuickBooks name, but we renamed
+    # sub-accounts to leaf-only and disambiguated colliding leaves. This map lets the journal
+    # transformer translate QB account names -> the Bigcapital names actually imported.
+    # Lookup keys are lowercased (case-insensitive matching); values keep proper casing.
+    by_full_name = {}
+    leaf_to_names = defaultdict(set)
+    for a in map_accounts:
+        by_full_name[a["qb_full_name"].lower()] = a["bigcapital_name"]
+        leaf_to_names[a["leaf"].lower()].add(a["bigcapital_name"])
+    by_leaf = {leaf: next(iter(names)) for leaf, names in leaf_to_names.items() if len(names) == 1}
+    ambiguous_leaves = sorted(leaf for leaf, names in leaf_to_names.items() if len(names) > 1)
+
+    name_map = {
+        "_comment": "QuickBooks account name -> Bigcapital account name. Keys lowercased for "
+                    "case-insensitive lookup. Resolve via by_full_name first, then by_leaf "
+                    "(unambiguous leaves only); an ambiguous_leaf needs its full QB path.",
+        "generated_from": os.path.basename(args.input),
+        "by_full_name": dict(sorted(by_full_name.items())),
+        "by_leaf": dict(sorted(by_leaf.items())),
+        "ambiguous_leaves": ambiguous_leaves,
+        "accounts": map_accounts,
+    }
+    map_path = args.name_map or (os.path.splitext(args.output)[0] + ".namemap.json")
+    with open(map_path, "w", encoding="utf-8") as f:
+        json.dump(name_map, f, indent=2, ensure_ascii=False)
+    print(f"Wrote name-map ({len(by_full_name)} accounts, "
+          f"{len(ambiguous_leaves)} ambiguous leaf name(s)) -> {map_path}", file=sys.stderr)
+
     if warnings:
         print(f"\n{len(warnings)} warning(s):", file=sys.stderr)
         for w in warnings:
