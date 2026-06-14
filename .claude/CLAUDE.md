@@ -187,6 +187,16 @@ OAuth forward-auth at Traefik edge is a **network-level access gate**, NOT ident
 
 `https://sandbox.bc.jjocllc.com` mirrors staging on the same host, fully isolated (container/volume/network). Pre-release testing (Square Phase 2/3 land here first). At `/srv/portal/clients/sandbox-bc/`. Runbook: `docker/sandbox-bc/README.md` (mysqldump + MinIO clone from staging, first boot, **post-clone Square-row wipe** since token encryption key differs).
 
+## Sofi's Mini Donuts — dedicated client VPS + QB migration
+
+First real client. Lives on its OWN **arm64** VPS (`163.192.116.72`, SSH port 4321), NOT co-located — GHCR images are arm64-only, and both shared 3.8 GB hosts already swap. Separate from sandbox/staging; **manual** pinned-tag updates, NOT wired to the `develop` deploy.
+
+- **Deploy stack**: `docker/sofis-bc/` (sibling of `docker/sandbox-bc/`). FQDN **`books.sofisminidonuts.com`** confirmed (A record → the VPS). Client logs in directly — **no JJOC OAuth edge** (Bigcapital JWT only + signup lockdown); `security-headers`+`rate-limit` only. Starts EMPTY (fresh org). Offsite restic backups mandatory (no sibling fallback). Runbook: `docker/sofis-bc/README.md`.
+  - **OPEN**: compose still ships a **bundled Traefik**; 2026-06-13 leaning was to drop it for the host's _standard_ Traefik (sandbox-bc style) — pending operator info (external network name, dynamic-config dir, predefined middlewares). Also TODO before boot: pin the vetted GHCR sha tag, set ACME email (moot if bundled Traefik dropped).
+- **Migration method = pure journal replay** (cash restaurant, NO AR/AP). Tooling in `tools/qb-migration/`: `qb_to_bigcapital_accounts.py` (COA → import CSV + `accounts.namemap.json` sidecar) → `qb_journal_to_bigcapital_manualjournals.py` (QB Journal report → Bigcapital Manual Journals CSV, one balanced journal per QB txn, remaps accounts via the name-map, loud-fails on unbalanced/unmapped/<2-leg). The journal tool MUST reuse the name-map — COA renamed sub-accounts to leaf-only, so QB-full-name → BC-name translation is the linchpin or the replayed TB won't tie out.
+  - **BLOCKED on input**: client must export `Reports → Accountant & Taxes → Journal` (Dates=All) → CSV + Trial Balance as of cutover. Journal-tool `HEADER_CANDIDATES` covers the common US-desktop layout — confirm against the real export. Cutover **2026-08-31**; Phase 1 = dry-run to sandbox + reconcile TB, Phase 2 = re-export at cutover → production.
+- **Recovered provisioning**: `deploy/provisioning/` is the tracked home for the cloud-init `user-data` recovered 2026-06-14 (sanitize-before-commit runbook; only `cloud-init.sanitized.yaml` may be committed — not yet created).
+
 ## VPS / infra gotchas
 
 - **cloud-init drops `<user> ALL=(ALL) NOPASSWD:ALL` into `/etc/sudoers.d/90-cloud-init-users`** — a new `deploy` user inherits broad NOPASSWD sudo that defeats the `command="…"` SSH lockdown (deploy-key compromise = root). When onboarding an env, rewrite that file to remove the deploy line right after SSH lockdown. Verify `sudo -l -U deploy` — only entry should be `(root) NOPASSWD: /srv/portal/clients/<env>/deploy.sh`.
