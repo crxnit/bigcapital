@@ -35,7 +35,7 @@ export class EditBranchService {
     // Deletes branch under unit-of-work.
     return this.uow.withTransaction(async (trx: Knex.Transaction) => {
       // Triggers `onBranchEdit` event.
-      await this.eventPublisher.emitAsync(events.warehouse.onEdit, {
+      await this.eventPublisher.emitAsync(events.branch.onEdit, {
         oldBranch,
         trx,
       } as IBranchEditPayload);
@@ -48,7 +48,7 @@ export class EditBranchService {
         });
 
       // Triggers `onBranchEdited` event.
-      await this.eventPublisher.emitAsync(events.warehouse.onEdited, {
+      await this.eventPublisher.emitAsync(events.branch.onEdited, {
         oldBranch,
         branch,
         trx,

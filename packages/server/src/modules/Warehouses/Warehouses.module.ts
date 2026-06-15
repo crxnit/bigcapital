@@ -23,6 +23,8 @@ import { VendorCreditsActivateWarehousesSubscriber } from './subscribers/Activat
 import { ReceiptsActivateWarehousesSubscriber } from './subscribers/Activate/ReceiptWarehousesActivateSubscriber';
 import { InvoicesActivateWarehousesSubscriber } from './subscribers/Activate/InvoiceWarehousesActivateSubscriber';
 import { CreditsActivateWarehousesSubscriber } from './subscribers/Activate/CreditNoteWarehousesActivateSubscriber';
+import { EstimatesActivateWarehousesSubscriber } from './subscribers/Activate/EstimateWarehousesActivateSubscriber';
+import { InventoryActivateWarehousesSubscriber } from './subscribers/Activate/InventoryTransactionsWarehousesActivateSubscriber';
 import { InventoryAdjustmentWarehouseValidatorSubscriber } from './subscribers/Validators/InventoryAdjustment/InventoryAdjustmentWarehouseValidatorSubscriber';
 import { DeleteItemWarehousesQuantitySubscriber } from './subscribers/DeleteItemWarehousesQuantitySubscriber';
 import { VendorCreditWarehousesValidateSubscriber } from './subscribers/Validators/Purchases/VendorCreditWarehousesSubscriber';
@@ -37,6 +39,8 @@ import { CreditNotesActivateWarehouses } from './Activate/CreditNoteWarehousesAc
 import { VendorCreditActivateWarehouses } from './Activate/VendorCreditWarehousesActivate';
 import { InvoicesActivateWarehouses } from './Activate/InvoiceWarehousesActivate';
 import { ReceiptActivateWarehouses } from './Activate/ReceiptWarehousesActivate';
+import { EstimatesActivateWarehouses } from './Activate/EstimateWarehousesActivate';
+import { InventoryActivateWarehouses } from './Activate/InventoryTransactionsWarehousesActivate';
 import { WarehousesDTOValidators } from './Integrations/WarehousesDTOValidators';
 import { DeleteItemWarehousesQuantity } from './commands/DeleteItemWarehousesQuantity';
 import { InventoryTransactionsWarehouses } from './AccountsTransactionsWarehouses';
@@ -71,6 +75,8 @@ const models = [RegisterTenancyModel(Warehouse)];
     InvoicesActivateWarehousesSubscriber,
     ReceiptsActivateWarehousesSubscriber,
     VendorCreditsActivateWarehousesSubscriber,
+    EstimatesActivateWarehousesSubscriber,
+    InventoryActivateWarehousesSubscriber,
     InventoryAdjustmentWarehouseValidatorSubscriber,
     DeleteItemWarehousesQuantitySubscriber,
     BillWarehousesValidateSubscriber,
@@ -83,14 +89,20 @@ const models = [RegisterTenancyModel(Warehouse)];
     BillActivateWarehouses,
     CreditNotesActivateWarehouses,
     VendorCreditActivateWarehouses,
-    CreditNotesActivateWarehouses,
     InvoicesActivateWarehouses,
     ReceiptActivateWarehouses,
+    EstimatesActivateWarehouses,
+    InventoryActivateWarehouses,
     WarehousesDTOValidators,
     DeleteItemWarehousesQuantity,
     InventoryTransactionsWarehouses,
-    ValidateWarehouseExistance
+    ValidateWarehouseExistance,
   ],
-  exports: [WarehousesSettings, WarehouseTransactionDTOTransform, WarehousesApplication, ...models],
+  exports: [
+    WarehousesSettings,
+    WarehouseTransactionDTOTransform,
+    WarehousesApplication,
+    ...models,
+  ],
 })
 export class WarehousesModule {}

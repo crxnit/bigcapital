@@ -584,6 +584,12 @@ export const events = {
    * Branches.
    */
   branch: {
+    onCreate: 'onBranchCreate',
+    onCreated: 'onBranchCreated',
+
+    onEdit: 'onBranchEdit',
+    onEdited: 'onBranchEdited',
+
     onActivate: 'onBranchActivate',
     onActivated: 'onBranchActivated',
 

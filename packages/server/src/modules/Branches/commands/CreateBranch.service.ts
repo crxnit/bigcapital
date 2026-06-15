@@ -34,7 +34,7 @@ export class CreateBranchService {
     // Creates a new branch under unit-of-work.
     return this.uow.withTransaction(async (trx: Knex.Transaction) => {
       // Triggers `onBranchCreate` event.
-      await this.eventPublisher.emitAsync(events.warehouse.onEdit, {
+      await this.eventPublisher.emitAsync(events.branch.onCreate, {
         createBranchDTO,
         trx,
       } as IBranchCreatePayload);
@@ -45,7 +45,7 @@ export class CreateBranchService {
           ...createBranchDTO,
         });
       // Triggers `onBranchCreated` event.
-      await this.eventPublisher.emitAsync(events.warehouse.onEdited, {
+      await this.eventPublisher.emitAsync(events.branch.onCreated, {
         createBranchDTO,
         branch,
         trx,

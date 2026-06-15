@@ -15,10 +15,21 @@ export interface IBranchCreatePayload {
   createBranchDTO: ICreateBranchDTO;
   trx: Knex.Transaction;
 }
-export interface IBranchCreatedPayload {}
+export interface IBranchCreatedPayload {
+  createBranchDTO: ICreateBranchDTO;
+  branch: Branch;
+  trx: Knex.Transaction;
+}
 
-export interface IBranchEditPayload {}
-export interface IBranchEditedPayload {}
+export interface IBranchEditPayload {
+  oldBranch: Branch;
+  trx: Knex.Transaction;
+}
+export interface IBranchEditedPayload {
+  oldBranch: Branch;
+  branch: Branch;
+  trx: Knex.Transaction;
+}
 
 export interface IBranchDeletePayload {}
 export interface IBranchDeletedPayload {}

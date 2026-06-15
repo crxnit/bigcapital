@@ -37,6 +37,18 @@ import { BillPaymentsActivateBranches } from './integrations/Purchases/PaymentMa
 import { BillBranchesActivateSubscriber } from './subscribers/Activate/BillBranchesActivateSubscriber';
 import { VendorCreditBranchesActivateSubscriber } from './subscribers/Activate/VendorCreditBranchesActivateSubscriber';
 import { PaymentMadeActivateBranchesSubscriber } from './subscribers/Activate/PaymentMadeBranchesActivateSubscriber';
+import { CashflowActivateBranchesSubscriber } from './subscribers/Activate/CashflowBranchesActivateSubscriber';
+import { ExpenseActivateBranchesSubscriber } from './subscribers/Activate/ExpenseBranchesActivateSubscriber';
+import { CreditNoteActivateBranchesSubscriber } from './subscribers/Activate/CreditNoteBranchesActivateSubscriber';
+import { PaymentReceiveActivateBranchesSubscriber } from './subscribers/Activate/PaymentReceiveBranchesActivateSubscriber';
+import { SaleEstimatesActivateBranchesSubscriber } from './subscribers/Activate/SaleEstiamtesBranchesActivateSubscriber';
+import { SaleInvoicesActivateBranchesSubscriber } from './subscribers/Activate/SaleInvoiceBranchesActivateSubscriber';
+import { SaleReceiptsActivateBranchesSubscriber } from './subscribers/Activate/SaleReceiptsBranchesActivateSubscriber';
+import { CreditNoteActivateBranches } from './integrations/Sales/CreditNoteBranchesActivate';
+import { PaymentReceiveActivateBranches } from './integrations/Sales/PaymentReceiveBranchesActivate';
+import { SaleEstimateActivateBranches } from './integrations/Sales/SaleEstimatesBranchesActivate';
+import { SaleInvoiceActivateBranches } from './integrations/Sales/SaleInvoiceBranchesActivate';
+import { SaleReceiptActivateBranches } from './integrations/Sales/SaleReceiptBranchesActivate';
 import { FeaturesModule } from '../Features/Features.module';
 
 @Module({
@@ -76,9 +88,21 @@ import { FeaturesModule } from '../Features/Features.module';
     BillActivateBranches,
     VendorCreditActivateBranches,
     BillPaymentsActivateBranches,
+    CreditNoteActivateBranches,
+    PaymentReceiveActivateBranches,
+    SaleEstimateActivateBranches,
+    SaleInvoiceActivateBranches,
+    SaleReceiptActivateBranches,
     BillBranchesActivateSubscriber,
     VendorCreditBranchesActivateSubscriber,
-    PaymentMadeActivateBranchesSubscriber
+    PaymentMadeActivateBranchesSubscriber,
+    CashflowActivateBranchesSubscriber,
+    ExpenseActivateBranchesSubscriber,
+    CreditNoteActivateBranchesSubscriber,
+    PaymentReceiveActivateBranchesSubscriber,
+    SaleEstimatesActivateBranchesSubscriber,
+    SaleInvoicesActivateBranchesSubscriber,
+    SaleReceiptsActivateBranchesSubscriber,
   ],
   exports: [
     BranchesSettingsService,
@@ -86,4 +110,4 @@ import { FeaturesModule } from '../Features/Features.module';
     ManualJournalBranchesDTOTransformer,
   ],
 })
-export class BranchesModule { }
+export class BranchesModule {}
