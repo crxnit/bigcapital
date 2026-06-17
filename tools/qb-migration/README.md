@@ -121,3 +121,32 @@ iterate until it ties.
 
 Field contract mirrored from:
 `packages/server/src/modules/ManualJournals/{commands/ManualJournalsImport.ts, models/ManualJournal.meta.ts, dtos/ManualJournal.dto.ts, constants.ts}`.
+
+---
+
+## `bc_import.py` — push a CSV into a running instance via the Import API
+
+Manual Journals has **no webapp import page** (only Accounts + TaxRate do), so the journal
+replay loads through the generic Import API. `bc_import.py` drives it end-to-end:
+`POST /import/file` → auto-build mapping → `POST /import/<id>/mapping` → `GET /import/<id>/preview`
+→ `POST /import/<id>/import`. Reusable for Accounts too (skips the wizard) and at cutover.
+
+```bash
+python3 bc_import.py \
+    --base-url https://books.sofisminidonuts.com/api \
+    --token "<JWT>" --org-id "<orgId>" \
+    --resource Account --file accounts.csv          # then --resource ManualJournal --file manual-journals.csv
+```
+
+- **Auth** = Bigcapital JWT + `organization-id` header (no OAuth edge on the Sofi box). Grab both
+  from the browser: DevTools → Network → any `/api` request → Request Headers.
+- **Auto-mapping** matches each sheet header to a resource field by display **name OR key**
+  (so `Currency Code`→`currencyCode`, and the ManualJournal `entries` group `Account`→`accountId`).
+- `--skip-errors` — commit the valid rows past expected duplicate-name errors (QB accounts that
+  collide with the org's seed accounts).
+- `--dry-run` — stop before the commit call. ⚠️ **The server's PREVIEW step itself persists created
+  rows in the current build** (its rollback doesn't hold), so `--dry-run` is NOT side-effect-free —
+  only ever use it against a throwaway/sandbox org you intend to wipe.
+
+Validated 2026-06-17: loaded the 2023 dry-run CSVs into the live Sofi stack — 88 accounts + 411
+journals, live Trial Balance reconciled to QuickBooks account-for-account.
