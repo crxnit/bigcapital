@@ -227,6 +227,11 @@ def main():
         if not any((c or "").strip() for c in raw_row):
             continue  # blank separator row
         account = cell(raw_row, "account")
+        # The grand-total / subtotal row carries a "Total" marker in the boundary column
+        # (e.g. QB prints "TOTAL" in the Trans # column) with no account. Skip it outright,
+        # else it opens a phantom dateless, leg-less journal.
+        if cell(raw_row, boundary).strip().lower() in ("total", "totals"):
+            continue
         starts_new = bool(cell(raw_row, boundary))
 
         if starts_new:
