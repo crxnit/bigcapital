@@ -12,8 +12,13 @@ on:
       environment:
         description: "Target environment"
         type: choice
-        options: [sandbox, uat]
+        options: [sandbox, uat, sofis]
         default: sandbox
+      sha:
+        description: "Commit to build & deploy (full or abbreviated SHA; blank = HEAD of the chosen ref). Used mainly to promote a UAT-vetted build to sofis."
+        type: string
+        required: false
+        default: ""
 
 # Required for actions/checkout + GHCR push via GITHUB_TOKEN.
 permissions:
@@ -39,10 +44,21 @@ jobs:
       sha-short: ${{ steps.sha.outputs.short }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Full history so an abbreviated `sha` input can be resolved + checked out.
+          fetch-depth: 0
 
       - id: sha
-        name: Compute short SHA
-        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        name: Resolve & check out target commit, compute short SHA
+        run: |
+          REQ="${{ github.event.inputs.sha }}"
+          if [ -n "$REQ" ]; then
+            FULL="$(git rev-parse --verify "${REQ}^{commit}")" \
+              || { echo "::error::requested sha '$REQ' not found in history"; exit 1; }
+            git checkout -q "$FULL"
+            echo "Building requested commit $FULL"
+          fi
+          echo "short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v4
 
@@ -101,10 +117,6 @@ jobs:
       group: deploy-sandbox
       cancel-in-progress: false
     steps:
-      - id: sha
-        name: Compute short SHA
-        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -115,13 +127,50 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Trigger remote deploy
+        env:
+          SHA: ${{ needs.build-and-scan.outputs.sha-short }}
         run: |
           ssh -p "${{ secrets.VPS_PORT }}" \
               -i ~/.ssh/deploy_key \
               -o IdentitiesOnly=yes \
               -o IdentityAgent=none \
               "${{ secrets.VPS_HOST }}" \
-              "${{ steps.sha.outputs.short }} ${{ steps.sha.outputs.short }}"
+              "$SHA $SHA"
+
+  deploy-sofis:
+    name: Deploy to Sofi's (live client)
+    needs: build-and-scan
+    # Manual one-click promote ONLY — never on push. Pick a UAT-vetted build via
+    # the optional `sha` input (blank = HEAD of the dispatched ref). The `sofis`
+    # GitHub Environment can carry a required-reviewer rule for a second gate.
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'sofis'
+    runs-on: ubuntu-latest
+    environment: sofis
+    concurrency:
+      group: deploy-sofis
+      cancel-in-progress: false
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      # The remote deploy.sh re-derives the GHCR tag (sha-<short>) from the SHA
+      # built+scanned above, so the promoted image is exactly what cleared Trivy.
+      - name: Trigger remote deploy
+        env:
+          SHA: ${{ needs.build-and-scan.outputs.sha-short }}
+        run: |
+          ssh -p "${{ secrets.VPS_PORT }}" \
+              -i ~/.ssh/deploy_key \
+              -o IdentitiesOnly=yes \
+              -o IdentityAgent=none \
+              "${{ secrets.VPS_HOST }}" \
+              "$SHA $SHA"
 
   deploy-uat:
     name: Deploy to uat
@@ -144,10 +193,6 @@ jobs:
       group: deploy-uat
       cancel-in-progress: false
     steps:
-      - id: sha
-        name: Compute short SHA
-        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -158,10 +203,12 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Trigger remote deploy
+        env:
+          SHA: ${{ needs.build-and-scan.outputs.sha-short }}
         run: |
           ssh -p "${{ secrets.VPS_PORT }}" \
               -i ~/.ssh/deploy_key \
               -o IdentitiesOnly=yes \
               -o IdentityAgent=none \
               "${{ secrets.VPS_HOST }}" \
-              "${{ steps.sha.outputs.short }} ${{ steps.sha.outputs.short }}"
+              "$SHA $SHA"

@@ -163,7 +163,39 @@ apt-get install -y restic
 > ✅ **Test a restore into a throwaway DB before go-live** (recipe in the
 > `backup.sh` header). A backup you haven't restored isn't a backup.
 
-## Updating the pinned image (deliberate, after staging proves it)
+## Updating the pinned image
+
+### Automated — one-click "promote" (preferred)
+
+A `workflow_dispatch` path in `.github/workflows/deploy.yml` (`environment=sofis`)
+builds+scans a chosen commit (Trivy-gated) then SSH-triggers `deploy.sh` on this
+box. `deploy.sh` takes a **pre-migration mysqldump of all DBs**, pins
+`SERVER_IMAGE`/`WEBAPP_IMAGE` in `.env`, pulls, migrates (blocks on exit code),
+recreates `server`+`webapp`, and smoke-tests the server HEALTHCHECK.
+
+```bash
+# promote the current develop HEAD
+gh workflow run deploy.yml -f environment=sofis
+
+# or promote a specific UAT-vetted commit (full or short sha)
+gh workflow run deploy.yml -f environment=sofis -f sha=<sha>
+```
+
+Never fires on push — manual dispatch only. The `sofis` GitHub Environment may
+carry a required-reviewer rule for a second approval gate. One-time wiring
+(deploy key, sudoers, installing `deploy.sh`, GH Environment secrets) is in the
+repo-root deploy docs / session runbook.
+
+Rollback = re-run the promote with the previous sha (images persist in GHCR by
+`sha-<short>`), or on the box directly:
+
+```bash
+sudo SSH_ORIGINAL_COMMAND="<old-sha> <old-sha>" /srv/portal/clients/sofis-bc/deploy.sh
+```
+
+Pre-deploy dumps are kept (last 5) at `/srv/portal/clients/sofis-bc/pre-deploy-backups/`.
+
+### Manual fallback (deliberate, after staging proves it)
 
 ```bash
 cd /srv/portal/clients/sofis-bc
